@@ -3,6 +3,8 @@ name: RType CI/CD
 on:
   push:
     branches: [ "main", "test_conan" ]
+    tags:
+      - "v*"
   pull_request:
     branches:
       - "main"
@@ -10,7 +12,6 @@ on:
 jobs:
   build:
     timeout-minutes: 120
-
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
 
@@ -19,6 +20,9 @@ jobs:
         os: [ubuntu-latest, windows-latest]
 
     steps:
+      # -----------------------------
+      # Checkout repository
+      # -----------------------------
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -59,16 +63,63 @@ jobs:
       # -----------------------------
       # Upload artifacts
       # -----------------------------
-      # - name: Upload binaries
-        # uses: actions/upload-artifact@v4
-        # with:
-          # name: rtype-${{ matrix.os }}
-          # path: |
-            # rtype_server
-            # rtype_server.exe
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: rtype-${{ matrix.os }}
           path: build/
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')  # Ne s'exécute que pour les tags
+
+    steps:
+      # -----------------------------
+      # Checkout repository
+      # -----------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # -----------------------------
+      # Download Ubuntu artifact
+      # -----------------------------
+      - name: Download Ubuntu artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rtype-ubuntu-latest
+          path: ubuntu/
+
+      # -----------------------------
+      # Download Windows artifact
+      # -----------------------------
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: rtype-windows-latest
+          path: windows/
+
+      # -----------------------------
+      # Zip Ubuntu build
+      # -----------------------------
+      - name: Zip Ubuntu build
+        run: zip -r ubuntu_build.zip ubuntu/
+
+      # -----------------------------
+      # Zip Windows build
+      # -----------------------------
+      - name: Zip Windows build
+        run: zip -r windows_build.zip windows/
+
+      # -----------------------------
+      # Create GitHub Release
+      # -----------------------------
+      - name: Create GitHub Release
+        run: |
+          gh release create ${{ github.ref_name }} ubuntu_build.zip windows_build.zip \
+            --repo la-cabane-epitech/RType-CI-CD \
+            --title "RType Release ${{ github.ref_name }}" \
+            --notes "Automated release from CI/CD"
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
