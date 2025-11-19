@@ -62,10 +62,5 @@ int main(void)
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
-<<<<<<< HEAD
-int main() {
-    std::cout << "RType server" << std::endl;
-=======
->>>>>>> test_conan
     return 0;
 }
