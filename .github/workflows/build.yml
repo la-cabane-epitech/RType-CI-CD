@@ -2,7 +2,7 @@ name: RType CI
 
 on:
   push:
-    branches: [ "main", "test-conan" ]
+    branches: [ "main", "test_conan" ]
   pull_request:
     branches: [ "main" ]
 
