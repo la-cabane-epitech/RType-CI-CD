@@ -4,6 +4,6 @@ conan install . --build=missing
 
 dir build\generators
 
-cmake -S . -B build -G "Visual Studio 17 2022" -DCMAKE_TOOLCHAIN_FILE=build\generators\conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+conan install . --build=missing  -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
 
 cmake --build build --config Release
