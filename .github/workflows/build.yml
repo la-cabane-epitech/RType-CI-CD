@@ -23,73 +23,32 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install dependencies (Unix)
+      - name: Install dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: sudo apt update && sudo apt install -y build-essential ninja-build
 
-      - name: Install dependencies (Windows)
-        if: matrix.os == 'windows-latest'
-        run: choco install ninja
+      # Pas d'installation de Ninja sur Windows
 
       - name: Configure CMake
-        shell: pwsh
         run: |
-          if ($env:MATRIX_OS -eq "windows-latest") {
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
             cmake -S . -B build -G "Visual Studio 17 2022" -A x64
-          } else {
+          else
             cmake -S . -B build -G Ninja
-          }
+          fi
+        shell: bash
 
       - name: Build project
-        shell: bash
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
             cmake --build build --config Release
           else
             cmake --build build --config Release
           fi
+        shell: bash
 
-      - name: Upload artifacts (always for CI)
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: rtype_build_${{ matrix.os }}
           path: build/
-
-  release:
-    name: Create Release
-    needs: build
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Download Ubuntu artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: rtype_build_ubuntu-latest
-          path: ubuntu/
-
-      - name: Download Windows artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: rtype_build_windows-latest
-          path: windows/
-
-      - name: Zip Ubuntu build
-        run: zip -r ubuntu_build.zip ubuntu/
-
-      - name: Zip Windows build
-        run: zip -r windows_build.zip windows/
-
-      - name: Create GitHub Release
-        run: |
-          gh release create ${{ github.ref_name }} ubuntu_build.zip windows_build.zip \
-            --repo la-cabane-epitech/RType-CI-CD \
-            --title "RType Release ${{ github.ref_name }}" \
-            --notes "Automated release from CI/CD"
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-
-
