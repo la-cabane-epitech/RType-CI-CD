@@ -54,9 +54,7 @@ jobs:
 
       - name: Build project via PowerShell on Windows
         if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          bash build.sh
+        run: build.bat
 
       # -----------------------------
       # Upload artifacts
