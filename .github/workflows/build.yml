@@ -75,6 +75,9 @@ jobs:
         run: |
           gh release create ${{ github.ref_name }} ubuntu_build.zip windows_build.zip \
             --repo la-cabane-epitech/RType-CI-CD \
-            --title
+            --title "RType Release ${{ github.ref_name }}" \
+            --notes "Automated release from CI/CD"
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
 
 
