@@ -66,13 +66,12 @@ jobs:
           path: windows/
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: actions/create-release@v1
         with:
-          name: "RType Release ${{ github.ref_name }}"
           tag_name: ${{ github.ref_name }}
-          body: "Automated release from CI/CD."
-          files: |
-            ubuntu/**
-            windows/**
+          release_name: "RType Release ${{ github.ref_name }}"
+          body: "Automated release from CI/CD"
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
