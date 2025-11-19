@@ -3,6 +3,8 @@ name: RType CI
 on:
   push:
     branches: [ "main", "test_conan" ]
+    tags:
+      - "v*"
   pull_request:
     branches: [ "main" ]
 
@@ -65,3 +67,18 @@ jobs:
           path: |
             rtype_server
             rtype_server.exe
+
+      - name: Build project
+        run: |
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            cmake --build build --config Release
+          else
+            cmake --build build --config Release
+          fi
+        shell: bash
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtype_build_${{ matrix.os }}
+          path: build/
