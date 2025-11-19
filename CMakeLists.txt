@@ -13,19 +13,6 @@ endif()
 add_executable(rtype_server src/server/main.cpp)
 # add_executable(rtype_client src/client/main.cpp)
 
-# --- Copier les DLL tierces pour Windows (exemple SDL2) ---
-if(WIN32)
-    set(SDL2_DLL_PATH "C:/path/to/SDL2/bin")  # <-- adapte selon ton installation
-    add_custom_command(TARGET rtype_server POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${SDL2_DLL_PATH}/SDL2.dll"
-            $<TARGET_FILE_DIR:rtype_server>
-    )
-
-    # Ajouter d'autres DLL si nécessaire, ex:
-    # COMMAND ${CMAKE_COMMAND} -E copy_if_different "C:/path/to/SDL2_image.dll" $<TARGET_FILE_DIR:rtype_server>
-endif()
-
 # --- CLEAN / FCLEAN / RE (compatible) ---
 add_custom_target(clean_build
     COMMAND ${CMAKE_COMMAND} -E echo "Cleaning build files..."
