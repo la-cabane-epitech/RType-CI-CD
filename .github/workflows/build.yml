@@ -39,13 +39,3 @@ jobs:
         with:
           name: rtype_build_${{ matrix.os }}
           path: build/
-
-      - name: Create GitHub Release
-        if: matrix.os == 'ubuntu-latest'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: "RType Build ${{ github.run_number }}"
-          body: "Automated build from CI"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
