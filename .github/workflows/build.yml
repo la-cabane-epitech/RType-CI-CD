@@ -41,6 +41,7 @@ jobs:
           }
 
       - name: Build project
+        shell: bash
         run: |
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
             cmake --build build --config Release
