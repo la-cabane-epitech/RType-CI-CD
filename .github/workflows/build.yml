@@ -19,34 +19,50 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install Conan (Unix)
+      # -----------------------------
+      # Install dependencies (Ubuntu)
+      # -----------------------------
+      - name: Install dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt update
-          sudo apt install -y python3-pip ninja-build
+          sudo apt install -y build-essential ninja-build python3-pip
           pip install conan
+          conan profile detect
 
-      - name: Install Conan (Windows)
-        if: matrix.os == 'windows-latest'
-        run: pip install conan
-
-      - name: Install dependencies (Unix)
-        if: matrix.os == 'ubuntu-latest'
-        run: sudo apt update && sudo apt install -y build-essential ninja-build
-
+      # -----------------------------
+      # Install dependencies (Windows)
+      # -----------------------------
       - name: Install dependencies (Windows)
         if: matrix.os == 'windows-latest'
-        run: choco install ninja
+        shell: pwsh
+        run: |
+          choco install ninja
+          pip install conan
+          conan profile detect
 
-      - name: Configure CMake
-        run: cmake -S . -B build -G Ninja
-          
-      - name: Build project
+      # -----------------------------
+      # Run build script
+      # -----------------------------
+      - name: Build project via build.sh
         if: matrix.os == 'ubuntu-latest'
-        run: ./build.sh
+        run: |
+          chmod +x build.sh
+          ./build.sh
 
-      - name: Upload artifacts (optional)
+      - name: Build project via PowerShell on Windows
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          bash build.sh
+
+      # -----------------------------
+      # Upload artifacts
+      # -----------------------------
+      - name: Upload binaries
         uses: actions/upload-artifact@v4
         with:
-          name: rtype_build_${{ matrix.os }}
-          path: build/
+          name: rtype-${{ matrix.os }}
+          path: |
+            rtype_server
+            rtype_server.exe
