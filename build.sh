@@ -6,6 +6,7 @@ set -e
 conan profile detect || true
 
 conan install . --build=missing \
+    -s compiler.libcxx=libstdc++11 \
     -c tools.system.package_manager:mode=install \
     -c tools.system.package_manager:sudo=True
 
