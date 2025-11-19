@@ -19,3 +19,4 @@ cmake -S . -B build \
 cmake --build build --config Release
 
 mv build/rtype_server .
+mv build/rtype_client .
