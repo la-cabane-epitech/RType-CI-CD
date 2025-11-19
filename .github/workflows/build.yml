@@ -2,16 +2,15 @@ name: RType CI/CD
 
 on:
   push:
-    branches:
-      - "main"
-    tags:
-      - "v*"
+    branches: [ "main", "test_conan" ]
   pull_request:
     branches:
       - "main"
 
 jobs:
   build:
+    timeout-minutes: 120
+
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
 
@@ -23,29 +22,50 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # -----------------------------
+      # Install dependencies (Ubuntu)
+      # -----------------------------
       - name: Install dependencies (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt update && sudo apt install -y build-essential ninja-build
-
-      # Pas d'installation de Ninja sur Windows
-
-      - name: Configure CMake
         run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            cmake -S . -B build -G "Visual Studio 17 2022" -A x64
-          else
-            cmake -S . -B build -G Ninja
-          fi
-        shell: bash
+          sudo apt update
+          sudo apt install -y build-essential python3-pip
+          pip install conan
+          conan profile detect
 
-      - name: Build project
+      # -----------------------------
+      # Install dependencies (Windows)
+      # -----------------------------
+      - name: Install dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
         run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            cmake --build build --config Release
-          else
-            cmake --build build --config Release
-          fi
-        shell: bash
+          pip install conan
+          conan profile detect
+
+      # -----------------------------
+      # Run build script
+      # -----------------------------
+      - name: Build project via build.sh
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Build project via PowerShell on Windows
+        if: matrix.os == 'windows-latest'
+        run: cmd /c build.bat
+
+      # -----------------------------
+      # Upload artifacts
+      # -----------------------------
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtype-${{ matrix.os }}
+          path: |
+            rtype_server
+            rtype_server.exe
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

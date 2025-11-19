@@ -4,14 +4,24 @@ project(RType LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+if (MSVC)
+    set(CMAKE_MSCV_RUNTIME_LIBRARY "Multithread$<$<CONFIG:Debug>:Debug>")
+    include(${CMAKE_BINARY_DIR}/generators/conan_toolchain.cmake)
+else ()
+    include(${CMAKE_BINARY_DIR}/Release/generators/conan_toolchain.cmake)
 endif()
+
+set(CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/generators" ${CMAKE_PREFIX_PATH})
+
+# --- Package ---
+find_package(raylib REQUIRED CONFIG)
 
 # --- Executable ---
 add_executable(rtype_server src/server/main.cpp)
 add_executable(rtype_client src/client/main.cpp)
 
+target_link_libraries(rtype_server PRIVATE raylib)
+#
 # --- CLEAN / FCLEAN / RE (compatible) ---
 add_custom_target(clean_build
     COMMAND ${CMAKE_COMMAND} -E echo "Cleaning build files..."
