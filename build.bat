@@ -1,3 +1,5 @@
+conan profile detect
+
 conan install . --build=missing
 
 cmake -S . -B build ^
