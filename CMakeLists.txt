@@ -4,7 +4,11 @@ project(RType LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include(${CMAKE_BINARY_DIR}/generators/conan_toolchain.cmake)
+if (WIN32)
+    include(${CMAKE_BINARY_DIR}/generators/conan_toolchain.cmake)
+else ()
+    include(${CMAKE_BINARY_DIR}/Release/generators/conan_toolchain.cmake)
+endif()
 
 set(CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/generators" ${CMAKE_PREFIX_PATH})
 
