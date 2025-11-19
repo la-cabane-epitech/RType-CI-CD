@@ -110,7 +110,7 @@ jobs:
       # Zip Windows build (Windows binaries only)
       # -----------------------------
       - name: Zip Windows build
-        run: zip windows_build.zip windows/rtype_server.exe windows/rtype_client.exe
+        run: zip -r windows_build.zip windows/   # <- inclut tous les fichiers .exe et sous-dossiers
 
       # -----------------------------
       # Create GitHub Release
