@@ -65,12 +65,16 @@ jobs:
           name: rtype_build_windows-latest
           path: windows/
 
+      - name: Zip Ubuntu build
+        run: zip -r ubuntu_build.zip ubuntu/
+
+      - name: Zip Windows build
+        run: zip -r windows_build.zip windows/
+
       - name: Create GitHub Release
         run: |
-          gh release create ${{ github.ref_name }} ubuntu/* windows/* \
-            --title "RType Release ${{ github.ref_name }}" \
-            --notes "Automated release from CI/CD"
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          gh release create ${{ github.ref_name }} ubuntu_build.zip windows_build.zip \
+            --repo la-cabane-epitech/RType-CI-CD \
+            --title
 
 
