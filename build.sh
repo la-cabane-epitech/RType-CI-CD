@@ -17,3 +17,5 @@ cmake -S . -B build \
 
 # 3. Build the project
 cmake --build build --config Release
+
+mv build/rtype_server .

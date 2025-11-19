@@ -12,12 +12,8 @@ This guide explains how to install the required tools and build the project on L
 Conan is the C/C++ package manager.  
 
 ```bash
-# Install pip if needed
-sudo apt update
-sudo apt install python3-pip -y
-
 # Install Conan
-pip install --user conan
+pipx install conan
 
 # Verify installation
 conan --version
@@ -38,3 +34,12 @@ sudo dnf install cmake -y
 cmake --version
 ```
 
+### 3. Build project
+
+```bash
+# On Linux
+./build.sh
+
+# On Windows
+./build.bat
+```

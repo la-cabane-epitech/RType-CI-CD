@@ -3,8 +3,6 @@ name: RType CI
 on:
   push:
     branches: [ "main", "test_conan" ]
-    tags:
-      - "v*"
   pull_request:
     branches: [ "main" ]
 
