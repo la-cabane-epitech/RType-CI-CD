@@ -2,12 +2,13 @@ name: RType CI/CD
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  push:
+    branches:
+      - "main"
     tags:
-      - 'v*'
+      - "v*"
+  pull_request:
+    branches:
+      - "main"
 
 jobs:
   build:
