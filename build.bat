@@ -5,7 +5,7 @@ rem 2. Détecte le profil Conan
 conan profile detect
 
 rem 3. Installe les dépendances avec Conan
-conan install . --build=missing -if build
+conan install . --build=missing
 
 rem 4. Génère le projet avec CMake
 cd build
