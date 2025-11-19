@@ -32,12 +32,13 @@ jobs:
         run: choco install ninja
 
       - name: Configure CMake
+        shell: pwsh
         run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          if ($env:MATRIX_OS -eq "windows-latest") {
             cmake -S . -B build -G "Visual Studio 17 2022" -A x64
-          else
+          } else {
             cmake -S . -B build -G Ninja
-          fi
+          }
 
       - name: Build project
         run: |
