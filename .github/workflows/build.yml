@@ -101,16 +101,16 @@ jobs:
           path: windows/
 
       # -----------------------------
-      # Zip Ubuntu build
+      # Zip Ubuntu build (Linux binaries only)
       # -----------------------------
       - name: Zip Ubuntu build
-        run: zip -r ubuntu_build.zip ubuntu/
+        run: zip ubuntu_build.zip ubuntu/rtype_server ubuntu/rtype_client
 
       # -----------------------------
-      # Zip Windows build
+      # Zip Windows build (Windows binaries only)
       # -----------------------------
       - name: Zip Windows build
-        run: zip -r windows_build.zip windows/
+        run: zip windows_build.zip windows/rtype_server.exe windows/rtype_client.exe
 
       # -----------------------------
       # Create GitHub Release
