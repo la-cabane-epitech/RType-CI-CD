@@ -71,5 +71,6 @@ jobs:
             --title "RType Release ${{ github.ref_name }}" \
             --notes "Automated release from CI/CD"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+
 
