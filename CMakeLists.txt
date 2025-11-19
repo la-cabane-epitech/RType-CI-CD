@@ -13,7 +13,7 @@ find_package(raylib REQUIRED CONFIG)
 add_executable(rtype_server src/server/main.cpp)
 # add_executable(rtype_client src/client/main.cpp)
 
-target_link_libraries(rtype_server raylib)
+target_link_libraries(rtype_server PRIVATE raylib)
 #
 # --- CLEAN / FCLEAN / RE (compatible) ---
 #
