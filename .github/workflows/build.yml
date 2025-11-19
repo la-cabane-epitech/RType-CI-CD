@@ -30,7 +30,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt update
-          sudo apt install -y build-essential ninja-build python3-pip
+          sudo apt install -y build-essential python3-pip
           pip install conan
           conan profile detect
 
@@ -67,15 +67,6 @@ jobs:
           path: |
             rtype_server
             rtype_server.exe
-
-      - name: Build project
-        run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            cmake --build build --config Release
-          else
-            cmake --build build --config Release
-          fi
-        shell: bash
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
