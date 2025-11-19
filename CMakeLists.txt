@@ -11,7 +11,7 @@ endif()
 
 # --- Executable ---
 add_executable(rtype_server src/server/main.cpp)
-# add_executable(rtype_client src/client/main.cpp)
+add_executable(rtype_client src/client/main.cpp)
 
 # --- CLEAN / FCLEAN / RE (compatible) ---
 add_custom_target(clean_build

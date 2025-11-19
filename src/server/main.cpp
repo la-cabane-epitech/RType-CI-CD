@@ -1,6 +1,6 @@
 #include <iostream>
 
 int main() {
-    std::cout << "CI/CD Test OK" << std::endl;
+    std::cout << "RType server" << std::endl;
     return 0;
 }
