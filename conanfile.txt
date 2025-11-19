@@ -1,5 +1,7 @@
 [requires]
 raylib/5.5
+glfw/3.4
+opengl/system
 
 [generators]
 CMakeDeps
