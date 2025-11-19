@@ -59,16 +59,28 @@ jobs:
       # -----------------------------
       # Upload artifacts
       # -----------------------------
-      - name: Upload binaries
+      # - name: Upload binaries
+        # uses: actions/upload-artifact@v4
+        # with:
+          # name: rtype-${{ matrix.os }}
+          # path: |
+            # rtype_server
+            # rtype_server.exe
+
+      - name: Prepare artifact folder
+        run: |
+          mkdir output
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            cp build/Release/rtype_server.exe output/
+            cp build/Release/rtype_client.exe output/
+          else
+            cp build/rtype_server output/
+            cp build/rtype_client output/
+          fi
+        shell: bash
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: rtype-${{ matrix.os }}
-          path: |
-            rtype_server
-            rtype_server.exe
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: rtype_build_${{ matrix.os }}
-          path: build/
+          path: output/
