@@ -39,7 +39,6 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          choco install ninja
           pip install conan
           conan profile detect
 
