@@ -9,10 +9,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Checkout du repo source
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
+      # Setup SSH pour GitHub
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
@@ -20,7 +22,10 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-      - name: Push to Epitech repo
-        run: |
-          git remote add orga-epitech git@github.com:EpitechPGE3-2025/G-CPP-500-RUN-5-2-rtype-6.git
-          git push --mirror orga-epitech
+      # Mirror vers le repo Epitech avec Pixta
+      - uses: pixta-dev/repository-mirroring-action@v1
+        with:
+          target_repo_url:
+            git@github.com:EpitechPGE3-2025/G-CPP-500-RUN-5-2-rtype-6.git
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh_username: git
