@@ -22,5 +22,5 @@ jobs:
 
       - name: Push to Epitech repo
         run: |
-          git remote add orga-epitech git@github.com:EpitechPGE3-2025/G-CPP-500-RUN-5-2-rtype-6.git
-          git push --mirror orga || exit 1
+          git remote set-url orga-epitech git@github.com:EpitechPGE3-2025/G-CPP-500-RUN-5-2-rtype-6.git
+          git push --mirror orga-epitech || exit 1
