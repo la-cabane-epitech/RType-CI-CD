@@ -25,7 +25,9 @@ jobs:
       # Mirror vers le repo Epitech avec Pixta
       - uses: pixta-dev/repository-mirroring-action@v1
         with:
-          target_repo_url:
-            git@github.com:EpitechPGE3-2025/G-CPP-500-RUN-5-2-rtype-6.git
+          target_repo_url: git@github.com:EpitechPGE3-2025/G-CPP-500-RUN-5-2-rtype-6.git
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
           ssh_username: git
+          push_all_branches: true
+          push_tags: true
+          force_push: false   # safe, ne réécrit pas main
