@@ -1,0 +1,24 @@
+name: Mirror to Epitech repo on release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  mirror_release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Push to Epitech repo
+        run: |
+          git remote add orga git@github.com:EpitechPGE3-2025/G-CPP-500-RUN-5-2-rtype-6.git
+          git push --mirror orga || exit 1
