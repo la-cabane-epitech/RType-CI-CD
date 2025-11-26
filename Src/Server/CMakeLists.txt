@@ -7,6 +7,7 @@ set (
     SOURCES
     main.cpp
     TCPServer.cpp
+    UDPServer.cpp
 )
 
 add_executable(rtype_server ${SOURCES})

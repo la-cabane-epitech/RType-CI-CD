@@ -1,3 +1,7 @@
 build
 CMakeUserPresets.json
 .vscode
+
+# binaries
+rtype_server
+rtype_client

@@ -6,7 +6,7 @@
 */
 
 #include "Server/TCPServer.hpp"
-#include "Network/Utils.hpp"
+#include "Server/Utils.hpp"
 using namespace NetworkUtils;
 
 TCPServer::TCPServer(int port)
@@ -18,26 +18,43 @@ TCPServer::TCPServer(int port)
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = INADDR_ANY;
 
-    bind(_sockfd, (sockaddr *)&addr, sizeof(addr));
-    listen(_sockfd, 10);
+    if (bind(_sockfd, (sockaddr *)&addr, sizeof(addr)) < 0)
+        throw std::runtime_error("Failed to bind TCP socket");
+    if (listen(_sockfd, 10) < 0)
+        throw std::runtime_error("Failed to listen on TCP socket");
+
+    _running = false;
 }
 
 TCPServer::~TCPServer()
 {
+    stop();
 }
 
 void TCPServer::start()
 {
+    if (_running)
+        return;
     _running = true;
+
     std::cout << "[TCP] Server starting..." << std::endl;
-    std::thread(&TCPServer::acceptLoop, this).detach();
+    _acceptThread = std::thread(&TCPServer::acceptLoop, this);
 }
 
 void TCPServer::stop()
 {
+    if (!_running)
+        return;
     _running = false;
+
     std::cout << "[TCP] Server stoping..." << std::endl;
     close(_sockfd);
+    if (_acceptThread.joinable())
+        _acceptThread.join();
+    for (auto& thread : _clientThread) {
+        if (thread.joinable())
+            thread.join();
+    }
 }
 
 void TCPServer::acceptLoop()
@@ -45,8 +62,10 @@ void TCPServer::acceptLoop()
     while (_running) {
         int clientSock = accept(_sockfd, nullptr, nullptr);
         std::cout << "[TCP] Client connection..." << std::endl;
-        if (clientSock >= 0)
-            std::thread(&TCPServer::handleClient, this, clientSock).detach();
+        if (clientSock >= 0) {
+            _clientThread.emplace_back(&TCPServer::handleClient, this, clientSock);
+            _clientThread.back().detach();
+        }
     }
 }
 
@@ -77,7 +96,7 @@ void TCPServer::handleClient(int clientSock)
     ConnectResponse res {};
     res.type = 2;
     res.playerId = _nextPlayerId++;
-    res.udpPort = 50000 + (res.playerId % 10);
+    res.udpPort = 5252;
     
     // Le serveur ecrit sur la socket du client
     if (!sendAll(clientSock, &res, sizeof(res))) {

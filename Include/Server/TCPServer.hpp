@@ -11,16 +11,17 @@
 */
 
 #ifndef TCPSERVER_HPP_
-#define TCPSERVER_HPP_
+    #define TCPSERVER_HPP_
 
-#include <cstdint>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <iostream>
-#include <thread>
-#include <cstring>
+    #include <cstdint>
+    #include <sys/socket.h>
+    #include <arpa/inet.h>
+    #include <iostream>
+    #include <thread>
+    #include <cstring>
+    #include <vector>
 
-#include "Network/ProtocoleTCP.hpp"
+#include "ProtocoleTCP.hpp"
 
 /**
  * @class TCPServer
@@ -64,6 +65,8 @@ private:
     int _sockfd;               ///< File descriptor of the listening TCP socket.
     bool _running;             ///< Flag indicating if the server is currently running.
     uint32_t _nextPlayerId = 1;///< Counter to assign unique player IDs.
+    std::thread _acceptThread;  ///< Thread for accepting incoming connections.
+    std::vector<std::thread> _clientThread;  ///< Thread for handling client connections.
 
     /**
      * @brief Main loop to accept incoming client connections.
