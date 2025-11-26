@@ -6,6 +6,9 @@ include_directories(${CMAKE_SOURCE_DIR}/Include)
 set (
     SOURCES
     main.cpp
+    RTypeClient.cpp
+    TCPClient.cpp
+    UDPClient.cpp
 )
 
 add_executable(rtype_client ${SOURCES})

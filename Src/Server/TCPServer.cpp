@@ -12,18 +12,25 @@ using namespace NetworkUtils;
 TCPServer::TCPServer(int port)
 {
     _sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    
+
     sockaddr_in addr {};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = INADDR_ANY;
 
-    bind(_sockfd, (sockaddr *)&addr, sizeof(addr));
-    listen(_sockfd, 10);
+    if (bind(_sockfd, (sockaddr *)&addr, sizeof(addr)) < 0) {
+        perror("bind failed");
+        exit(1);
+    }
+    if (listen(_sockfd, 10) < 0) {
+        perror("listen failed");
+        exit(1);
+    }
 }
 
 TCPServer::~TCPServer()
 {
+    stop();
 }
 
 void TCPServer::start()
