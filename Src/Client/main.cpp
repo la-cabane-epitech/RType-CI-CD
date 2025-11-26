@@ -1,89 +1,48 @@
-// #include <sys/socket.h>
-// #include <arpa/inet.h>
-// // #include <unistd.h>
-// #include <cstring>
-// #include <iostream>
+/*
+** EPITECH PROJECT, 2025
+** RType-CI-CD
+** File description:
+** main.cpp
+*/
 
-// #include "Server/ProtocoleTCP.hpp"
-// #include "Server/Utils.hpp"
-// using namespace NetworkUtils;
-
-// int main() {
-//     int sock = socket(AF_INET, SOCK_STREAM, 0);
-
-//     sockaddr_in serv {};
-//     serv.sin_family = AF_INET;
-//     serv.sin_port = htons(4242);
-//     inet_pton(AF_INET, "127.0.0.1", &serv.sin_addr);
-
-//     connect(sock, (sockaddr *)&serv, sizeof(serv));
-
-//     // Setup du message pour le serveur
-//     ConnectRequest req {};
-//     req.type = 1;
-//     strncpy(req.username, "Player1", 32);
-
-//     // Le client ecrit sur la socket du serveur
-//     send(sock, &req, sizeof(req), 0);
-//     std::cout << "Type request = " << static_cast<int>(req.type) << std::endl;
-//     std::cout << "Username = " << req.username << std::endl;
-
-//     // Lit le type de message
-//     uint8_t type;
-//     recv(sock, &type, 1, 0);
-
-//     // Complete le reste, 2 pour OK, 3 pour Error
-//     if (type == 2) {
-//         ConnectResponse res {};
-//         res.type = type;
-//         recv(sock, ((char*)&res) + 1, sizeof(res) - 1, 0);
-//         std::cout << "Type = " << (int)res.type << "\n";
-//         std::cout << "PlayerId = " << res.playerId << "\n";
-//         std::cout << "UDP Port = " << res.udpPort << "\n";
-//     } else if (type == 3) {
-//         ErrorResponse err {};
-//         err.type = type;
-//         recv(sock, ((char*)&err) + 1, sizeof(err) - 1, 0);
-//         std::cerr << "Server Error: " << err.message << std::endl;
-//     }
-
-//     close(sock);
-// }
-
-
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <cstring>
+#include "Client/TCPClient.hpp"
+#include "Client/UDPClient.hpp"
 #include <iostream>
 
 int main() {
-    int sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock < 0) {
-        perror("socket");
+
+    TCPClient tcpClient("127.0.0.1", 4242);
+    if (!tcpClient.connectToServer()) {
+        std::cerr << "Impossible de se connecter au serveur TCP\n";
         return 1;
     }
 
-    sockaddr_in serv{};
-    serv.sin_family = AF_INET;
-    serv.sin_port = htons(5252); // port UDP que ton serveur a donné
-    inet_pton(AF_INET, "127.0.0.1", &serv.sin_addr);
+    ConnectResponse res;
+    if (!tcpClient.sendConnectRequest("Player1", res)) {
+        std::cerr << "Handshake TCP échoué\n";
+        return 1;
+    }
 
-    // Exemple : envoyer un message simple
-    const char* msg = "Hello UDP server!";
-    while (1)
-        sendto(sock, msg, strlen(msg), 0, (sockaddr*)&serv, sizeof(serv));
+    std::cout << "Connecté ! PlayerId: " << res.playerId
+            << ", UDP Port: " << res.udpPort << "\n";
 
-    // Recevoir une réponse
-    // char buffer[1024]{0};
-    // sockaddr_in from{};
-    // socklen_t fromLen = sizeof(from);
-    // ssize_t received = recvfrom(sock, buffer, sizeof(buffer)-1, 0,
-    //                             (sockaddr*)&from, &fromLen);
-    // if (received > 0) {
-    //     buffer[received] = '\0';
-    //     std::cout << "Server replied: " << buffer << std::endl;
-    // }
+    UDPClient udpClient("127.0.0.1", res.udpPort);
 
-    close(sock);
+    while (true) {
+        
+        Packet packet {};
+        packet.type = 1;
+        packet.playerId = res.playerId;
+        packet.x = 100.0f;
+        packet.y = 200.0f;
+        udpClient.sendMessage(packet);
+        // Packet recvPacket;
+
+        // if (udpClient.receivePacket(recvPacket)) {
+        //     std::cout << "Packet reçu ! type=" << int(recvPacket.type) << "\n";
+        // }
+
+    }
+
+    return 0;
 }

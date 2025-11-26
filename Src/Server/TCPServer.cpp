@@ -12,7 +12,7 @@ using namespace NetworkUtils;
 TCPServer::TCPServer(int port)
 {
     _sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    
+
     sockaddr_in addr {};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
