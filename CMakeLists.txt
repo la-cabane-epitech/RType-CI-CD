@@ -17,10 +17,12 @@ set(CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/generators" ${CMAKE_PREFIX_PATH})
 find_package(raylib REQUIRED CONFIG)
 
 # --- Executable ---
-add_executable(rtype_server src/server/main.cpp)
-add_executable(rtype_client src/client/main.cpp)
+add_subdirectory(Src/Server)
+add_subdirectory(Src/Client)
+# add_executable(rtype_server Src/Server/main.cpp)
+# add_executable(rtype_client Src/Client/main.cpp)
 
-target_link_libraries(rtype_server PRIVATE raylib)
+# target_link_libraries(rtype_server PRIVATE raylib)
 #
 # --- CLEAN / FCLEAN / RE (compatible) ---
 add_custom_target(clean_build

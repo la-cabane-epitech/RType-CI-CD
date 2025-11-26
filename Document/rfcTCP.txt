@@ -1,0 +1,85 @@
+RFC: R-Type TCP Protocol
+
+Version: 1.0
+Date: 26/11/2025
+Authors: Sacha Mong hune
+Status: Informational
+
+1. Introduction
+
+This document specifies the TCP protocol used for handshake and player connection in the R-Type multiplayer game.
+The TCP protocol is primarily responsible for:
+
+    1. Connecting players to the server.
+
+    2. Exchanging player identification and assigned UDP ports for gameplay.
+
+    3. Reporting errors during the connection process.
+
+After the handshake, gameplay occurs over UDP for performance reasons.
+
+
+2. Packet Structure
+
+All TCP packets are binary structures, aligned with 1-byte packing (#pragma pack(1)) to ensure identical memory layouts on client and server.
+
+Every packet begins with a 1-byte Type field to identify the packet type.
+
+2.1 Packet Types
+    Type	Name	Direction	Payload Description
+    1	CONNECT	Client → Server	username[32]
+    2	CONNECT_OK	Server → Client	playerId (uint32_t), udpPort (uint16_t)
+    3	ERROR	Server → Client	message[64]
+
+
+3. TCP Connection Flow
+
+    1. Client establishes a TCP connection to the server on the listening port (default 4242).
+
+    2. Client sends a ConnectRequest packet containing the username.
+
+    3. Server validates the request:
+
+        - If valid: server sends ConnectResponse with a unique playerId and assigned udpPort.
+
+        - If invalid: server sends ErrorResponse with a human-readable error message.
+
+    4. Server closes the TCP connection after responding.
+
+    5. Client uses the assigned UDP port to continue gameplay communication.
+
+
+4. Error Handling
+
+    - Invalid Type: Server responds with ErrorResponse type 3.
+
+    - Malformed Packet: Server closes the connection immediately.
+
+    - Overflowed Username: Server truncates to 31 characters and ensures null-termination.
+
+5. Implementation Notes
+
+    - All structures must be 1-byte packed (#pragma pack(1)) to avoid padding issues.
+
+    - Client and server must share the exact same definitions for all packets.
+
+    - TCP is only used for handshake; UDP is used for actual game data.
+
+    - recv() and send() should verify byte counts and handle partial reads/writes.
+
+6. Example Sequence
+
+    Client                   Server
+    ------                   ------
+    ConnectRequest(type=1) -->
+                              Validate
+                              Assign playerId / udpPort
+    <-- ConnectResponse(type=2, playerId=1, udpPort=50001)
+
+Or, in case of error:
+
+    Client                   Server
+    ------                   ------
+    ConnectRequest(type=12) -->
+                              Error: invalid type
+    <-- ErrorResponse(type=3, message="Invalid request type")
