@@ -96,7 +96,7 @@ void TCPServer::handleClient(int clientSock)
     res.type = 2;
     res.playerId = _nextPlayerId++;
     res.udpPort = 5252;
-    
+
     // Le serveur ecrit sur la socket du client
     if (!sendAll(clientSock, &res, sizeof(res))) {
         std::cerr << "[TCP] Failed to send ConnectResponse" << std::endl;

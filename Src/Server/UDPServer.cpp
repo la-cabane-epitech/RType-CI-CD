@@ -94,7 +94,6 @@ void UDPServer::processLoop()
             const Packet& pkt = *pktOpt;
             handlePacket(pkt.data.data(), pkt.length, pkt.addr);
         } else {
-            // Wait a bit if no packets are available to avoid busy-waiting
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
@@ -102,13 +101,15 @@ void UDPServer::processLoop()
 
 void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in& clientAddr)
 {
-    // The client sends a specific packet structure, so we cast the raw data to it.
-    // This assumes the client and server share the same definition from ProtocoleUDP.hpp
     if (length == sizeof(PlayerInputPacket)) {
         const PlayerInputPacket* clientPacket = reinterpret_cast<const PlayerInputPacket*>(data);
 
         std::cout << "[UDP] Received PlayerInputPacket from " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << "\n"
                   << "  - PlayerID: " << clientPacket->playerId << "\n"
-                  << "  - Position: (" << clientPacket->x << ", " << clientPacket->y << ")" << std::endl;
+                  << "  - Inputs: up=" << static_cast<int>(clientPacket->input_up)
+                  << ", down=" << static_cast<int>(clientPacket->input_down)
+                  << ", left=" << static_cast<int>(clientPacket->input_left)
+                  << ", right=" << static_cast<int>(clientPacket->input_right)
+                  << ", shoot=" << static_cast<int>(clientPacket->shooting) << std::endl;
     }
 }

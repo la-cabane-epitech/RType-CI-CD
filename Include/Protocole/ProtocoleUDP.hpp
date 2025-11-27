@@ -41,15 +41,17 @@ enum UDPMessageType : uint8_t {
  * - type: Always PLAYER_INPUT
  * - playerId: Player identifier assigned by TCP handshake
  * - tick: Increasing counter used to help server detect late packets
- * - x / y: Directional movement inputs
+ * - input_up, input_down, input_left, input_right: Directional movement inputs (1 for pressed, 0 for released)
  * - shooting: Whether the player is firing
  */
 struct PlayerInputPacket {
     uint8_t type = PLAYER_INPUT;
     uint32_t playerId;
     uint32_t tick;
-    float x;
-    float y;
+    uint8_t input_up;
+    uint8_t input_down;
+    uint8_t input_left;
+    uint8_t input_right;
     uint8_t shooting;
 };
 
