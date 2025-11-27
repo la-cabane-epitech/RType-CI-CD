@@ -16,7 +16,7 @@
 #include <arpa/inet.h>
 #include <iostream>
 #include <string.h>
-#include "Server/ProtocoleTCP.hpp"
+#include "Protocole/ProtocoleTCP.hpp"
 
 class TCPClient {
     private:

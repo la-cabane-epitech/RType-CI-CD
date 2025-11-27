@@ -37,6 +37,7 @@ void UDPServer::start()
     std::cout << "[UDP] Server starting..." << std::endl;
     _recvThread = std::thread(&UDPServer::recvLoop, this);
     _sendThread = std::thread(&UDPServer::sendLoop, this);
+    _processThread = std::thread(&UDPServer::processLoop, this);
 }
 
 void UDPServer::stop()
@@ -51,6 +52,8 @@ void UDPServer::stop()
         _recvThread.join();
     if (_sendThread.joinable())
         _sendThread.join();
+    if (_processThread.joinable())
+        _processThread.join();
 }
 
 void UDPServer::recvLoop()
@@ -60,12 +63,11 @@ void UDPServer::recvLoop()
         sockaddr_in clientAddr {};
         socklen_t addrLen = sizeof(clientAddr);
         ssize_t bytesReceived = recvfrom(_sockfd, pkt.data.data(), pkt.data.size(), 0,
-                                        (sockaddr *)&clientAddr, &addrLen);
+                                         (sockaddr *)&clientAddr, &addrLen);
         if (bytesReceived > 0) {
             pkt.addr = clientAddr;
             pkt.length = static_cast<size_t>(bytesReceived);
             _incoming.push(pkt);
-            handlePacket(pkt.data.data(), pkt.length, clientAddr);
         }
     }
 }
@@ -78,16 +80,35 @@ void UDPServer::sendLoop()
             const Packet& pkt = *pktOpt;
             sendto(_sockfd, pkt.data.data(), pkt.length, 0,
                    (sockaddr *)&pkt.addr, sizeof(pkt.addr));
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    }
+}
+
+void UDPServer::processLoop()
+{
+    while (_running) {
+        auto pktOpt = _incoming.pop();
+        if (pktOpt) {
+            const Packet& pkt = *pktOpt;
+            handlePacket(pkt.data.data(), pkt.length, pkt.addr);
+        } else {
+            // Wait a bit if no packets are available to avoid busy-waiting
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 }
 
 void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in& clientAddr)
 {
-    // Handle incoming packet data here
-    // For example, parse the packet and respond accordingly
-    std::cout << "[UDP] Received packet of length " << length << " from "
-            << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << std::endl;
+    // The client sends a specific packet structure, so we cast the raw data to it.
+    // This assumes the client and server share the same definition from ProtocoleUDP.hpp
+    if (length == sizeof(PlayerInputPacket)) {
+        const PlayerInputPacket* clientPacket = reinterpret_cast<const PlayerInputPacket*>(data);
+
+        std::cout << "[UDP] Received PlayerInputPacket from " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << "\n"
+                  << "  - PlayerID: " << clientPacket->playerId << "\n"
+                  << "  - Position: (" << clientPacket->x << ", " << clientPacket->y << ")" << std::endl;
+    }
 }
-
-

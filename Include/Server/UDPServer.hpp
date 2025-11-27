@@ -18,7 +18,14 @@
     #include <unistd.h>
 
     #include "Server/RingBuffer.hpp"
-    #include "Server/ProtocoleUDP.hpp"
+    #include "Server/Packet.hpp"
+    #include "Protocole/ProtocoleUDP.hpp"
+
+struct ClientInfo {
+    sockaddr_in addr;
+    // You can add more client-specific state here,
+    // like last seen time for handling timeouts.
+};
 
 class UDPServer {
     public:
@@ -35,13 +42,15 @@ class UDPServer {
 
         std::thread _recvThread;
         std::thread _sendThread;
+        std::thread _processThread;
 
 
         RingBuffer<Packet, 1024> _incoming;
         RingBuffer<Packet, 1024> _outgoing;
 
         std::unordered_map<uint32_t, ClientInfo> _clients;
-
+        
+        void processLoop();
         void recvLoop();
         void sendLoop();
         void handlePacket(const char* data, size_t length, const sockaddr_in& clientAddr);

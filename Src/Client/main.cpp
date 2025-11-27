@@ -7,6 +7,9 @@
 
 #include "Client/TCPClient.hpp"
 #include "Client/UDPClient.hpp"
+#include "Protocole/ProtocoleUDP.hpp"
+#include <thread>
+#include <chrono>
 #include <iostream>
 
 int main() {
@@ -29,13 +32,17 @@ int main() {
     UDPClient udpClient("127.0.0.1", res.udpPort);
 
     while (true) {
-        
-        Packet packet {};
-        packet.type = 1;
+        PlayerInputPacket packet {};
+        packet.type = UDPMessageType::PLAYER_INPUT;
         packet.playerId = res.playerId;
+        packet.tick = 0; // Should be an incrementing counter
         packet.x = 100.0f;
         packet.y = 200.0f;
+        packet.shooting = 0;
         udpClient.sendMessage(packet);
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+
         // Packet recvPacket;
 
         // if (udpClient.receivePacket(recvPacket)) {

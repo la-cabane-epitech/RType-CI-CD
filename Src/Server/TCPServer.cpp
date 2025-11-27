@@ -64,7 +64,6 @@ void TCPServer::acceptLoop()
         std::cout << "[TCP] Client connection..." << std::endl;
         if (clientSock >= 0) {
             _clientThread.emplace_back(&TCPServer::handleClient, this, clientSock);
-            _clientThread.back().detach();
         }
     }
 }

@@ -6,9 +6,22 @@
 */
 
 #include <iostream>
+#include <stdexcept>
 #include "Client/UDPClient.hpp"
 
-bool UDPClient::sendMessage(const Packet& packet) {
+UDPClient::UDPClient(const std::string& serverIp, uint16_t port) {
+    _sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (_sockfd < 0) {
+        throw std::runtime_error("Failed to create UDP socket");
+    }
+    _serverAddr.sin_family = AF_INET;
+    _serverAddr.sin_port = htons(port);
+    inet_pton(AF_INET, serverIp.c_str(), &_serverAddr.sin_addr);
+}
+
+UDPClient::~UDPClient() { if (_sockfd >= 0) close(_sockfd); }
+
+bool UDPClient::sendMessage(const PlayerInputPacket& packet) {
     if (_sockfd < 0)
             return false;
 
@@ -24,7 +37,7 @@ bool UDPClient::sendMessage(const Packet& packet) {
         return sent == sizeof(packet);
 }
 
-bool UDPClient::receivePacket(Packet& packet) {
+bool UDPClient::receivePacket(PlayerStatePacket& packet) {
     if (_sockfd < 0)
         return false;
 

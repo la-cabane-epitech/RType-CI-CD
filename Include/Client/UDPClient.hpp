@@ -15,14 +15,7 @@
 #ifndef UDPCLIENT_HPP_
 #define UDPCLIENT_HPP_
 
-#pragma pack(push, 1)
-struct Packet {
-    uint32_t playerId;
-    uint8_t type;
-    float x;
-    float y;
-};
-#pragma pack(pop)
+#include "Protocole/ProtocoleUDP.hpp"
 
 class UDPClient
 {
@@ -30,18 +23,11 @@ private:
     int _sockfd;
     sockaddr_in _serverAddr;
 public:
-    UDPClient(const std::string& serverIp, uint16_t port) {
-        _sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-        if (_sockfd < 0) {
-            throw std::runtime_error("Failed to create UDP socket");
-        }
-        _serverAddr.sin_family = AF_INET;
-        _serverAddr.sin_port = htons(port);
-        inet_pton(AF_INET, serverIp.c_str(), &_serverAddr.sin_addr);
-    }
+    UDPClient(const std::string& serverIp, uint16_t port);
+    ~UDPClient();
 
-    bool sendMessage(const Packet& packet);
-    bool receivePacket(Packet& packet);
+    bool sendMessage(const PlayerInputPacket& packet);
+    bool receivePacket(PlayerStatePacket& packet);
 };
 
 #endif // UDPCLIENT_HPP_
