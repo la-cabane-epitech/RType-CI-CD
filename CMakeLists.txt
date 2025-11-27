@@ -4,21 +4,28 @@ project(RType LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# include(${CMAKE_BINARY_DIR}/generators/conan_toolchain.cmake)
+if (MSVC)
+    set(CMAKE_MSCV_RUNTIME_LIBRARY "Multithread$<$<CONFIG:Debug>:Debug>")
+    include(${CMAKE_BINARY_DIR}/generators/conan_toolchain.cmake)
+else ()
+    include(${CMAKE_BINARY_DIR}/Release/generators/conan_toolchain.cmake)
+endif()
+
+set(CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/generators" ${CMAKE_PREFIX_PATH})
 
 # --- Package ---
 # find_package(raylib REQUIRED CONFIG)
 find_package(raylib REQUIRED CONFIG PATHS ${CMAKE_BINARY_DIR}/generators)
 
 # --- Executable ---
-add_executable(rtype_server src/server/main.cpp)
-# add_executable(rtype_client src/client/main.cpp)
+add_subdirectory(Src/Server)
+add_subdirectory(Src/Client)
+# add_executable(rtype_server Src/Server/main.cpp)
+# add_executable(rtype_client Src/Client/main.cpp)
 
-target_link_libraries(rtype_server raylib)
+# target_link_libraries(rtype_server PRIVATE raylib)
 #
 # --- CLEAN / FCLEAN / RE (compatible) ---
-#
-
 add_custom_target(clean_build
     COMMAND ${CMAKE_COMMAND} -E echo "Cleaning build files..."
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/CMakeFiles
