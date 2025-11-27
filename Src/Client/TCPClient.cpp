@@ -5,7 +5,12 @@
 ** TCPClient.cpp
 */
 
-#include "../../Include/Client/TCPClient.hpp"
+#include "Client/TCPClient.hpp"
+
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+
 
 TCPClient::TCPClient(const std::string& serverIp, uint16_t port)
     : _serverIp(serverIp), _port(port), _sock(-1) {}

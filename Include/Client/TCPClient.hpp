@@ -14,8 +14,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <iostream>
-#include <string.h>
+#include <cstring>
 #include "Protocole/ProtocoleTCP.hpp"
 
 class TCPClient {

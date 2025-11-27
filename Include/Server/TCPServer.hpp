@@ -16,10 +16,9 @@
     #include <cstdint>
     #include <sys/socket.h>
     #include <arpa/inet.h>
-    #include <iostream>
     #include <thread>
-    #include <cstring>
     #include <vector>
+    #include <string>
 
 #include "Protocole/ProtocoleTCP.hpp"
 

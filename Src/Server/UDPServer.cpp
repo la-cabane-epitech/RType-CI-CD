@@ -106,10 +106,10 @@ void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in&
 
         std::cout << "[UDP] Received PlayerInputPacket from " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << "\n"
                   << "  - PlayerID: " << clientPacket->playerId << "\n"
-                  << "  - Inputs: up=" << static_cast<int>(clientPacket->input_up)
-                  << ", down=" << static_cast<int>(clientPacket->input_down)
-                  << ", left=" << static_cast<int>(clientPacket->input_left)
-                  << ", right=" << static_cast<int>(clientPacket->input_right)
-                  << ", shoot=" << static_cast<int>(clientPacket->shooting) << std::endl;
+                  << "  - Inputs: up=" << ((clientPacket->inputs & UP) ? 1 : 0)
+                  << ", down=" << ((clientPacket->inputs & DOWN) ? 1 : 0)
+                  << ", left=" << ((clientPacket->inputs & LEFT) ? 1 : 0)
+                  << ", right=" << ((clientPacket->inputs & RIGHT) ? 1 : 0)
+                  << ", shoot=" << ((clientPacket->inputs & SHOOT) ? 1 : 0) << std::endl;
     }
 }

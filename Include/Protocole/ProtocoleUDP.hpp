@@ -20,6 +20,29 @@
 #pragma pack(push, 1)
 
 /**
+ * @enum Input
+ * @brief Defines bitmasks for player actions to save network bandwidth.
+ *
+ * This enum uses bit shifting to assign a unique bit to each possible player action (e.g., UP, DOWN, SHOOT).
+ * This technique, known as bitmasking, allows multiple boolean states to be packed into a single byte (`uint8_t`).
+ *
+ * By combining these flags using the bitwise OR operator (`|`), we can represent the complete state of player inputs
+ * in a single `uint8_t` field within the `PlayerInputPacket`. This is highly efficient for network communication,
+ * as it saves significant bandwidth compared to sending a separate boolean or byte for each action.
+ *
+ * Example:
+ * - To represent a player moving UP and SHOOTING: `uint8_t actions = UP | SHOOT;`
+ * - To check if the player is moving UP: `if (actions & UP) { ... }`
+ */
+enum Input : uint8_t {
+    UP = 1 << 0,    ///< Represents bit 0 (value 1)
+    DOWN = 1 << 1,  ///< Represents bit 1 (value 2)
+    LEFT = 1 << 2,  ///< Represents bit 2 (value 4)
+    RIGHT = 1 << 3, ///< Represents bit 3 (value 8)
+    SHOOT = 1 << 4  ///< Represents bit 4 (value 16)
+};
+
+/**
  * @enum UDPMessageType
  * @brief Identifies the type of each UDP packet sent between client and server.
  */
@@ -41,18 +64,13 @@ enum UDPMessageType : uint8_t {
  * - type: Always PLAYER_INPUT
  * - playerId: Player identifier assigned by TCP handshake
  * - tick: Increasing counter used to help server detect late packets
- * - input_up, input_down, input_left, input_right: Directional movement inputs (1 for pressed, 0 for released)
- * - shooting: Whether the player is firing
+ * - inputs: A bitmask representing all player actions (up, down, left, right, shoot).
  */
 struct PlayerInputPacket {
     uint8_t type = PLAYER_INPUT;
     uint32_t playerId;
     uint32_t tick;
-    uint8_t input_up;
-    uint8_t input_down;
-    uint8_t input_left;
-    uint8_t input_right;
-    uint8_t shooting;
+    uint8_t inputs; // Bit 0: UP, Bit 1: DOWN, Bit 2: LEFT, Bit 3: RIGHT, Bit 4: SHOOT
 };
 
 /**

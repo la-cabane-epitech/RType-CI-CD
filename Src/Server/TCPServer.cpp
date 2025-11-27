@@ -7,6 +7,10 @@
 
 #include "Server/TCPServer.hpp"
 #include "Server/Utils.hpp"
+#include <iostream>
+#include <cstring>
+#include <unistd.h>
+
 using namespace NetworkUtils;
 
 TCPServer::TCPServer(int port)

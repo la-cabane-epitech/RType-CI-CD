@@ -8,6 +8,7 @@
 #include "Client/TCPClient.hpp"
 #include "Client/UDPClient.hpp"
 #include "Protocole/ProtocoleUDP.hpp"
+
 #include <thread>
 #include <chrono>
 #include <iostream>
@@ -49,17 +50,18 @@ int main(void)
         packet.type = UDPMessageType::PLAYER_INPUT;
         packet.playerId = res.playerId;
         packet.tick = tick++;
-        packet.input_up = 0;
-        packet.input_down = 0;
-        packet.input_left = 0;
-        packet.input_right = 0;
-        packet.shooting = 0;
+        packet.inputs = 0;
 
-        if (IsKeyDown(KEY_UP)) packet.input_up = 1;
-        if (IsKeyDown(KEY_DOWN)) packet.input_down = 1;
-        if (IsKeyDown(KEY_LEFT)) packet.input_left = 1;
-        if (IsKeyDown(KEY_RIGHT)) packet.input_right = 1;
-        if (IsKeyDown(KEY_SPACE)) packet.shooting = 1;
+        if (IsKeyDown(KEY_UP))
+            packet.inputs |= UP;
+        if (IsKeyDown(KEY_DOWN))
+            packet.inputs |= DOWN;
+        if (IsKeyDown(KEY_LEFT))
+            packet.inputs |= LEFT;
+        if (IsKeyDown(KEY_RIGHT))
+            packet.inputs |= RIGHT;
+        if (IsKeyDown(KEY_SPACE))
+            packet.inputs |= SHOOT;
 
         udpClient.sendMessage(packet);
 
