@@ -78,6 +78,8 @@ void UDPServer::sendLoop()
             const Packet& pkt = *pktOpt;
             sendto(_sockfd, pkt.data.data(), pkt.length, 0,
                    (sockaddr *)&pkt.addr, sizeof(pkt.addr));
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
     }
 }
