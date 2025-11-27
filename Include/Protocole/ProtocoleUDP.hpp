@@ -21,18 +21,11 @@
 
 /**
  * @enum Input
- * @brief Defines bitmasks for player actions to save network bandwidth.
+ * @brief Defines bitmasks for player actions.
  *
- * This enum uses bit shifting to assign a unique bit to each possible player action (e.g., UP, DOWN, SHOOT).
- * This technique, known as bitmasking, allows multiple boolean states to be packed into a single byte (`uint8_t`).
- *
- * By combining these flags using the bitwise OR operator (`|`), we can represent the complete state of player inputs
- * in a single `uint8_t` field within the `PlayerInputPacket`. This is highly efficient for network communication,
- * as it saves significant bandwidth compared to sending a separate boolean or byte for each action.
- *
- * Example:
- * - To represent a player moving UP and SHOOTING: `uint8_t actions = UP | SHOOT;`
- * - To check if the player is moving UP: `if (actions & UP) { ... }`
+ * Each action is assigned a unique bit to pack multiple inputs into a single byte,
+ * saving network bandwidth. The combined state is sent in the `inputs` field
+ * of the `PlayerInputPacket`.
  */
 enum Input : uint8_t {
     UP = 1 << 0,    ///< Represents bit 0 (value 1)
