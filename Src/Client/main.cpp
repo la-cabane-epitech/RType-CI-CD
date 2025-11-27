@@ -15,9 +15,15 @@
 #include "raylib.h"
 
 
-int main(void)
+int main(int ac, char **av)
 {
-    TCPClient tcpClient("127.0.0.1", 4242);
+    if (ac != 2) {
+        std::cerr << "Usage: " << av[0] << " <server_ip>\n";
+        return 1;
+    }
+    std::string serverIp = av[1];
+
+    TCPClient tcpClient(serverIp, 4242);
     if (!tcpClient.connectToServer()) {
         std::cerr << "Impossible de se connecter au serveur TCP\n";
         return 1;
@@ -32,7 +38,7 @@ int main(void)
     std::cout << "Connecté ! PlayerId: " << res.playerId
               << ", UDP Port: " << res.udpPort << "\n";
 
-    UDPClient udpClient("127.0.0.1", res.udpPort);
+    UDPClient udpClient(serverIp, res.udpPort);
     uint32_t tick = 0;
 
     const int screenWidth = 800;
