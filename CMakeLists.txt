@@ -4,10 +4,11 @@ project(RType LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include(${CMAKE_BINARY_DIR}/generators/conan_toolchain.cmake)
+# include(${CMAKE_BINARY_DIR}/generators/conan_toolchain.cmake)
 
 # --- Package ---
-find_package(raylib REQUIRED CONFIG)
+# find_package(raylib REQUIRED CONFIG)
+find_package(raylib REQUIRED CONFIG PATHS ${CMAKE_BINARY_DIR}/generators)
 
 # --- Executable ---
 add_executable(rtype_server src/server/main.cpp)

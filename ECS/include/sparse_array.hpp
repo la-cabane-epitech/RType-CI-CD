@@ -1,0 +1,119 @@
+/*
+** EPITECH PROJECT, 2025
+** G-CPP-500-RUN-5-2-bsrtype-5
+** File description:
+** sparse_array.hpp
+*/
+
+#ifndef SPARSE_ARRAY_HPP
+    #define SPARSE_ARRAY_HPP
+    #include <vector>
+    #include <optional>
+    #include <cstddef>
+    #include <utility>
+
+template <typename Component>
+class sparse_array {
+public:
+    using value_type = std::optional<Component>;
+    using reference_type = value_type &;
+    using const_reference_type = value_type const &;
+    using container_t = std::vector<value_type>;
+    using size_type = typename container_t::size_type;
+    using iterator = typename container_t::iterator;
+    using const_iterator = typename container_t::const_iterator;
+
+public:
+    sparse_array() = default;
+    sparse_array(sparse_array const &) = default;
+    sparse_array(sparse_array &&) noexcept = default;
+    ~sparse_array() = default;
+
+    sparse_array &operator=(sparse_array const &) = default;
+    sparse_array &operator=(sparse_array &&) noexcept = default;
+
+    reference_type operator[](size_t idx) {
+        if (idx >= _data.size())
+            _data.resize(idx + 1);
+        return _data[idx];
+    }
+
+    const_reference_type operator[](size_t idx) const {
+        return _data[idx];
+    }
+
+    iterator begin() { 
+        return _data.begin();
+    }
+    
+    const_iterator begin() const { 
+        return _data.begin();
+    }
+
+    const_iterator cbegin() const {
+        return _data.cbegin();
+    }
+
+    iterator end() { 
+        return _data.end();
+    }
+
+    const_iterator end() const { 
+        return _data.end();
+    }
+
+    const_iterator cend() const {
+        return _data.cend();
+    }
+
+    size_type size() const { 
+        return _data.size();
+    }
+
+    reference_type insert_at(size_type pos, Component const &c) {
+        if (pos >= _data.size())
+            _data.resize(pos + 1);
+
+        _data[pos] = c;
+        return _data[pos];
+    }
+
+    reference_type insert_at(size_type pos, Component &&c) {
+        if (pos >= _data.size())
+            _data.resize(pos + 1);
+
+        _data[pos] = std::move(c);
+        return _data[pos];
+    }
+
+    template <class... Params>
+    reference_type emplace_at(size_type pos, Params &&... params) {
+        if (pos >= _data.size())
+            _data.resize(pos + 1);
+
+        _data[pos].emplace(std::forward<Params>(params)...);
+        return _data[pos];
+    }
+
+    void erase(size_type pos) {
+        if (pos < _data.size())
+            _data[pos].reset();
+    }
+
+    size_type get_index(value_type const &val) const {
+
+        size_type i = 0;
+
+        while (i < _data.size()) {
+            if (&_data[i] == &val)
+                return i;
+            i++;
+        }
+        return _data.size();
+    }
+
+private:
+    container_t _data;
+};
+
+#endif // SPARSE_ARRAY_HPP
