@@ -9,6 +9,7 @@
 #include <iostream>
 #include <thread>
 
+// #include "Server/Network.hpp"
 #include "Exception.hpp"
 #include "Server/Game.hpp"
 #include "Server/TCPServer.hpp"
@@ -16,6 +17,7 @@
 
 int main(void)
 {
+    // NetworkInitializer netInit; // Handles WSAStartup/WSACleanup on Windows
     try {
         Game game;
         TCPServer tcpServer(4242, game);
