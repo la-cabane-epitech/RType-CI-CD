@@ -13,6 +13,7 @@
     #include <ws2tcpip.h>
     #pragma comment(lib, "Ws2_32.lib")
     using SocketType = SOCKET;
+    using ssize_t = long long;
 #else
     #include <unistd.h>
     #include <sys/socket.h>

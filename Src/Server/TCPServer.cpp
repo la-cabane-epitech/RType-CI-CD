@@ -97,7 +97,7 @@ void TCPServer::acceptLoop()
 }
 
 
-void TCPServer::handleClient(int clientSock)
+void TCPServer::handleClient(SocketType clientSock)
 {
     ConnectRequest req {};
     // Ce qu'envoie le client sur la socket

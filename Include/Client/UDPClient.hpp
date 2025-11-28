@@ -6,6 +6,7 @@
     #include <winsock2.h>
     #include <ws2tcpip.h>
     using socklen_t = int;
+    using ssize_t = long long;
     #define CLOSESOCK closesocket
     #define GET_ERROR WSAGetLastError()
 #else

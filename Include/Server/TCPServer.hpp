@@ -30,9 +30,9 @@ public:
 
 private:
     void acceptLoop();
-    void handleClient(int clientSock);
+    void handleClient(SocketType clientSock);
 
-    int _sockfd;
+    SocketType _sockfd;
     bool _running;
     Game& _game;
     uint32_t _nextPlayerId = 1;
