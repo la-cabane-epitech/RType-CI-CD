@@ -6,6 +6,7 @@
 */
 
 #include "Server/TCPServer.hpp"
+#include "Server/Utils.hpp"
 #include <iostream>
 #include <cstring>
 #include <unistd.h>
@@ -15,6 +16,13 @@ using namespace NetworkUtils;
 TCPServer::TCPServer(int port, Game& game)
     : _game(game)
 {
+#ifdef _WIN32
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+        throw std::runtime_error("Failed to initialize Winsock");
+        
+#else
+        
     _sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
     sockaddr_in addr {};
@@ -25,14 +33,39 @@ TCPServer::TCPServer(int port, Game& game)
     if (bind(_sockfd, (sockaddr *)&addr, sizeof(addr)) < 0)
         throw std::runtime_error("Failed to bind TCP socket");
     if (listen(_sockfd, 10) < 0)
-        throw std::runtime_error("Failed to listen on TCP socket");
-
+    throw std::runtime_error("Failed to listen on TCP socket");
+    
+#endif
     _running = false;
 }
 
 TCPServer::~TCPServer()
 {
     stop();
+}
+
+void TCPServer::stop()
+{
+    if (!_running)
+        return;
+    _running = false;
+
+    std::cout << "[TCP] Server stopping..." << std::endl;
+
+#ifdef _WIN32
+    closesocket(_sockfd);
+    WSACleanup();
+#else
+    close(_sockfd);
+#endif
+
+    if (_acceptThread.joinable())
+        _acceptThread.join();
+
+    for (auto& thread : _clientThread) {
+        if (thread.joinable())
+            thread.join();
+    }
 }
 
 void TCPServer::start()
@@ -45,42 +78,30 @@ void TCPServer::start()
     _acceptThread = std::thread(&TCPServer::acceptLoop, this);
 }
 
-void TCPServer::stop()
-{
-    if (!_running)
-        return;
-    _running = false;
-
-    std::cout << "[TCP] Server stoping..." << std::endl;
-#ifdef _WIN32
-    closesocket(_sockfd);
-#else
-    close(_sockfd);
-#endif
-    if (_acceptThread.joinable())
-        _acceptThread.join();
-    for (auto& thread : _clientThread) {
-        if (thread.joinable())
-            thread.join();
-    }
-}
-
 void TCPServer::acceptLoop()
 {
     while (_running) {
-        int clientSock = accept(_sockfd, nullptr, nullptr);
+#ifdef _WIN32
+        SocketType clientSock = accept(_sockfd, nullptr, nullptr);
+        if (clientSock == INVALID_SOCKET)
+            continue;
+#else
+        SocketType clientSock = accept(_sockfd, nullptr, nullptr);
+        if (clientSock < 0)
+            continue;
+#endif
+
         std::cout << "[TCP] Client connection..." << std::endl;
-        if (clientSock >= 0) {
-            _clientThread.emplace_back(&TCPServer::handleClient, this, clientSock);
-        }
+        _clientThread.emplace_back(&TCPServer::handleClient, this, clientSock);
     }
 }
+
 
 void TCPServer::handleClient(int clientSock)
 {
     ConnectRequest req {};
     // Ce qu'envoie le client sur la socket
-    if (recv(clientSock, reinterpret_cast<char*>(&req), sizeof(req), 0) <= 0) {
+    if (!recvAll(clientSock, &req, sizeof(req))) {
         std::cerr << "[TCP] Failed to receive ConnectRequest" << std::endl;
 #ifdef _WIN32
         closesocket(clientSock);

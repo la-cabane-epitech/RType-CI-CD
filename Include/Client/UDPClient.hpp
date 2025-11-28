@@ -1,6 +1,24 @@
 #ifndef UDPCLIENT_HPP_
 #define UDPCLIENT_HPP_
 
+// -------- PLATFORM ABSTRACTION --------
+#ifdef _WIN32
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    using socklen_t = int;
+    #define CLOSESOCK closesocket
+    #define GET_ERROR WSAGetLastError()
+#else
+    #include <netinet/in.h>
+    #include <sys/socket.h>
+    #include <unistd.h>
+    #include <arpa/inet.h>
+    #include <fcntl.h>
+    #define CLOSESOCK close
+    #define GET_ERROR errno
+    using SOCKET = int;
+#endif
+
 #include <cstring>
 #include <string>
 #include <optional>
@@ -12,17 +30,13 @@
 class UDPClient
 {
 private:
-    int _sockfd;
+    SOCKET _sockfd;
     sockaddr_in _serverAddr;
 
 public:
     UDPClient(const std::string& serverIp, uint16_t port);
     ~UDPClient();
 
-    // bool sendMessage(const PlayerInputPacket& packet);
-    // bool receivePacket(PlayerStatePacket& packet);
-
-    // ----------- TEMPLATE RECEIVE RAW BUFFER -----------
     template<size_t BufferSize>
     std::optional<std::array<char, BufferSize>> receiveMessage()
     {
@@ -48,16 +62,12 @@ public:
         return std::nullopt;
     }
 
-    // ----------- TEMPLATE SEND ANY PACKET -----------
     template<typename T>
     bool sendMessage(const T& packet)
     {
-        if (_sockfd < 0)
-            return false;
-
         ssize_t sent = sendto(
             _sockfd,
-            &packet,
+            reinterpret_cast<const char *>(&packet),
             sizeof(T),
             0,
             (sockaddr*)&_serverAddr,
