@@ -1,16 +1,13 @@
 #ifndef UDPCLIENT_HPP_
 #define UDPCLIENT_HPP_
 
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <arpa/inet.h>
 #include <cstring>
 #include <string>
 #include <optional>
 #include <array>
 
 #include "Protocole/ProtocoleUDP.hpp"
+#include "CrossPlatformSocket.hpp"
 
 class UDPClient
 {

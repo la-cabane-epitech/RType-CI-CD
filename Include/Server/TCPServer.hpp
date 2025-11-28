@@ -14,8 +14,6 @@
     #define TCPSERVER_HPP_
 
     #include <cstdint>
-    #include <sys/socket.h>
-    #include <arpa/inet.h>
     #include <thread>
     #include <vector>
     #include <string>
@@ -23,6 +21,7 @@
 #include "Protocole/ProtocoleTCP.hpp"
 #include "Server/Game.hpp"
 
+#include "CrossPlatformSocket.hpp"
 /**
  * @class TCPServer
  * @brief Manages TCP connections for the R-Type server.

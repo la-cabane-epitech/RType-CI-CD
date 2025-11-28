@@ -6,7 +6,6 @@
 */
 
 #include "Server/TCPServer.hpp"
-#include "Server/Utils.hpp"
 #include <iostream>
 #include <cstring>
 #include <unistd.h>
@@ -53,7 +52,11 @@ void TCPServer::stop()
     _running = false;
 
     std::cout << "[TCP] Server stoping..." << std::endl;
+#ifdef _WIN32
+    closesocket(_sockfd);
+#else
     close(_sockfd);
+#endif
     if (_acceptThread.joinable())
         _acceptThread.join();
     for (auto& thread : _clientThread) {
@@ -77,9 +80,13 @@ void TCPServer::handleClient(int clientSock)
 {
     ConnectRequest req {};
     // Ce qu'envoie le client sur la socket
-    if (!recvAll(clientSock, &req, sizeof(req))) {
+    if (recv(clientSock, reinterpret_cast<char*>(&req), sizeof(req), 0) <= 0) {
         std::cerr << "[TCP] Failed to receive ConnectRequest" << std::endl;
+#ifdef _WIN32
+        closesocket(clientSock);
+#else
         close(clientSock);
+#endif
         return;
     }
     std::cout << "[TCP] Type request = " << static_cast<int>(req.type) << std::endl;
@@ -92,7 +99,11 @@ void TCPServer::handleClient(int clientSock)
         strncpy(err.message, "Invalid request type", sizeof(err.message) - 1);
         err.message[sizeof(err.message)-1] = '\0';
         sendAll(clientSock, &err, sizeof(err));
+#ifdef _WIN32
+        closesocket(clientSock);
+#else
         close(clientSock);
+#endif
         return;
     }
 
@@ -112,5 +123,9 @@ void TCPServer::handleClient(int clientSock)
     std::cout << "[TCP] PlayerId = " << res.playerId << std::endl;
     std::cout << "[TCP] Use UDP port = " << res.udpPort << std::endl;
 
+#ifdef _WIN32
+    closesocket(clientSock);
+#else
     close(clientSock);
+#endif
 }

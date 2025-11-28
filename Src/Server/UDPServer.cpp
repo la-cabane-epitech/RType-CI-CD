@@ -48,7 +48,11 @@ void UDPServer::stop()
     _running = false;
 
     std::cout << "[UDP] Server stoping..." << std::endl;
+#ifdef _WIN32
+    closesocket(_sockfd);
+#else
     close(_sockfd);
+#endif
     if (_recvThread.joinable())
         _recvThread.join();
     if (_sendThread.joinable())

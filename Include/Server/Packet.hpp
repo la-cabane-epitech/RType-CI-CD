@@ -10,7 +10,7 @@
 
 #include <array>
 #include <cstddef>
-#include <netinet/in.h>
+#include "CrossPlatformSocket.hpp"
 
 /**
  * @struct Packet

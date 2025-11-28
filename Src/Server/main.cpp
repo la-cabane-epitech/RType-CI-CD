@@ -14,8 +14,20 @@
 #include "Server/TCPServer.hpp"
 #include "Server/UDPServer.hpp"
 
+#ifdef _WIN32
+#include <winsock2.h>
+#endif
+
 int main(void)
 {
+#ifdef _WIN32
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        std::cerr << "WSAStartup failed.\n";
+        return 1;
+    }
+#endif
+
     try {
         Game game;
         TCPServer tcpServer(4242, game);
@@ -31,4 +43,8 @@ int main(void)
         std::cerr << "Error: " << e.what() << std::endl;
         return 84;
     }
+
+#ifdef _WIN32
+    WSACleanup();
+#endif
 }

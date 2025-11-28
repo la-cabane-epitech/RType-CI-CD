@@ -8,19 +8,17 @@
 #ifndef UDPSERVER_HPP_
     #define UDPSERVER_HPP_
     #include <cstdint>
-    #include <sys/socket.h>
-    #include <arpa/inet.h>
     #include <iostream>
     #include <thread>
     #include <cstring>
     #include <array>
     #include <unordered_map>
-    #include <unistd.h>
 
     #include "Server/RingBuffer.hpp"
     #include "Server/Packet.hpp"
     #include "Protocole/ProtocoleUDP.hpp"
     #include "Server/Game.hpp"
+    #include "CrossPlatformSocket.hpp"
 
 struct ClientInfo {
     sockaddr_in addr;

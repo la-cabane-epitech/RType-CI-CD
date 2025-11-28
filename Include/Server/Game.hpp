@@ -11,9 +11,9 @@
 #include <cstdint>
 #include <vector>
 #include <mutex>
-#include <arpa/inet.h>
 #include <iostream>
 
+#include "CrossPlatformSocket.hpp"
 #include "Protocole/ProtocoleUDP.hpp"
 class UDPServer;
 
