@@ -8,11 +8,18 @@
 #ifndef GAMESTATE_HPP_
 #define GAMESTATE_HPP_
 
+#include <unordered_map>
+#include <cstdint>
+
+struct PlayerDisplay {
+    float x;
+    float y;
+};
+
 class GameState {
-    private:
-    public:
-        float playerX = 0;
-        float playerY = 0;
+public:
+    std::unordered_map<uint32_t, PlayerDisplay> players;
+    uint32_t myPlayerId = 0;
 };
 
 #endif

@@ -20,6 +20,7 @@
     #include "Server/RingBuffer.hpp"
     #include "Server/Packet.hpp"
     #include "Protocole/ProtocoleUDP.hpp"
+    #include "Server/Game.hpp"
 
 struct ClientInfo {
     sockaddr_in addr;
@@ -29,16 +30,20 @@ struct ClientInfo {
 
 class UDPServer {
     public:
-        UDPServer(int port);
+        UDPServer(int port, Game& game);
         ~UDPServer();
 
         void start();
         void stop();
 
+        template<typename T>
+        void queueMessage(const T& msg, const sockaddr_in& addr);
+
     protected:
     private:
         int _sockfd;
         bool _running;
+        Game& _game;
 
         std::thread _recvThread;
         std::thread _sendThread;
@@ -55,5 +60,17 @@ class UDPServer {
         void sendLoop();
         void handlePacket(const char* data, size_t length, const sockaddr_in& clientAddr);
 };
+
+template<typename T>
+void UDPServer::queueMessage(const T& msg, const sockaddr_in& addr)
+{
+    Packet pkt;
+    pkt.addr = addr;
+    pkt.length = sizeof(T);
+    static_assert(sizeof(T) <= pkt.data.size(), "Packet data buffer is too small for message type");
+    std::memcpy(pkt.data.data(), &msg, sizeof(T));
+
+    _outgoing.push(pkt);
+}
 
 #endif /* !UDPSERVER_HPP_ */

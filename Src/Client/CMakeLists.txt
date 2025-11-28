@@ -9,6 +9,7 @@ set (
     RTypeClient.cpp
     TCPClient.cpp
     UDPClient.cpp
+    Renderer.cpp
 )
 
 add_executable(rtype_client ${SOURCES})

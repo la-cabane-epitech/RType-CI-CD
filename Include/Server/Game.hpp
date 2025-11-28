@@ -15,11 +15,13 @@
 #include <iostream>
 
 #include "Protocole/ProtocoleUDP.hpp"
+class UDPServer;
 
 struct Player {
     uint32_t id;
     float x = 400;
     float y = 225;
+    float velocity = 5;
     sockaddr_in udpAddr;
     bool addrSet = false;
 };
@@ -44,6 +46,18 @@ public:
             }
         }
     }
+
+    Player* getPlayer(uint32_t playerId) {
+        std::lock_guard<std::mutex> lock(_playersMutex);
+        for (auto& player : _players) {
+            if (player.id == playerId) {
+                return &player;
+            }
+        }
+        return nullptr;
+    }
+
+    void broadcastGameState(UDPServer& udpServer);
 
 private:
     std::vector<Player> _players;

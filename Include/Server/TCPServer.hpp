@@ -21,6 +21,7 @@
     #include <string>
 
 #include "Protocole/ProtocoleTCP.hpp"
+#include "Server/Game.hpp"
 
 /**
  * @class TCPServer
@@ -38,7 +39,7 @@ public:
      * @brief Constructor: initializes the TCP server on a given port.
      * @param port TCP port to bind and listen on.
      */
-    TCPServer(int port);
+    TCPServer(int port, Game& game);
 
     /**
      * @brief Destructor: stops the server and closes the socket.
@@ -64,6 +65,7 @@ private:
     int _sockfd;               ///< File descriptor of the listening TCP socket.
     bool _running;             ///< Flag indicating if the server is currently running.
     uint32_t _nextPlayerId = 1;///< Counter to assign unique player IDs.
+    Game& _game;               ///< Reference to the main game state.
     std::thread _acceptThread;  ///< Thread for accepting incoming connections.
     std::vector<std::thread> _clientThread;  ///< Thread for handling client connections.
 

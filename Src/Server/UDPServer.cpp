@@ -7,7 +7,8 @@
 
 #include "Server/UDPServer.hpp"
 
-UDPServer::UDPServer(int port)
+UDPServer::UDPServer(int port, Game& game)
+    : _game(game)
 {
     _sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (_sockfd < 0)
@@ -102,7 +103,11 @@ void UDPServer::processLoop()
 void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in& clientAddr)
 {
     if (length == sizeof(PlayerInputPacket)) {
-        const PlayerInputPacket* clientPacket = reinterpret_cast<const PlayerInputPacket*>(data);
+        const auto* clientPacket = reinterpret_cast<const PlayerInputPacket*>(data);
+
+        _game.updatePlayerUdpAddr(clientPacket->playerId, clientAddr);
+        Player* player = _game.getPlayer(clientPacket->playerId);
+        if (!player) return;
 
         std::cout << "[UDP] Received PlayerInputPacket from " << inet_ntoa(clientAddr.sin_addr) << ":" << ntohs(clientAddr.sin_port) << "\n"
                   << "  - PlayerID: " << clientPacket->playerId << "\n"
@@ -111,5 +116,12 @@ void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in&
                   << ", left=" << ((clientPacket->inputs & LEFT) ? 1 : 0)
                   << ", right=" << ((clientPacket->inputs & RIGHT) ? 1 : 0)
                   << ", shoot=" << ((clientPacket->inputs & SHOOT) ? 1 : 0) << std::endl;
+
+        if (clientPacket->inputs & UP)    player->y -= player->velocity;
+        if (clientPacket->inputs & DOWN)  player->y += player->velocity;
+        if (clientPacket->inputs & LEFT)  player->x -= player->velocity;
+        if (clientPacket->inputs & RIGHT) player->x += player->velocity;
+
+        std::cout << "[Game] Player " << player->id << " new position: (" << player->x << ", " << player->y << ")" << std::endl;
     }
 }

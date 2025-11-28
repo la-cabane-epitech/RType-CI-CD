@@ -8,10 +8,15 @@
 #ifndef RENDERER_HPP_
 #define RENDERER_HPP_
 
+#include "GameState.hpp"
+
 class Renderer {
-    private:
+public:
+    Renderer(GameState& gameState);
+    void draw();
 
-    public:
-
+private:
+    GameState& _gameState;
 };
+
 #endif

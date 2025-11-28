@@ -8,6 +8,7 @@ set (
     main.cpp
     TCPServer.cpp
     UDPServer.cpp
+    Game.cpp
 )
 
 add_executable(rtype_server ${SOURCES})
