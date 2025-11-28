@@ -12,12 +12,14 @@
 #include "Exception.hpp"
 #include "Server/TCPServer.hpp"
 #include "Server/UDPServer.hpp"
+#include "Server/Game.hpp"
 
 int main(void)
 {
     try {
-        TCPServer tcpServer(4242);
-        UDPServer udpServer(5252);
+        Game game;
+        TCPServer tcpServer(4242, game);
+        UDPServer udpServer(5252, game);
 
         tcpServer.start();
         udpServer.start();

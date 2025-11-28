@@ -1,6 +1,6 @@
 /*
 ** EPITECH PROJECT, 2025
-** G-CPP-500-RUN-5-2-bsrtype-5
+** RType-CI-CD
 ** File description:
 ** sparse_array.hpp
 */
@@ -101,13 +101,8 @@ public:
     }
 
     size_type get_index(value_type const &val) const {
-
-        size_type i = 0;
-
-        while (i < _data.size()) {
-            if (&_data[i] == &val)
-                return i;
-            i++;
+        for (size_type i = 0; i < _data.size(); ++i) {
+            if (&_data[i] == &val) return i;
         }
         return _data.size();
     }

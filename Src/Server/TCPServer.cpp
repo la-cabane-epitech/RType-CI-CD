@@ -13,7 +13,7 @@
 
 using namespace NetworkUtils;
 
-TCPServer::TCPServer(int port)
+TCPServer::TCPServer(int port, Game& game) : _game(game)
 {
     _sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -100,6 +100,8 @@ void TCPServer::handleClient(int clientSock)
     res.type = 2;
     res.playerId = _nextPlayerId++;
     res.udpPort = 5252;
+
+    _game.addPlayer(res.playerId);
 
     // Le serveur ecrit sur la socket du client
     if (!sendAll(clientSock, &res, sizeof(res))) {

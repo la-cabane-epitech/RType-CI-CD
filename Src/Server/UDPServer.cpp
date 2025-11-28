@@ -7,7 +7,7 @@
 
 #include "Server/UDPServer.hpp"
 
-UDPServer::UDPServer(int port)
+UDPServer::UDPServer(int port, Game& game) : _game(game)
 {
     _sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (_sockfd < 0)
@@ -111,5 +111,7 @@ void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in&
                   << ", left=" << ((clientPacket->inputs & LEFT) ? 1 : 0)
                   << ", right=" << ((clientPacket->inputs & RIGHT) ? 1 : 0)
                   << ", shoot=" << ((clientPacket->inputs & SHOOT) ? 1 : 0) << std::endl;
+
+        _game.updatePlayer(clientPacket->playerId, clientPacket->inputs, clientAddr);
     }
 }

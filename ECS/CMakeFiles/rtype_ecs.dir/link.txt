@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/rtype_ecs.dir/src/main.cpp.o -o rtype_ecs  -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
