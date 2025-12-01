@@ -1,19 +1,16 @@
 #ifndef TCPCLIENT_HPP_
 #define TCPCLIENT_HPP_
 
-    #include <unistd.h>
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <arpa/inet.h>
-
 #include <string>
 #include <stdint.h>
 #include <cstring>
 #include "Protocole/ProtocoleTCP.hpp"
+#include "asio.hpp"
 
 class TCPClient {
 private:
-    int _sock;
+    asio::io_context _io_context;
+    asio::ip::tcp::socket _socket;
     std::string _serverIp;
     uint16_t _port;
 

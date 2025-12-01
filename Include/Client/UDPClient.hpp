@@ -1,12 +1,6 @@
 #ifndef UDPCLIENT_HPP_
 #define UDPCLIENT_HPP_
 
-    #include <netinet/in.h>
-    #include <sys/socket.h>
-    #include <unistd.h>
-    #include <arpa/inet.h>
-    #include <fcntl.h>
-
 #include <cstring>
 #include <string>
 #include <optional>
@@ -14,21 +8,23 @@
 
 #include "Protocole/ProtocoleUDP.hpp"
 #include "CrossPlatformSocket.hpp"
+#include "asio.hpp"
 
 class UDPClient
 {
 private:
-    int _sockfd;
-    sockaddr_in _serverAddr;
+    asio::io_context _io_context;
+    asio::ip::udp::socket _socket;
+    asio::ip::udp::endpoint _server_endpoint;
 
 public:
     UDPClient(const std::string& serverIp, uint16_t port);
     ~UDPClient();
 
     template<size_t BufferSize>
-    std::optional<std::array<char, BufferSize>> receiveMessage()
+    std::optional<std::array<char, BufferSize>> receiveMessage() noexcept
     {
-        if (_sockfd < 0)
+        if (_socket.native_handle() < 0)
             return std::nullopt;
 
         std::array<char, BufferSize> buffer{};
@@ -36,7 +32,7 @@ public:
         socklen_t addrLen = sizeof(senderAddr);
 
         ssize_t received = recvfrom(
-            _sockfd,
+            _socket.native_handle(),
             buffer.data(),
             buffer.size(),
             0,
@@ -51,18 +47,11 @@ public:
     }
 
     template<typename T>
-    bool sendMessage(const T& packet)
+    bool sendMessage(const T& packet) noexcept
     {
-        ssize_t sent = sendto(
-            _sockfd,
-            reinterpret_cast<const char *>(&packet),
-            sizeof(T),
-            0,
-            (sockaddr*)&_serverAddr,
-            sizeof(_serverAddr)
-        );
-
-        return sent == sizeof(T);
+        asio::error_code ec;
+        _socket.send_to(asio::buffer(&packet, sizeof(T)), _server_endpoint, 0, ec);
+        return !ec;
     }
 };
 

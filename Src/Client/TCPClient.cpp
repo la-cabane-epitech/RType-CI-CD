@@ -7,88 +7,70 @@
 
 #include "Client/TCPClient.hpp"
 #include <iostream>
-#include <stdexcept>
 
 TCPClient::TCPClient(const std::string& serverIp, uint16_t port)
-    : _serverIp(serverIp), _port(port), _sock(-1)
+    : _io_context(), _socket(_io_context), _serverIp(serverIp), _port(port)
 {
 }
 
 TCPClient::~TCPClient()
 {
-    if (_sock != -1) {
-        close(_sock);
-        _sock = -1;
+    if (_socket.is_open()) {
+        _socket.close();
     }
 }
 
 bool TCPClient::connectToServer()
 {
-    _sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (_sock < 0) {
-        std::cerr << "Failed to create socket\n";
+    try {
+        asio::ip::tcp::resolver resolver(_io_context);
+        auto endpoints = resolver.resolve(_serverIp, std::to_string(_port));
+        asio::connect(_socket, endpoints);
+    } catch (const std::exception& e) {
+        std::cerr << "Connection failed: " << e.what() << "\n";
         return false;
     }
-
-    sockaddr_in servAddr{};
-    servAddr.sin_family = AF_INET;
-    servAddr.sin_port = htons(_port);
-
-    if (inet_pton(AF_INET, _serverIp.c_str(), &servAddr.sin_addr) <= 0) {
-        std::cerr << "Invalid IP address\n";
-        return false;
-    }
-
-    if (connect(_sock, (sockaddr *)&servAddr, sizeof(servAddr)) < 0) {
-        std::cerr << "Connection failed\n";
-        return false;
-    }
-
     return true;
 }
 
 bool TCPClient::sendConnectRequest(const std::string& username, ConnectResponse& outResponse)
 {
-    ConnectRequest req{};
-    req.type = 1;
-    std::strncpy(req.username, username.c_str(), sizeof(req.username) - 1);
+    try {
+        ConnectRequest req{};
+        req.type = 1;
+        std::strncpy(req.username, username.c_str(), sizeof(req.username) - 1);
+        req.username[sizeof(req.username) - 1] = '\0';
 
-    // -------- SEND FULL REQUEST --------
-    int sent = send(_sock, reinterpret_cast<const char*>(&req), sizeof(req), 0);
-    if (sent <= 0) {
-        std::cerr << "Failed to send\n";
-        return false;
-    }
+        // -------- SEND FULL REQUEST --------
+        asio::write(_socket, asio::buffer(&req, sizeof(req)));
 
-    // -------- RECEIVE PACKET TYPE --------
-    uint8_t type = 0;
-    if (recv(_sock, reinterpret_cast<char*>(&type), 1, 0) <= 0) {
-        std::cerr << "Failed to receive packet type\n";
-        return false;
-    }
+        // -------- RECEIVE PACKET TYPE --------
+        uint8_t type = 0;
+        asio::read(_socket, asio::buffer(&type, 1));
 
-    // -------- CONNECT RESPONSE --------
-    if (type == 2) {
-        outResponse.type = 2;
-        if (recv(_sock, reinterpret_cast<char*>(&outResponse) + 1,
-                sizeof(outResponse) - 1, 0) <= 0) {
-            std::cerr << "Failed to receive response\n";
+        // -------- CONNECT RESPONSE --------
+        if (type == 2) {
+            outResponse.type = 2;
+            asio::read(_socket, asio::buffer(reinterpret_cast<char*>(&outResponse) + 1, sizeof(outResponse) - 1));
+            return true;
+        }
+
+        // -------- ERROR RESPONSE --------
+        if (type == 3) {
+            ErrorResponse err{};
+            err.type = 3;
+
+            asio::read(_socket, asio::buffer(reinterpret_cast<char*>(&err) + 1, sizeof(err) - 1));
+
+            std::cerr << "Server Error: " << err.message << "\n";
             return false;
         }
-        return true;
-    }
 
-    // -------- ERROR RESPONSE --------
-    if (type == 3) {
-        ErrorResponse err{};
-        err.type = 3;
+        std::cerr << "Invalid response type from server\n";
+        return false;
 
-        recv(_sock, reinterpret_cast<char*>(&err) + 1,
-            sizeof(err) - 1, 0);
-
-        std::cerr << "Server Error: " << err.message << "\n";
+    } catch (const std::exception& e) {
+        std::cerr << "Handshake failed: " << e.what() << "\n";
         return false;
     }
-
-    return false;
 }

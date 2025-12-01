@@ -16,6 +16,7 @@ set(CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}/generators" ${CMAKE_PREFIX_PATH})
 
 # --- Package ---
 find_package(raylib REQUIRED CONFIG)
+find_package(asio REQUIRED)
 
 # --- Executable ---
 add_subdirectory(Src/Server)
