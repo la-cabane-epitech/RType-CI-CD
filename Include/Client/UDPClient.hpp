@@ -10,6 +10,11 @@
 #include "CrossPlatformSocket.hpp"
 #include "asio.hpp"
 
+#ifdef WIN32
+    #typedef SSIZE_T ssize_t
+    #include <basetsd.h>
+#endif
+
 class UDPClient
 {
 private:
@@ -31,7 +36,7 @@ public:
         sockaddr_in senderAddr{};
         socklen_t addrLen = sizeof(senderAddr);
 
-        ssize_t received = recvfrom(
+        SSIZE_T received = recvfrom(
             _socket.native_handle(),
             buffer.data(),
             buffer.size(),
