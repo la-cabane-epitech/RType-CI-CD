@@ -16,13 +16,6 @@ using namespace NetworkUtils;
 TCPServer::TCPServer(int port, Game& game)
     : _game(game)
 {
-#ifdef _WIN32
-    WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-        throw std::runtime_error("Failed to initialize Winsock");
-        
-#else
-        
     _sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
     sockaddr_in addr {};
@@ -34,8 +27,6 @@ TCPServer::TCPServer(int port, Game& game)
         throw std::runtime_error("Failed to bind TCP socket");
     if (listen(_sockfd, 10) < 0)
     throw std::runtime_error("Failed to listen on TCP socket");
-    
-#endif
     _running = false;
 }
 
@@ -51,13 +42,7 @@ void TCPServer::stop()
     _running = false;
 
     std::cout << "[TCP] Server stopping..." << std::endl;
-
-#ifdef _WIN32
-    closesocket(_sockfd);
-    WSACleanup();
-#else
     close(_sockfd);
-#endif
 
     if (_acceptThread.joinable())
         _acceptThread.join();
@@ -81,33 +66,22 @@ void TCPServer::start()
 void TCPServer::acceptLoop()
 {
     while (_running) {
-#ifdef _WIN32
-        SocketType clientSock = accept(_sockfd, nullptr, nullptr);
-        if (clientSock == INVALID_SOCKET)
-            continue;
-#else
-        SocketType clientSock = accept(_sockfd, nullptr, nullptr);
+        int clientSock = accept(_sockfd, nullptr, nullptr);
         if (clientSock < 0)
             continue;
-#endif
-
         std::cout << "[TCP] Client connection..." << std::endl;
         _clientThread.emplace_back(&TCPServer::handleClient, this, clientSock);
     }
 }
 
 
-void TCPServer::handleClient(SocketType clientSock)
+void TCPServer::handleClient(int clientSock)
 {
     ConnectRequest req {};
     // Ce qu'envoie le client sur la socket
     if (!recvAll(clientSock, &req, sizeof(req))) {
         std::cerr << "[TCP] Failed to receive ConnectRequest" << std::endl;
-#ifdef _WIN32
-        closesocket(clientSock);
-#else
         close(clientSock);
-#endif
         return;
     }
     std::cout << "[TCP] Type request = " << static_cast<int>(req.type) << std::endl;
@@ -120,11 +94,7 @@ void TCPServer::handleClient(SocketType clientSock)
         strncpy(err.message, "Invalid request type", sizeof(err.message) - 1);
         err.message[sizeof(err.message)-1] = '\0';
         sendAll(clientSock, &err, sizeof(err));
-#ifdef _WIN32
-        closesocket(clientSock);
-#else
         close(clientSock);
-#endif
         return;
     }
 
@@ -143,10 +113,5 @@ void TCPServer::handleClient(SocketType clientSock)
     std::cout << "[TCP] Type response = " << static_cast<int>(res.type)<< std::endl;
     std::cout << "[TCP] PlayerId = " << res.playerId << std::endl;
     std::cout << "[TCP] Use UDP port = " << res.udpPort << std::endl;
-
-#ifdef _WIN32
-    closesocket(clientSock);
-#else
     close(clientSock);
-#endif
 }

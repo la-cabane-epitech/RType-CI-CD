@@ -8,18 +8,9 @@
 #ifndef UDPSERVER_HPP_
 #define UDPSERVER_HPP_
 
-// ---------------- PLATFORM INCLUDES ----------------
-#ifdef _WIN32
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    using SocketType = SOCKET;
-#else
     #include <sys/socket.h>
     #include <arpa/inet.h>
     #include <unistd.h>
-    using SocketType = int;
-#endif
-// ---------------------------------------------------
 
 #include <cstdint>
 #include <iostream>
@@ -32,7 +23,7 @@
 #include "Server/Packet.hpp"
 #include "Protocole/ProtocoleUDP.hpp"
 
-class Game; // Forward declaration
+class Game;
 
 struct ClientInfo {
     sockaddr_in addr;
@@ -47,10 +38,20 @@ public:
     void stop();
 
     template<typename T>
-    void queueMessage(const T& msg, const sockaddr_in& addr);
+    void queueMessage(const T& msg, const sockaddr_in& addr)
+    {
+        Packet pkt;
+        pkt.addr = addr;
+        pkt.length = sizeof(T);
+
+        static_assert(sizeof(T) <= pkt.data.size(), "Packet too large!");
+
+        std::memcpy(pkt.data.data(), &msg, sizeof(T));
+        _outgoing.push(pkt);
+    }
 
 private:
-    SocketType _sockfd;
+    int _sockfd;
     bool _running;
     Game& _game;
 
@@ -68,18 +69,5 @@ private:
     void processLoop();
     void handlePacket(const char* data, size_t length, const sockaddr_in& clientAddr);
 };
-
-template<typename T>
-void UDPServer::queueMessage(const T& msg, const sockaddr_in& addr)
-{
-    Packet pkt;
-    pkt.addr = addr;
-    pkt.length = sizeof(T);
-
-    static_assert(sizeof(T) <= pkt.data.size(), "Packet too large!");
-
-    std::memcpy(pkt.data.data(), &msg, sizeof(T));
-    _outgoing.push(pkt);
-}
 
 #endif /* !UDPSERVER_HPP_ */

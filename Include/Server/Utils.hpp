@@ -8,17 +8,8 @@
 #ifndef UTILS_HPP_
 #define UTILS_HPP_
 
-#ifdef _WIN32
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    #pragma comment(lib, "Ws2_32.lib")
-    using SocketType = SOCKET;
-    using ssize_t = long long;
-#else
     #include <unistd.h>
     #include <sys/socket.h>
-    using SocketType = int;
-#endif
 
 #include <cstddef>
 #include <cstdint>
@@ -29,7 +20,7 @@ namespace NetworkUtils {
 /**
  * @brief Receive exactly 'length' bytes from a socket.
  */
-inline bool recvAll(SocketType sock, void* buffer, size_t length)
+inline bool recvAll(int sock, void* buffer, size_t length)
 {
     char* buf = static_cast<char*>(buffer);
     size_t total = 0;
@@ -52,7 +43,7 @@ inline bool recvAll(SocketType sock, void* buffer, size_t length)
 /**
  * @brief Send exactly 'length' bytes to a socket.
  */
-inline bool sendAll(SocketType sock, const void* buffer, size_t length)
+inline bool sendAll(int sock, const void* buffer, size_t length)
 {
     const char* buf = static_cast<const char*>(buffer);
     size_t total = 0;

@@ -10,25 +10,12 @@
 #include <iostream>
 #include "raylib.h"
 
-#ifdef _WIN32
-#include <winsock2.h>
-#endif
-
 int main(int ac, char **av)
 {
     if (ac != 2) {
         std::cerr << "Usage: " << av[0] << " <server_ip>\n";
         return 1;
     }
-
-#ifdef _WIN32
-    WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-        std::cerr << "WSAStartup failed.\n";
-        return 1;
-    }
-#endif
-
     std::string serverIp = av[1];
 
     TCPClient tcpClient(serverIp, 4242);
@@ -55,10 +42,5 @@ int main(int ac, char **av)
     client.run();
 
     CloseWindow();
-
-#ifdef _WIN32
-    WSACleanup();
-#endif
-
     return 0;
 }

@@ -8,19 +8,9 @@
 #include "Server/UDPServer.hpp"
 #include "Server/Game.hpp"
 
-// Windows extra dependency
-#ifdef _WIN32
-    #pragma comment(lib, "ws2_32.lib")
-#endif
-
 UDPServer::UDPServer(int port, Game& game)
     : _game(game)
 {
-#ifdef _WIN32
-    WSADATA wsa;
-    WSAStartup(MAKEWORD(2, 2), &wsa);
-#endif
-
     _sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 
     if (_sockfd < 0)
@@ -40,10 +30,6 @@ UDPServer::UDPServer(int port, Game& game)
 UDPServer::~UDPServer()
 {
     stop();
-
-#ifdef _WIN32
-    WSACleanup();
-#endif
 }
 
 void UDPServer::start()
@@ -67,11 +53,7 @@ void UDPServer::stop()
     _running = false;
 
     std::cout << "[UDP] Server stoping..." << std::endl;
-#ifdef _WIN32
-    closesocket(_sockfd);
-#else
     close(_sockfd);
-#endif
     if (_recvThread.joinable())
         _recvThread.join();
     if (_sendThread.joinable())
@@ -141,9 +123,6 @@ void UDPServer::processLoop()
 
 void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in& clientAddr)
 {
-    // if (length < sizeof(UDPMessageHeader))
-    //     return;
-
     if (length == sizeof(PlayerInputPacket)) {
         const PlayerInputPacket* p = reinterpret_cast<const PlayerInputPacket*>(data);
 

@@ -1,24 +1,11 @@
 #ifndef UDPCLIENT_HPP_
 #define UDPCLIENT_HPP_
 
-// -------- PLATFORM ABSTRACTION --------
-#ifdef _WIN32
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    using socklen_t = int;
-    using ssize_t = long long;
-    #define CLOSESOCK closesocket
-    #define GET_ERROR WSAGetLastError()
-#else
     #include <netinet/in.h>
     #include <sys/socket.h>
     #include <unistd.h>
     #include <arpa/inet.h>
     #include <fcntl.h>
-    #define CLOSESOCK close
-    #define GET_ERROR errno
-    using SOCKET = int;
-#endif
 
 #include <cstring>
 #include <string>
@@ -31,7 +18,7 @@
 class UDPClient
 {
 private:
-    SOCKET _sockfd;
+    int _sockfd;
     sockaddr_in _serverAddr;
 
 public:

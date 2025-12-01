@@ -12,23 +12,14 @@
 TCPClient::TCPClient(const std::string& serverIp, uint16_t port)
     : _serverIp(serverIp), _port(port), _sock(-1)
 {
-#ifdef _WIN32
-    WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0)
-        throw std::runtime_error("WSAStartup failed");
-#endif
 }
 
 TCPClient::~TCPClient()
 {
     if (_sock != -1) {
-        CLOSESOCK(_sock);
+        close(_sock);
         _sock = -1;
     }
-
-#ifdef _WIN32
-    WSACleanup();
-#endif
 }
 
 bool TCPClient::connectToServer()
@@ -43,17 +34,10 @@ bool TCPClient::connectToServer()
     servAddr.sin_family = AF_INET;
     servAddr.sin_port = htons(_port);
 
-#ifdef _WIN32
-    if (InetPton(AF_INET, _serverIp.c_str(), &servAddr.sin_addr) != 1) {
-        std::cerr << "Invalid IP address\n";
-        return false;
-    }
-#else
     if (inet_pton(AF_INET, _serverIp.c_str(), &servAddr.sin_addr) <= 0) {
         std::cerr << "Invalid IP address\n";
         return false;
     }
-#endif
 
     if (connect(_sock, (sockaddr *)&servAddr, sizeof(servAddr)) < 0) {
         std::cerr << "Connection failed\n";
@@ -100,7 +84,7 @@ bool TCPClient::sendConnectRequest(const std::string& username, ConnectResponse&
         err.type = 3;
 
         recv(_sock, reinterpret_cast<char*>(&err) + 1,
-             sizeof(err) - 1, 0);
+            sizeof(err) - 1, 0);
 
         std::cerr << "Server Error: " << err.message << "\n";
         return false;

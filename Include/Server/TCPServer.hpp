@@ -1,17 +1,10 @@
 #ifndef TCPSERVER_HPP_
 #define TCPSERVER_HPP_
 
-#ifdef _WIN32
-    #include <winsock2.h>
-    #include <ws2tcpip.h>
-    #pragma comment(lib, "Ws2_32.lib")
-    using SocketType = SOCKET;
-#else
     #include <sys/socket.h>
     #include <arpa/inet.h>
     #include <unistd.h>
-    using SocketType = int;
-#endif
+
 
 #include <thread>
 #include <vector>
@@ -30,9 +23,9 @@ public:
 
 private:
     void acceptLoop();
-    void handleClient(SocketType clientSock);
+    void handleClient(int clientSock);
 
-    SocketType _sockfd;
+    int _sockfd;
     bool _running;
     Game& _game;
     uint32_t _nextPlayerId = 1;
