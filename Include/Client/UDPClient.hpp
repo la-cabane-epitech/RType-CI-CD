@@ -36,7 +36,7 @@ public:
         sockaddr_in senderAddr{};
         socklen_t addrLen = sizeof(senderAddr);
 
-        SSIZE_T received = recvfrom(
+        ssize_t received = recvfrom(
             _socket.native_handle(),
             buffer.data(),
             buffer.size(),
