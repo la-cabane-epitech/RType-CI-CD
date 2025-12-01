@@ -5,9 +5,9 @@
 ** RTypeClient.cpp
 */
 
+#include "Client/Ray.hpp"
 #include "Client/RTypeClient.hpp"
 #include "Protocole/ProtocoleUDP.hpp"
-#include "raylib.h"
 
 RTypeClient::RTypeClient(const std::string& serverIp, const ConnectResponse& connectResponse)
     : _udpClient(serverIp, connectResponse.udpPort),

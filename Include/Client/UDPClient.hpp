@@ -8,12 +8,7 @@
 
 #include "Protocole/ProtocoleUDP.hpp"
 #include "CrossPlatformSocket.hpp"
-#include "asio.hpp"
-
-#ifdef WIN32
-    #include <basetsd.h>
-    typedef SSIZE_T ssize_t
-#endif
+#include "Client/Asio.hpp"
 
 class UDPClient
 {
