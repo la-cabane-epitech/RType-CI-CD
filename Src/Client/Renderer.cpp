@@ -5,8 +5,8 @@
 ** Renderer.cpp
 */
 
-#include "Client/Renderer.hpp"
 #include "raylib.h"
+#include "Client/Renderer.hpp"
 #include <string>
 
 Renderer::Renderer(GameState& gameState) : _gameState(gameState) {}

@@ -5,10 +5,10 @@
 ** main
 */
 
+#include "raylib.h"
 #include "Client/TCPClient.hpp"
 #include "Client/RTypeClient.hpp"
 #include <iostream>
-#include "raylib.h"
 
 int main(int ac, char **av)
 {
