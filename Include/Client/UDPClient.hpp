@@ -34,9 +34,9 @@ public:
         ssize_t received = recvfrom(
             _socket.native_handle(),
             buffer.data(),
-            buffer.size(),
+            static_cast<int>(buffer.size()),
             0,
-            (sockaddr*)&senderAddr,
+            reinterpret_cast<sockaddr*>(&senderAddr),
             &addrLen
         );
 
