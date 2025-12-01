@@ -11,8 +11,8 @@
 #include "asio.hpp"
 
 #ifdef WIN32
-    #typedef SSIZE_T ssize_t
     #include <basetsd.h>
+    typedef SSIZE_T ssize_t
 #endif
 
 class UDPClient

@@ -22,7 +22,11 @@ void Renderer::draw()
     for (const auto& pair : _gameState.players) {
         Color color = (pair.first == _gameState.myPlayerId) ? BLUE : RED;
         DrawRectangle(static_cast<int>(pair.second.x - 25), static_cast<int>(pair.second.y - 25), 50, 50, color);
-        DrawText(std::to_string(pair.first).c_str(), pair.second.x - 10, pair.second.y - 10, 20, WHITE);
+        DrawText(std::to_string(pair.first).c_str(), 
+                static_cast<int>(pair.second.x - 10), // Cast explicite ici
+                static_cast<int>(pair.second.y - 10), // Et ici
+                20, 
+                WHITE);
     }
 
     EndDrawing();
