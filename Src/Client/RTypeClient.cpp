@@ -59,6 +59,24 @@ void RTypeClient::update()
             const auto* statePkt = reinterpret_cast<const PlayerStatePacket*>(data.data());
             _gameState.players[statePkt->playerId] = {statePkt->x, statePkt->y};
         }
+
+        // iici on gère tiut ce qui concerne la mise à jour de l'état du client
+        if (type == UDPMessageType::ENTITY_SPAWN && data.size() >= sizeof(EntitySpawnPacket)) {
+            const auto* spawnPkt = reinterpret_cast<const EntitySpawnPacket*>(data.data());
+            _gameState.entities[spawnPkt->entityId] = {spawnPkt->x, spawnPkt->y};
+        }
+
+        if (type == UDPMessageType::ENTITY_UPDATE && data.size() >= sizeof(EntityUpdatePacket)) {
+            const auto* updatePkt = reinterpret_cast<const EntityUpdatePacket*>(data.data());
+            if (_gameState.entities.count(updatePkt->entityId)) {
+                _gameState.entities[updatePkt->entityId] = {updatePkt->x, updatePkt->y};
+            }
+        }
+
+        if (type == UDPMessageType::ENTITY_DESTROY && data.size() >= sizeof(EntityDestroyPacket)) {
+            const auto* destroyPkt = reinterpret_cast<const EntityDestroyPacket*>(data.data());
+            _gameState.entities.erase(destroyPkt->entityId);
+        }
     }
 }
 

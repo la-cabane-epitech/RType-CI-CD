@@ -29,5 +29,9 @@ void Renderer::draw()
                 WHITE);
     }
 
+    for (const auto& pair : _gameState.entities) {
+        DrawRectangle(static_cast<int>(pair.second.x), static_cast<int>(pair.second.y), 8, 8, BLACK);
+    }
+
     EndDrawing();
 }

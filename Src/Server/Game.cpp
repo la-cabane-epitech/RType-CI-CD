@@ -25,3 +25,58 @@ void Game::broadcastGameState(UDPServer& udpServer) {
             }
         }
     }
+
+
+void Game::createPlayerShot(uint32_t playerId, UDPServer& udpServer) {
+    Player* player = getPlayer(playerId);
+    if (!player) return;
+
+    std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
+    uint32_t entityId = _nextEntityId++;
+    _entities.push_back({entityId, 1, player->x + 25, player->y, 10.0f, 0.0f});
+
+    EntitySpawnPacket spawnPkt;
+    spawnPkt.entityId = entityId;
+    spawnPkt.entityType = 1;
+    spawnPkt.x = player->x + 25;
+    spawnPkt.y = player->y;
+
+    std::lock_guard<std::mutex> lock_players(_playersMutex);
+    for (const auto& destPlayer : _players) {
+        if (destPlayer.addrSet) {
+            udpServer.queueMessage(spawnPkt, destPlayer.udpAddr);
+        }
+    }
+}
+
+void Game::updateEntities(UDPServer& udpServer) {
+    std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
+    std::vector<uint32_t> destroyedEntities;
+
+    for (auto it = _entities.begin(); it != _entities.end(); ) {
+        auto& entity = *it;
+        entity.x += entity.velocityX;
+        entity.y += entity.velocityY;
+
+        // Supprime l'entité si elle sort de l'écran
+        if (entity.x > 850) {
+            destroyedEntities.push_back(entity.id);
+            it = _entities.erase(it);
+        } else {
+            EntityUpdatePacket updatePkt;
+            updatePkt.entityId = entity.id;
+            updatePkt.x = entity.x;
+            updatePkt.y = entity.y;
+
+            std::lock_guard<std::mutex> lock_players(_playersMutex);
+            for (const auto& destPlayer : _players) {
+                if (destPlayer.addrSet) {
+                    udpServer.queueMessage(updatePkt, destPlayer.udpAddr);
+                }
+            }
+            ++it;
+        }
+    }
+²    // TODO: Informer les clients de la suppression des entités.
+    // Pour l'instant, cela évite déjà la surcharge du serveur, ce qui est le plus important.
+}

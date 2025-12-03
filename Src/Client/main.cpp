@@ -33,8 +33,8 @@ int main(int ac, char **av)
     std::cout << "Connecté ! PlayerId: " << res.playerId
             << ", UDP Port: " << res.udpPort << "\n";
 
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    const int screenWidth = 1920;
+    const int screenHeight = 1080;
     InitWindow(screenWidth, screenHeight, "R-Type Client");
     SetTargetFPS(60);
 

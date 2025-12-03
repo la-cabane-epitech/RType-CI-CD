@@ -26,6 +26,7 @@ int main(void)
         udpServer.start();
         while (true) {
             game.broadcastGameState(udpServer);
+            game.updateEntities(udpServer);
             std::this_thread::sleep_for(std::chrono::milliseconds(16)); // ~60Hz
         }
     } catch (const RType::Exception& e) {

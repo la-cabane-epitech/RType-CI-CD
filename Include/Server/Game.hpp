@@ -26,6 +26,17 @@ struct Player {
     bool addrSet = false;
 };
 
+// ajout de Gémi
+struct Entity {
+    uint32_t id;
+    uint16_t type; // Pour différencier projectiles, ennemis, etc.
+    float x;
+    float y;
+    float velocityX = 10.0f; // Vitesse horizontale du projectile
+    float velocityY = 0.0f;
+};
+// fin ajout Gémi
+
 class Game {
 public:
     void addPlayer(uint32_t playerId) {
@@ -59,9 +70,16 @@ public:
 
     void broadcastGameState(UDPServer& udpServer);
 
+    void createPlayerShot(uint32_t playerId, UDPServer& udpServer);
+    void updateEntities(UDPServer& udpServer);
+
 private:
     std::vector<Player> _players;
     std::mutex _playersMutex;
+
+    std::vector<Entity> _entities;
+    std::mutex _entitiesMutex;
+    uint32_t _nextEntityId = 1;
 };
 
 

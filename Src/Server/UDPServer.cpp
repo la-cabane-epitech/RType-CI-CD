@@ -133,6 +133,7 @@ void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in&
             if (p->inputs & DOWN) player->y += player->velocity;
             if (p->inputs & LEFT) player->x -= player->velocity;
             if (p->inputs & RIGHT) player->x += player->velocity;
+            if (p->inputs & SHOOT) _game.createPlayerShot(p->playerId, *this);
         }
     }
 }
