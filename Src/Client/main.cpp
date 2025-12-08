@@ -38,8 +38,10 @@ int main(int ac, char **av)
     InitWindow(screenWidth, screenHeight, "R-Type Client");
     SetTargetFPS(60);
 
-    RTypeClient client(serverIp, res);
-    client.run();
+    {
+        RTypeClient client(serverIp, res);
+        client.run();
+    }
 
     CloseWindow();
     return 0;
