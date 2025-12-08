@@ -9,14 +9,17 @@
 #define RENDERER_HPP_
 
 #include "GameState.hpp"
+#include "raylib.h"
 
 class Renderer {
 public:
     Renderer(GameState& gameState);
+    ~Renderer();
     void draw();
 
 private:
     GameState& _gameState;
+    Texture2D _playerSpritesheet;
 };
 
 #endif

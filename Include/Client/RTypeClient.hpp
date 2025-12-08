@@ -8,7 +8,7 @@
 #ifndef RTYPECLIENT_HPP_
 #define RTYPECLIENT_HPP_
 
-#include "./UDPClient.hpp"
+#include "UDPClient.hpp"
 #include "GameState.hpp"
 #include "Renderer.hpp"
 #include "Protocole/ProtocoleTCP.hpp"

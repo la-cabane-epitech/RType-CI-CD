@@ -10,10 +10,11 @@
 #include "Protocole/ProtocoleUDP.hpp"
 
 RTypeClient::RTypeClient(const std::string& serverIp, const ConnectResponse& connectResponse)
-    : _udpClient(serverIp, connectResponse.udpPort),
-      _renderer(_gameState)
+        : _udpClient(serverIp, connectResponse.udpPort), _renderer(_gameState)
 {
     _gameState.myPlayerId = connectResponse.playerId;
+    // Placement du joueur au centre de l'écran au démarrage
+    _gameState.players[connectResponse.playerId] = { 800.0f / 2.0f, 450.0f / 2.0f };
 }
 
 void RTypeClient::run()
