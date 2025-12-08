@@ -9,10 +9,19 @@
 #include "Client/Renderer.hpp"
 #include <string>
 
-Renderer::Renderer(GameState& gameState) : _gameState(gameState) {}
+Renderer::Renderer(GameState& gameState) : _gameState(gameState)
+{
+    _attack = LoadTexture("Assets/attack.png");
+}
+
+Renderer::~Renderer()
+{
+    UnloadTexture(_attack);
+}
 
 void Renderer::draw()
 {
+
     BeginDrawing();
 
     ClearBackground(RAYWHITE);
@@ -30,7 +39,7 @@ void Renderer::draw()
     }
 
     for (const auto& pair : _gameState.entities) {
-        DrawRectangle(static_cast<int>(pair.second.x), static_cast<int>(pair.second.y), 8, 8, BLACK);
+        DrawTexture(_attack, static_cast<int>(pair.second.x), static_cast<int>(pair.second.y), WHITE);
     }
 
     EndDrawing();

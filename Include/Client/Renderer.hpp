@@ -13,10 +13,12 @@
 class Renderer {
 public:
     Renderer(GameState& gameState);
+    ~Renderer();
     void draw();
 
 private:
     GameState& _gameState;
+    Texture2D _attack;
 };
 
 #endif

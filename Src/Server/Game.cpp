@@ -61,6 +61,12 @@ void Game::updateEntities(UDPServer& udpServer) {
         // Supprime l'entité si elle sort de l'écran
         if (entity.x > 850) {
             destroyedEntities.push_back(entity.id);
+            EntityDestroyPacket destroyPkt;
+            destroyPkt.entityId = entity.id;
+            for (const auto& destPlayer : _players) {
+                if (destPlayer.addrSet)
+                    udpServer.queueMessage(destroyPkt, destPlayer.udpAddr);
+            }
             it = _entities.erase(it);
         } else {
             EntityUpdatePacket updatePkt;
@@ -77,6 +83,16 @@ void Game::updateEntities(UDPServer& udpServer) {
             ++it;
         }
     }
-²    // TODO: Informer les clients de la suppression des entités.
-    // Pour l'instant, cela évite déjà la surcharge du serveur, ce qui est le plus important.
+
+    // if (!destroyedEntities.empty()) {
+    //     std::lock_guard<std::mutex> lock_players(_playersMutex);
+    //     for (uint32_t entityId : destroyedEntities) {
+    //         EntityDestroyPacket destroyPkt;
+    //         destroyPkt.entityId = entityId;
+    //         for (const auto& destPlayer : _players) {
+    //             if (destPlayer.addrSet)
+    //                 udpServer.queueMessage(destroyPkt, destPlayer.udpAddr);
+    //         }
+    //     }
+    // }
 }

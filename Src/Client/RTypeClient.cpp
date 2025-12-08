@@ -42,7 +42,7 @@ void RTypeClient::handleInput()
     if (IsKeyDown(KEY_DOWN))  packet.inputs |= DOWN;
     if (IsKeyDown(KEY_LEFT))  packet.inputs |= LEFT;
     if (IsKeyDown(KEY_RIGHT)) packet.inputs |= RIGHT;
-    if (IsKeyDown(KEY_SPACE)) packet.inputs |= SHOOT;
+    if (IsKeyPressed(KEY_SPACE)) packet.inputs |= SHOOT;
 
     if (packet.inputs != 0) {
         _udpClient.sendMessage(packet);
