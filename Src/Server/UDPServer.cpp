@@ -136,4 +136,8 @@ void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in&
             if (p->inputs & SHOOT) _game.createPlayerShot(p->playerId, *this);
         }
     }
+    if (length == sizeof(PlayerDisconnectPacket)) {
+        const PlayerDisconnectPacket* p = reinterpret_cast<const PlayerDisconnectPacket*>(data);
+        _game.disconnectPlayer(p->playerId, *this);
+    }
 }
