@@ -135,4 +135,8 @@ void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in&
             if (p->inputs & RIGHT) player->x += player->velocity;
         }
     }
+    if (length == sizeof(PlayerDisconnectPacket)) {
+        const PlayerDisconnectPacket* p = reinterpret_cast<const PlayerDisconnectPacket*>(data);
+        _game.disconnectPlayer(p->playerId);
+    }
 }

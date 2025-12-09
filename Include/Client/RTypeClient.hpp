@@ -13,6 +13,7 @@
 #include "Renderer.hpp"
 #include "Protocole/ProtocoleTCP.hpp"
 #include <string>
+#include <iostream>
 
 class RTypeClient {
 public:

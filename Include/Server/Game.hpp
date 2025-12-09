@@ -12,6 +12,7 @@
 #include <vector>
 #include <mutex>
 #include <iostream>
+ #include <algorithm>
 
 #include "CrossPlatformSocket.hpp"
 #include "Protocole/ProtocoleUDP.hpp"
@@ -59,6 +60,17 @@ public:
 
     void broadcastGameState(UDPServer& udpServer);
 
+    void disconnectPlayer(uint32_t playerId) {
+        std::lock_guard<std::mutex> lock(_playersMutex);
+        auto it = std::remove_if(_players.begin(), _players.end(),
+                                 [playerId](const Player& player) {
+                                     return player.id == playerId;
+                                 });
+        if (it != _players.end()) {
+            _players.erase(it, _players.end());
+            std::cout << "[Game] Player " << playerId << " disconnected." << std::endl;
+        }
+    }
 private:
     std::vector<Player> _players;
     std::mutex _playersMutex;
