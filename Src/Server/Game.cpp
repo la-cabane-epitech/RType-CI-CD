@@ -56,10 +56,11 @@ Player* Game::getPlayer(uint32_t playerId) {
     return nullptr;
 }
 
-
 void Game::createPlayerShot(uint32_t playerId, UDPServer& udpServer) {
     Player* player = getPlayer(playerId);
-    if (!player) return;
+
+    if (!player)
+        return;
 
     std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
     uint32_t entityId = _nextEntityId++;
@@ -79,6 +80,29 @@ void Game::createPlayerShot(uint32_t playerId, UDPServer& udpServer) {
     }
 }
 
+void Game::createEnemy(UDPServer& udpServer) {
+    std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
+    uint32_t entityId = _nextEntityId++;
+ 
+    float spawnX = 1920.0f;
+    float spawnY = rand() % 1000 + 40;
+ 
+    _entities.push_back({entityId, 2, spawnX, spawnY, -5.0f, 0.0f});
+ 
+    EntitySpawnPacket spawnPkt;
+    spawnPkt.entityId = entityId;
+    spawnPkt.entityType = 2;
+    spawnPkt.x = spawnX;
+    spawnPkt.y = spawnY;
+
+    std::lock_guard<std::mutex> lock_players(_playersMutex);
+    for (const auto& destPlayer : _players) {
+        if (destPlayer.addrSet) {
+            udpServer.queueMessage(spawnPkt, destPlayer.udpAddr);
+        }
+    }
+} 
+
 void Game::updateEntities(UDPServer& udpServer) {
     std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
     std::vector<uint32_t> destroyedEntities;
@@ -89,7 +113,8 @@ void Game::updateEntities(UDPServer& udpServer) {
         entity.y += entity.velocityY;
 
         // Supprime l'entité si elle sort de l'écran
-        if (entity.x > 850) {
+        // if (entity.x > 850) {
+        if (entity.x > 1920 || entity.x < -20) {
             destroyedEntities.push_back(entity.id);
             EntityDestroyPacket destroyPkt;
             destroyPkt.entityId = entity.id;
@@ -135,15 +160,3 @@ void Game::disconnectPlayer(uint32_t playerId, UDPServer& udpServer) {
         }
     }
 }
-
-    // if (!destroyedEntities.empty()) {
-    //     std::lock_guard<std::mutex> lock_players(_playersMutex);
-    //     for (uint32_t entityId : destroyedEntities) {
-    //         EntityDestroyPacket destroyPkt;
-    //         destroyPkt.entityId = entityId;
-    //         for (const auto& destPlayer : _players) {
-    //             if (destPlayer.addrSet)
-    //                 udpServer.queueMessage(destroyPkt, destPlayer.udpAddr);
-    //         }
-    //     }
-    // }

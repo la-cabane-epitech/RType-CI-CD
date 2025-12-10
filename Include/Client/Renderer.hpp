@@ -9,6 +9,7 @@
 #define RENDERER_HPP_
 
 #include "GameState.hpp"
+#include <map>
 
 class Renderer {
 public:
@@ -18,7 +19,7 @@ public:
 
 private:
     GameState& _gameState;
-    Texture2D _attack;
+    std::map<uint16_t, Texture2D> _textures;
 };
 
 #endif
