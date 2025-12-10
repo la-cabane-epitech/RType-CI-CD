@@ -14,10 +14,13 @@
 #include "Protocole/ProtocoleTCP.hpp"
 #include <string>
 #include <iostream>
+#include "Clock.hpp"
+#include <deque>
 
 class RTypeClient {
 public:
     RTypeClient(const std::string& serverIp, const ConnectResponse& connectResponse);
+    void applyInput(const PlayerInputPacket& packet);
     void run();
 
 private:
@@ -29,6 +32,13 @@ private:
     GameState _gameState;
     Renderer _renderer;
     uint32_t _tick = 0;
+    Clock _clock;
+
+    // Historique des inputs pour la prédiction
+    std::deque<PlayerInputPacket> _pendingInputs;
+
+    uint32_t _lastPingTime = 0;
+    static constexpr uint32_t PING_INTERVAL_MS = 1000; // Ping every second
 };
 
 #endif // RTYPECLIENT_HPP_

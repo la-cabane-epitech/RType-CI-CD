@@ -33,6 +33,7 @@ struct GameState {
     uint32_t myPlayerId = 0;
     std::unordered_map<uint32_t, Position> players;
     std::unordered_map<uint32_t, Position> entities;
+    uint32_t rtt = 0;
 };
 
 #endif

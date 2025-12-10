@@ -14,13 +14,15 @@
 #include "Server/Game.hpp"
 #include "Server/TCPServer.hpp"
 #include "Server/UDPServer.hpp"
+#include "Clock.hpp"
 
 int main(void)
 {
     try {
+        Clock clock;
         Game game;
-        TCPServer tcpServer(4242, game);
-        UDPServer udpServer(5252, game);
+        TCPServer tcpServer(4242, game, clock);
+        UDPServer udpServer(5252, game, clock);
 
         tcpServer.start();
         udpServer.start();

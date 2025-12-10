@@ -22,6 +22,7 @@ void Game::broadcastGameState(UDPServer& udpServer) {
 
         PlayerStatePacket statePkt;
         statePkt.playerId = player.id;
+        statePkt.lastProcessedTick = player.lastProcessedTick;
         statePkt.x = player.x;
         statePkt.y = player.y;
 
@@ -41,6 +42,18 @@ void Game::updatePlayerUdpAddr(uint32_t playerId, const sockaddr_in& udpAddr) {
                 player.addrSet = true;
                 std::cout << "[Game] Player " << playerId << " UDP address set." << std::endl;
             }
+            return;
+        }
+    }
+}
+
+void Game::setPlayerLastProcessedTick(uint32_t playerId, uint32_t tick) {
+    std::lock_guard<std::mutex> lock(_playersMutex);
+    for (auto& player : _players) {
+        if (player.id == playerId) {
+            // On ne met à jour que si le tick est plus récent pour éviter les paquets en désordre
+            if (tick > player.lastProcessedTick)
+                player.lastProcessedTick = tick;
             return;
         }
     }

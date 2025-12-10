@@ -24,6 +24,7 @@ struct Player {
     float y = 225;
     float velocity = 5;
     sockaddr_in udpAddr;
+    uint32_t lastProcessedTick = 0;
     bool addrSet = false;
 };
 
@@ -42,6 +43,7 @@ public:
     void updatePlayerUdpAddr(uint32_t playerId, const sockaddr_in& udpAddr);
     Player* getPlayer(uint32_t playerId);
     void broadcastGameState(UDPServer& udpServer);
+    void setPlayerLastProcessedTick(uint32_t playerId, uint32_t tick);
 
     void createPlayerShot(uint32_t playerId, UDPServer& udpServer);
     void updateEntities(UDPServer& udpServer);

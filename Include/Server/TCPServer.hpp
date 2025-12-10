@@ -12,10 +12,11 @@
 
 #include "Protocole/ProtocoleTCP.hpp"
 #include "Server/Game.hpp"
+#include "Clock.hpp"
 
 class TCPServer {
 public:
-    TCPServer(int port, Game& game);
+    TCPServer(int port, Game& game, Clock& clock);
     ~TCPServer();
 
     void start();
@@ -32,6 +33,7 @@ private:
 
     std::thread _acceptThread;
     std::vector<std::thread> _clientThread;
+    const Clock& _clock;
 };
 
 #endif
