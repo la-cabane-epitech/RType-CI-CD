@@ -112,7 +112,7 @@ void Game::updateEntities(UDPServer& udpServer) {
         entity.x += entity.velocityX;
         entity.y += entity.velocityY;
 
-        Supprime l'entité si elle sort de l'écran
+        // Supprime l'entité si elle sort de l'écran
         // if (entity.x > 850) {
         if (entity.x > 1920 || entity.x < -20) {
             destroyedEntities.push_back(entity.id);
