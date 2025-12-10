@@ -63,13 +63,13 @@ void RTypeClient::update()
         // iici on gère tiut ce qui concerne la mise à jour de l'état du client
         if (type == UDPMessageType::ENTITY_SPAWN && data.size() >= sizeof(EntitySpawnPacket)) {
             const auto* spawnPkt = reinterpret_cast<const EntitySpawnPacket*>(data.data());
-            _gameState.entities[spawnPkt->entityId] = {spawnPkt->x, spawnPkt->y};
+            _gameState.entities[spawnPkt->entityId] = {spawnPkt->x, spawnPkt->y, spawn->type};
         }
 
         if (type == UDPMessageType::ENTITY_UPDATE && data.size() >= sizeof(EntityUpdatePacket)) {
             const auto* updatePkt = reinterpret_cast<const EntityUpdatePacket*>(data.data());
             if (_gameState.entities.count(updatePkt->entityId)) {
-                _gameState.entities[updatePkt->entityId] = {updatePkt->x, updatePkt->y};
+                _gameState.entities[updatePkt->entityId] = {updatePkt->x, updatePkt->y, updatePkt->type};
             }
         }
 

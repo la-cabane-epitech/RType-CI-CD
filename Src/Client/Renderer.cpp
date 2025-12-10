@@ -32,11 +32,13 @@ void Renderer::draw()
         Color color = (pair.first == _gameState.myPlayerId) ? BLUE : RED;
         DrawRectangle(static_cast<int>(pair.second.x - 25), static_cast<int>(pair.second.y - 25), 50, 50, color);
         DrawText(std::to_string(pair.first).c_str(), 
-                static_cast<int>(pair.second.x - 10), // Cast explicite ici
-                static_cast<int>(pair.second.y - 10), // Et ici
+                static_cast<int>(pair.second.x - 10),
+                static_cast<int>(pair.second.y - 10),
                 20, 
                 WHITE);
     }
+
+    for 
 
     for (const auto& pair : _gameState.entities) {
         DrawTexture(_attack, static_cast<int>(pair.second.x), static_cast<int>(pair.second.y), WHITE);
