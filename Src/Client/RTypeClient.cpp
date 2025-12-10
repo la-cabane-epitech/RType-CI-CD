@@ -27,6 +27,9 @@ void RTypeClient::run()
         update();
         render();
     }
+    PlayerDisconnectPacket disconnectPacket{};
+    disconnectPacket.playerId = _gameState.myPlayerId;
+    _udpClient.sendMessage(disconnectPacket);
 }
 
 void RTypeClient::handleInput()
@@ -76,6 +79,12 @@ void RTypeClient::update()
         if (type == UDPMessageType::ENTITY_DESTROY && data.size() >= sizeof(EntityDestroyPacket)) {
             const auto* destroyPkt = reinterpret_cast<const EntityDestroyPacket*>(data.data());
             _gameState.entities.erase(destroyPkt->entityId);
+        }
+
+        if (type == UDPMessageType::PLAYER_DISCONNECT && data.size() >= sizeof(PlayerDisconnectPacket)) {
+            const auto* disconnectPkt = reinterpret_cast<const PlayerDisconnectPacket*>(data.data());
+            _gameState.players.erase(disconnectPkt->playerId);
+            std::cout << "[Game] Player " << disconnectPkt->playerId << " disconnected." << std::endl;
         }
     }
 }

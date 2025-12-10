@@ -46,7 +46,8 @@ enum UDPMessageType : uint8_t {
     ENTITY_UPDATE     = 4,  // Sent by server → update entity state
     ENTITY_DESTROY    = 5,  // Sent by server → destroy entity
     PING              = 6,  // Client → Server
-    PONG              = 7   // Server → Client
+    PONG              = 7,  // Server → Client
+    PLAYER_DISCONNECT = 8   // Sent by client → player is disconnecting
 };
 
 /**
@@ -145,6 +146,19 @@ struct PingPacket {
 struct PongPacket {
     uint8_t type = PONG;
     uint32_t timestamp;
+};
+
+/**
+ * @struct PlayerDisconnectPacket
+ * @brief Sent by the client to inform the server it is disconnecting.
+ *
+ * Fields:
+ * - type: Always PLAYER_DISCONNECT
+ * - playerId: Player identifier
+ */
+struct PlayerDisconnectPacket {
+    uint8_t type = PLAYER_DISCONNECT;
+    uint32_t playerId;
 };
 
 // Restore packing

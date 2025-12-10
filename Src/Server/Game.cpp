@@ -8,23 +8,53 @@
 #include "Server/Game.hpp"
 #include "Server/UDPServer.hpp"
 
+
+void Game::addPlayer(uint32_t playerId) {
+    std::lock_guard<std::mutex> lock(_playersMutex);
+    _players.push_back({playerId});
+}
+
 void Game::broadcastGameState(UDPServer& udpServer) {
-        std::lock_guard<std::mutex> lock(_playersMutex);
+    std::lock_guard<std::mutex> lock(_playersMutex);
 
-        for (const auto& player : _players) {
-            if (!player.addrSet) continue;
+    for (const auto& player : _players) {
+        if (!player.addrSet) continue;
 
-            PlayerStatePacket statePkt;
-            statePkt.playerId = player.id;
-            statePkt.x = player.x;
-            statePkt.y = player.y;
+        PlayerStatePacket statePkt;
+        statePkt.playerId = player.id;
+        statePkt.x = player.x;
+        statePkt.y = player.y;
 
-            for (const auto& destPlayer : _players) {
-                if (!destPlayer.addrSet) continue;
-                udpServer.queueMessage(statePkt, destPlayer.udpAddr);
-            }
+        for (const auto& destPlayer : _players) {
+            if (!destPlayer.addrSet) continue;
+            udpServer.queueMessage(statePkt, destPlayer.udpAddr);
         }
     }
+}
+
+void Game::updatePlayerUdpAddr(uint32_t playerId, const sockaddr_in& udpAddr) {
+    std::lock_guard<std::mutex> lock(_playersMutex);
+    for (auto& player : _players) {
+        if (player.id == playerId) {
+            if (!player.addrSet) {
+                player.udpAddr = udpAddr;
+                player.addrSet = true;
+                std::cout << "[Game] Player " << playerId << " UDP address set." << std::endl;
+            }
+            return;
+        }
+    }
+}
+
+Player* Game::getPlayer(uint32_t playerId) {
+    std::lock_guard<std::mutex> lock(_playersMutex);
+    for (auto& player : _players) {
+        if (player.id == playerId) {
+            return &player;
+        }
+    }
+    return nullptr;
+}
 
 
 void Game::createPlayerShot(uint32_t playerId, UDPServer& udpServer) {
@@ -83,6 +113,28 @@ void Game::updateEntities(UDPServer& udpServer) {
             ++it;
         }
     }
+}
+
+void Game::disconnectPlayer(uint32_t playerId, UDPServer& udpServer) {
+    std::lock_guard<std::mutex> lock(_playersMutex);
+    auto it = std::remove_if(_players.begin(), _players.end(),
+                             [playerId](const Player& player) {
+                                return player.id == playerId;
+                             });
+    if (it != _players.end()) {
+        _players.erase(it, _players.end());
+        std::cout << "[Game] Player " << playerId << " disconnected." << std::endl;
+    }
+
+    for (const auto& destPlayer : _players) {
+        if (destPlayer.addrSet) {
+            PlayerDisconnectPacket disconnectPkt {};
+            disconnectPkt.playerId = playerId;
+            udpServer.queueMessage(disconnectPkt, destPlayer.udpAddr);
+            std::cout << "Send message disconnect to player " << destPlayer.id << "." << std::endl;
+        }
+    }
+}
 
     // if (!destroyedEntities.empty()) {
     //     std::lock_guard<std::mutex> lock_players(_playersMutex);
@@ -95,4 +147,3 @@ void Game::updateEntities(UDPServer& udpServer) {
     //         }
     //     }
     // }
-}
