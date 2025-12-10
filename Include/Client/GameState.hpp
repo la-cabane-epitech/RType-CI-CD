@@ -29,6 +29,12 @@ struct Position {
     float y;
 };
 
+struct EntityState {
+    float x;
+    float y;
+    uint16_t type;
+};
+
 struct GameState {
     uint32_t myPlayerId = 0;
     std::unordered_map<uint32_t, Position> players;

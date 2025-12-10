@@ -47,7 +47,7 @@ public:
 
     void createPlayerShot(uint32_t playerId, UDPServer& udpServer);
     void updateEntities(UDPServer& udpServer);
-
+    void createEnemy(UDPServer& udpServer);
     void disconnectPlayer(uint32_t playerId, UDPServer& udpServer);
 private:
     std::vector<Player> _players;

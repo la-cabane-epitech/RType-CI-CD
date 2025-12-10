@@ -7,16 +7,22 @@
 
 #include "Client/Ray.hpp"
 #include "Client/Renderer.hpp"
+#include <map>
 #include <string>
 
 Renderer::Renderer(GameState& gameState) : _gameState(gameState)
 {
-    _attack = LoadTexture("Assets/attack.png");
+    // On charge la texture pour les tirs du joueur (type 1)
+    _textures[1] = LoadTexture("Assets/attack.png");
 }
 
 Renderer::~Renderer()
 {
-    UnloadTexture(_attack);
+    // On décharge toutes les textures de la map
+    for (auto const& [key, val] : _textures)
+    {
+        UnloadTexture(val);
+    }
 }
 
 void Renderer::draw()
@@ -35,14 +41,21 @@ void Renderer::draw()
         Color color = (pair.first == _gameState.myPlayerId) ? BLUE : RED;
         DrawRectangle(static_cast<int>(pair.second.x - 25), static_cast<int>(pair.second.y - 25), 50, 50, color);
         DrawText(std::to_string(pair.first).c_str(), 
-                static_cast<int>(pair.second.x - 10), // Cast explicite ici
-                static_cast<int>(pair.second.y - 10), // Et ici
+                static_cast<int>(pair.second.x - 10),
+                static_cast<int>(pair.second.y - 10),
                 20, 
                 WHITE);
     }
 
     for (const auto& pair : _gameState.entities) {
-        DrawTexture(_attack, static_cast<int>(pair.second.x), static_cast<int>(pair.second.y), WHITE);
+        const auto& entity = pair.second;
+
+        if (entity.type == 2) {
+            DrawRectangle(static_cast<int>(entity.x), static_cast<int>(entity.y), 30, 30, GREEN);
+        }
+        else if (_textures.count(entity.type)) {
+            DrawTexture(_textures.at(entity.type), static_cast<int>(entity.x), static_cast<int>(entity.y), WHITE);
+        }
     }
 
     EndDrawing();
