@@ -11,15 +11,35 @@
 #include <unordered_map>
 #include <cstdint>
 
-struct PlayerDisplay {
+// struct PlayerDisplay {
+//     float x;
+//     float y;
+// };
+
+// class GameState {
+// public:
+//     std::unordered_map<uint32_t, PlayerDisplay> players;
+//     uint32_t myPlayerId = 0;
+// };
+
+// #endif
+
+struct Position {
     float x;
     float y;
 };
 
-class GameState {
-public:
-    std::unordered_map<uint32_t, PlayerDisplay> players;
+struct EntityState {
+    float x;
+    float y;
+    uint16_t type;
+};
+
+struct GameState {
     uint32_t myPlayerId = 0;
+    std::unordered_map<uint32_t, Position> players;
+    std::unordered_map<uint32_t, EntityState> entities;
+    uint32_t rtt = 0;
 };
 
 #endif

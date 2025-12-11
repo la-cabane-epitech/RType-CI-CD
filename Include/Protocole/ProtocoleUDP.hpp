@@ -46,7 +46,8 @@ enum UDPMessageType : uint8_t {
     ENTITY_UPDATE     = 4,  // Sent by server → update entity state
     ENTITY_DESTROY    = 5,  // Sent by server → destroy entity
     PING              = 6,  // Client → Server
-    PONG              = 7   // Server → Client
+    PONG              = 7,  // Server → Client
+    PLAYER_DISCONNECT = 8   // Sent by client → player is disconnecting
 };
 
 /**
@@ -72,23 +73,28 @@ struct PlayerInputPacket {
  *
  * Fields:
  * - type: PLAYER_STATE
- * - playerId: Player concerned
+ * - playerId: IF of player
+ * - lastProcessedTick: Le dernier tick d'input traité par le serveur pour ce joueur
+ * - timestamp: Server time when the state was generated, for interpolation
  * - x / y: Authoritative position on the map
  */
 struct PlayerStatePacket {
     uint8_t type = PLAYER_STATE;
     uint32_t playerId;
+    uint32_t lastProcessedTick;
+    uint32_t timestamp;
     float x;
     float y;
 };
 
 /**
  * @struct EntitySpawnPacket
- * @brief Sent by the server to spawn a new enemy, projectile, etc.
+ * @brief Sent by the server to spawn a new entity (enemy, projectile, etc.).
  *
  * Fields:
  * - type: ENTITY_SPAWN
  * - entityId: Unique ID of the entity
+ * - timestamp: Server time when the entity was spawned
  * - entityType: Defines what type of entity (enemy, bullet, etc.)
  * - x / y: Spawn coordinates
  */
@@ -96,6 +102,7 @@ struct EntitySpawnPacket {
     uint8_t type = ENTITY_SPAWN;
     uint32_t entityId;
     uint16_t entityType;
+    uint32_t timestamp;
     float x;
     float y;
 };
@@ -107,11 +114,13 @@ struct EntitySpawnPacket {
  * Fields:
  * - type: ENTITY_UPDATE
  * - entityId: ID of the entity to update
+ * - timestamp: Server time when the state was generated, for interpolation
  * - x / y: New authoritative position
  */
 struct EntityUpdatePacket {
     uint8_t type = ENTITY_UPDATE;
     uint32_t entityId;
+    uint32_t timestamp;
     float x;
     float y;
 };
@@ -145,6 +154,19 @@ struct PingPacket {
 struct PongPacket {
     uint8_t type = PONG;
     uint32_t timestamp;
+};
+
+/**
+ * @struct PlayerDisconnectPacket
+ * @brief Sent by the client to inform the server it is disconnecting.
+ *
+ * Fields:
+ * - type: Always PLAYER_DISCONNECT
+ * - playerId: Player identifier
+ */
+struct PlayerDisconnectPacket {
+    uint8_t type = PLAYER_DISCONNECT;
+    uint32_t playerId;
 };
 
 // Restore packing

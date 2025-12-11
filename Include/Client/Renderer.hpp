@@ -9,7 +9,7 @@
 #define RENDERER_HPP_
 
 #include "GameState.hpp"
-#include "raylib.h"
+#include <map>
 
 class Renderer {
 public:
@@ -19,7 +19,7 @@ public:
 
 private:
     GameState& _gameState;
-    Texture2D _playerSpritesheet;
+    std::map<uint16_t, Texture2D> _textures;
 };
 
 #endif

@@ -13,6 +13,7 @@
 #define PROTOCOLETCP_HPP_
 
 #include <cstdint>
+#include "Clock.hpp"
 
 // -----------------------------------------
 // Ensure structures are packed without padding
@@ -46,6 +47,7 @@ struct ConnectResponse {
     uint8_t type = 2;     // CONNECT_OK
     uint32_t playerId;    // Unique player ID
     uint16_t udpPort;     // Assigned UDP port for gameplay
+    Clock clock;          // 
 };
 
 /**

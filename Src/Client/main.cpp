@@ -46,5 +46,26 @@ int main() {
         window.display();
     }
 
+    ConnectResponse res;
+    if (!tcpClient.sendConnectRequest("Player1", res)) {
+        std::cerr << "Handshake TCP échoué\n";
+        return 1;
+    }
+
+    std::cout << "Connecté ! PlayerId: " << res.playerId
+            << ", UDP Port: " << res.udpPort << "\n";
+
+    const int screenWidth = 1920;
+    const int screenHeight = 1080;
+    InitWindow(screenWidth, screenHeight, "R-Type Client");
+    SetTargetFPS(60);
+
+    {
+        RTypeClient client(serverIp, res);
+        client.run();
+    }
+
+    CloseWindow();
+    // indiquer au server la fermeture + deconnecter
     return 0;
 }
