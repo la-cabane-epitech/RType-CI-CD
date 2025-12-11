@@ -7,6 +7,8 @@
 
 #include <SFML/Graphics.hpp>
 #include "Client/PlayerState.hpp"
+#include "Client/RTypeClient.hpp"
+#include "Client/TCPClient.hpp"
 
 int main() {
     sf::RenderWindow window(sf::VideoMode(800, 600), "R-Type");
