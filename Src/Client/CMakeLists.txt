@@ -10,6 +10,7 @@ set (
     TCPClient.cpp
     UDPClient.cpp
     Renderer.cpp
+    PlayerState.cpp
 )
 
 add_executable(rtype_client ${SOURCES})
