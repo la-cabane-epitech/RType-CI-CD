@@ -25,6 +25,8 @@ struct Player {
     float velocity = 5;
     sockaddr_in udpAddr;
     bool addrSet = false;
+    int height = 32;
+    int width = 32;
 };
 
 struct Entity {
@@ -34,6 +36,9 @@ struct Entity {
     float y;
     float velocityX = 10.0f;
     float velocityY = 0.0f;
+    int height = 0;
+    int width = 0;
+    bool is_collide = false;
 };
 
 class Game {
@@ -47,6 +52,7 @@ public:
     void updateEntities(UDPServer& udpServer);
     void createEnemy(UDPServer& udpServer);
     void disconnectPlayer(uint32_t playerId, UDPServer& udpServer);
+    void handleCollision();
 private:
     std::vector<Player> _players;
     std::mutex _playersMutex;
@@ -54,6 +60,7 @@ private:
     std::vector<Entity> _entities;
     std::mutex _entitiesMutex;
     uint32_t _nextEntityId = 1;
+    bool checkCollision(float x1, float y1, int w1, int h1, float x2, float y2, int w2, int h2);
 };
 
 

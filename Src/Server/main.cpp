@@ -31,7 +31,7 @@ int main(void)
         while (true) {
             game.broadcastGameState(udpServer);
             game.updateEntities(udpServer);
-           
+            game.handleCollision();
            // teste pour spawn ennemies 
             if (std::chrono::steady_clock::now() - lastEnemySpawnTime > std::chrono::seconds(2)) {
                 game.createEnemy(udpServer);

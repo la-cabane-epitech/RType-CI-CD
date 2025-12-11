@@ -64,7 +64,7 @@ void Game::createPlayerShot(uint32_t playerId, UDPServer& udpServer) {
 
     std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
     uint32_t entityId = _nextEntityId++;
-    _entities.push_back({entityId, 1, player->x + 25, player->y, 10.0f, 0.0f});
+    _entities.push_back({entityId, 1, player->x + 25, player->y, 10.0f, 0.0f, 10, 5});
 
     EntitySpawnPacket spawnPkt;
     spawnPkt.entityId = entityId;
@@ -87,7 +87,7 @@ void Game::createEnemy(UDPServer& udpServer) {
     float spawnX = 1920.0f;
     float spawnY = rand() % 1000 + 40;
  
-    _entities.push_back({entityId, 2, spawnX, spawnY, -5.0f, 0.0f});
+    _entities.push_back({entityId, 2, spawnX, spawnY, -5.0f, 0.0f, 32, 32});
  
     EntitySpawnPacket spawnPkt;
     spawnPkt.entityId = entityId;
@@ -114,7 +114,7 @@ void Game::updateEntities(UDPServer& udpServer) {
 
         // Supprime l'entité si elle sort de l'écran
         // if (entity.x > 850) {
-        if (entity.x > 1920 || entity.x < -20) {
+        if (entity.x > 1920 || entity.x < -20 || entity.is_collide) {
             destroyedEntities.push_back(entity.id);
             EntityDestroyPacket destroyPkt;
             destroyPkt.entityId = entity.id;
@@ -157,6 +157,30 @@ void Game::disconnectPlayer(uint32_t playerId, UDPServer& udpServer) {
             disconnectPkt.playerId = playerId;
             udpServer.queueMessage(disconnectPkt, destPlayer.udpAddr);
             std::cout << "Send message disconnect to player " << destPlayer.id << "." << std::endl;
+        }
+    }
+}
+
+bool Game::checkCollision(float x1, float y1, int w1, int h1, float x2, float y2, int w2, int h2) {
+    return  x1 < x2 + w2 &&
+            x1 + w1 > x2 &&
+            y1 < y2 + h2 &&
+            y1 + h1 > y2;
+}
+
+void Game::handleCollision() {
+    std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
+    std::lock_guard<std::mutex> lock_players(_playersMutex);
+
+    for (auto& projectile : _entities) {
+        if (projectile.type != 1) continue;
+        for (auto& enemy : _entities) {
+            if (enemy.type != 2) continue;
+            if (projectile.is_collide || enemy.is_collide) continue;
+            if (checkCollision(projectile.x, projectile.y, projectile.width, projectile.height, enemy.x, enemy.y, enemy.width, enemy.height)) {
+                projectile.is_collide = true;
+                enemy.is_collide = true;
+            }
         }
     }
 }
