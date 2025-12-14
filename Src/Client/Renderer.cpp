@@ -13,7 +13,7 @@
 Renderer::Renderer(GameState& gameState) : _gameState(gameState)
 {
     // On charge la texture pour les tirs du joueur (type 1)
-    _textures[0] = LoadTexture("Assets/r-typesheet42.png");
+    _textures[0] = LoadTexture("Assets/r-typesheet42.gif");
     _textures[1] = LoadTexture("Assets/attack.png");
 }
 
@@ -43,7 +43,9 @@ void Renderer::draw()
         // DrawRectangle(static_cast<int>(pair.second.x - 25), static_cast<int>(pair.second.y - 25), 50, 50, color);
         if (_textures.count(0) && _textures.at(0).id != 0) {
             const Texture2D& texture = _textures.at(0);
-            DrawTexture(texture, static_cast<int>(pair.second.x - texture.width / 2), static_cast<int>(pair.second.y - texture.height / 2), WHITE);
+            Rectangle sourceRec = { 0.0f, 0.0f, 33.0f, 17.0f };
+            Vector2 position = { pair.second.x - 33.0f / 2, pair.second.y - 17.0f / 2 };
+            DrawTextureRec(texture, sourceRec, position, WHITE);
         }
         DrawText(std::to_string(pair.first).c_str(), 
                 static_cast<int>(pair.second.x - 10),
