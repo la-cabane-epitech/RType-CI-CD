@@ -1,3 +1,5 @@
+conan profile detect
+
 rem Crée le dossier build si absent
 If not exist build\ (mkdir build)
 

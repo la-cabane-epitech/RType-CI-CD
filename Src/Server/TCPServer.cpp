@@ -13,8 +13,8 @@
 
 using namespace NetworkUtils;
 
-TCPServer::TCPServer(int port, Game& game)
-    : _game(game)
+TCPServer::TCPServer(int port, Game& game, Clock& clock)
+    : _game(game), _clock(clock)
 {
     _sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -103,6 +103,7 @@ void TCPServer::handleClient(int clientSock)
     res.type = 2;
     res.playerId = _nextPlayerId++;
     res.udpPort = 5252;
+    res.clock = _clock;
 
     _game.addPlayer(res.playerId);
 

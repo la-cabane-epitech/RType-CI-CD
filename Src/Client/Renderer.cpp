@@ -35,6 +35,9 @@ void Renderer::draw()
 
     DrawText("R-Type", 10, 10, 20, DARKGRAY);
 
+    std::string pingText = "Ping: " + std::to_string(_gameState.rtt) + " ms";
+    DrawText(pingText.c_str(), 10, 40, 20, DARKGRAY);
+
     for (const auto& pair : _gameState.players) {
         Color color = (pair.first == _gameState.myPlayerId) ? BLUE : RED;
         // DrawRectangle(static_cast<int>(pair.second.x - 25), static_cast<int>(pair.second.y - 25), 50, 50, color);

@@ -22,6 +22,7 @@
 #include "Server/RingBuffer.hpp"
 #include "Server/Packet.hpp"
 #include "Protocole/ProtocoleUDP.hpp"
+#include "Clock.hpp"
 
 class Game;
 
@@ -31,7 +32,7 @@ struct ClientInfo {
 
 class UDPServer {
 public:
-    UDPServer(int port, Game& game);
+    UDPServer(int port, Game& game, Clock& clock);
     ~UDPServer();
 
     void start();
@@ -54,6 +55,7 @@ private:
     int _sockfd;
     bool _running;
     Game& _game;
+    const Clock& _clock;
 
     std::thread _recvThread;
     std::thread _sendThread;

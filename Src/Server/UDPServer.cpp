@@ -8,8 +8,8 @@
 #include "Server/UDPServer.hpp"
 #include "Server/Game.hpp"
 
-UDPServer::UDPServer(int port, Game& game)
-    : _game(game)
+UDPServer::UDPServer(int port, Game& game, Clock& clock)
+    : _game(game), _clock(clock)
 {
     _sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -118,26 +118,47 @@ void UDPServer::processLoop()
         } else {
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
         }
+        std::cout << "The server is running since " << _clock.getElapsedTimeMs() << " ms.\n";
     }
 }
 
 void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in& clientAddr)
 {
-    if (length == sizeof(PlayerInputPacket)) {
-        const PlayerInputPacket* p = reinterpret_cast<const PlayerInputPacket*>(data);
+    if (length < 1) return;
 
-        _game.updatePlayerUdpAddr(p->playerId, clientAddr);
+    uint8_t type = *reinterpret_cast<const uint8_t*>(data);
 
-        if (Player* player = _game.getPlayer(p->playerId)) {
-            if (p->inputs & UP) player->y -= player->velocity;
-            if (p->inputs & DOWN) player->y += player->velocity;
-            if (p->inputs & LEFT) player->x -= player->velocity;
-            if (p->inputs & RIGHT) player->x += player->velocity;
-            if (p->inputs & SHOOT) _game.createPlayerShot(p->playerId, *this);
-        }
-    }
-    if (length == sizeof(PlayerDisconnectPacket)) {
-        const PlayerDisconnectPacket* p = reinterpret_cast<const PlayerDisconnectPacket*>(data);
-        _game.disconnectPlayer(p->playerId, *this);
+    switch (type) {
+        case PLAYER_INPUT:
+            if (length == sizeof(PlayerInputPacket)) {
+                const auto* p = reinterpret_cast<const PlayerInputPacket*>(data);
+                _game.updatePlayerUdpAddr(p->playerId, clientAddr);
+
+                // On met à jour le dernier tick traité pour ce joueur
+                _game.setPlayerLastProcessedTick(p->playerId, p->tick);
+
+                if (Player* player = _game.getPlayer(p->playerId)) {
+                    if (p->inputs & UP) player->y -= player->velocity;
+                    if (p->inputs & DOWN) player->y += player->velocity;
+                    if (p->inputs & LEFT) player->x -= player->velocity;
+                    if (p->inputs & RIGHT) player->x += player->velocity;
+                    if (p->inputs & SHOOT) _game.createPlayerShot(p->playerId, *this);
+                }
+            }
+            break;
+        case PLAYER_DISCONNECT:
+            if (length == sizeof(PlayerDisconnectPacket)) {
+                const auto* p = reinterpret_cast<const PlayerDisconnectPacket*>(data);
+                _game.disconnectPlayer(p->playerId, *this);
+            }
+            break;
+        case PING:
+            if (length == sizeof(PingPacket)) {
+                // sleep(2);
+                const auto* p = reinterpret_cast<const PingPacket*>(data);
+                PongPacket pongPkt{ .type = PONG, .timestamp = p->timestamp };
+                queueMessage(pongPkt, clientAddr);
+            }
+            break;
     }
 }
