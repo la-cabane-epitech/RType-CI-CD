@@ -89,36 +89,32 @@ void UDPServer::recvLoop()
 void UDPServer::sendLoop()
 {
     while (_running) {
+        if (_outgoing.isEmpty())
+            continue;
+
         auto pktOpt = _outgoing.pop();
+        const Packet& pkt = *pktOpt;
 
-        if (pktOpt) {
-            const Packet& pkt = *pktOpt;
-
-            sendto(
-                _sockfd,
-                pkt.data.data(),
-                pkt.length,
-                0,
-                (sockaddr*)&pkt.addr,
-                sizeof(pkt.addr)
-            );
-        } else {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        }
+        sendto(
+            _sockfd,
+            pkt.data.data(),
+            pkt.length,
+            0,
+            (sockaddr*)&pkt.addr,
+            sizeof(pkt.addr)
+        );
     }
 }
 
 void UDPServer::processLoop()
 {
     while (_running) {
+        std::cout << "The server is running since " << _clock.getElapsedTimeMs() << " ms.\n";
+        if (_incoming.isEmpty())
+            continue;
         auto pktOpt = _incoming.pop();
 
-        if (pktOpt) {
-            handlePacket(pktOpt->data.data(), pktOpt->length, pktOpt->addr);
-        } else {
-            std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        }
-        std::cout << "The server is running since " << _clock.getElapsedTimeMs() << " ms.\n";
+        handlePacket(pktOpt->data.data(), pktOpt->length, pktOpt->addr);
     }
 }
 
