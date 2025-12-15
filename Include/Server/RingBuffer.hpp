@@ -40,16 +40,16 @@ class RingBuffer {
             return item;
         }
 
-        bool isEmpty() const {
+        bool isEmpty() {
             std::lock_guard<std::mutex> lock(_mutex);
             return _count == 0;
         }
-        bool isFull() const {
+        bool isFull() {
             std::lock_guard<std::mutex> lock(_mutex);
             return _count == Capacity;
         }
 
-        size_t count() const {
+        size_t count() {
             std::lock_guard<std::mutex> lock(_mutex);
             return _count;
         }

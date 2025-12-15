@@ -12,9 +12,9 @@
 
 Renderer::Renderer(GameState& gameState) : _gameState(gameState)
 {
-    // On charge la texture pour les tirs du joueur (type 1)
     _textures[0] = LoadTexture("Assets/r-typesheet42.gif");
     _textures[1] = LoadTexture("Assets/attack.png");
+    _textures[2] = LoadTexture("Assets/r-typesheet3.gif");
 }
 
 Renderer::~Renderer()
@@ -40,7 +40,6 @@ void Renderer::draw()
 
     for (const auto& pair : _gameState.players) {
         Color color = (pair.first == _gameState.myPlayerId) ? BLUE : RED;
-        // DrawRectangle(static_cast<int>(pair.second.x - 25), static_cast<int>(pair.second.y - 25), 50, 50, color);
         if (_textures.count(0) && _textures.at(0).id != 0) {
             const Texture2D& texture = _textures.at(0);
             Rectangle sourceRec = { 0.0f, 0.0f, 33.0f, 17.0f };
@@ -58,7 +57,15 @@ void Renderer::draw()
         const auto& entity = pair.second;
 
         if (entity.type == 2) {
-            DrawRectangle(static_cast<int>(entity.x), static_cast<int>(entity.y), 30, 30, GREEN);
+            if (_textures.count(2)) {
+                const Texture2D& texture = _textures.at(2);
+                float frameWidth = 17.0f;
+                float frameHeight = 18.0f;
+                int currentFrame = static_cast<int>(GetTime() * 8.0f) % 12;
+                Rectangle sourceRec = { currentFrame * frameWidth, 0.0f, frameWidth, frameHeight };
+                Vector2 position = { entity.x - frameWidth / 2, entity.y - frameHeight / 2 };
+                DrawTextureRec(texture, sourceRec, position, WHITE);
+            }
         }
         else if (_textures.count(entity.type)) {
             DrawTexture(_textures.at(entity.type), static_cast<int>(entity.x), static_cast<int>(entity.y), WHITE);
