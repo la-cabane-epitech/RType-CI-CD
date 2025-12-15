@@ -34,11 +34,10 @@ private:
     uint32_t _tick = 0;
     Clock _clock;
 
-    // Historique des inputs pour la prédiction
     std::deque<PlayerInputPacket> _pendingInputs;
 
     uint32_t _lastPingTime = 0;
-    static constexpr uint32_t PING_INTERVAL_MS = 1000; // Ping every second
+    static constexpr uint32_t PING_INTERVAL_MS = 1000;
 };
 
 #endif // RTYPECLIENT_HPP_

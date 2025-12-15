@@ -12,7 +12,7 @@
 #include <vector>
 #include <mutex>
 #include <iostream>
- #include <algorithm>
+#include <algorithm>
 
 #include "CrossPlatformSocket.hpp"
 #include "Protocole/ProtocoleUDP.hpp"
@@ -32,7 +32,7 @@ struct Player {
 
 struct Entity {
     uint32_t id;
-    uint16_t type; // Pour différencier projectiles, ennemis, etc.
+    uint16_t type;
     float x;
     float y;
     float velocityX = 10.0f;

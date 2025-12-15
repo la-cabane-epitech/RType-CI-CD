@@ -11,19 +11,6 @@
 #include <unordered_map>
 #include <cstdint>
 
-// struct PlayerDisplay {
-//     float x;
-//     float y;
-// };
-
-// class GameState {
-// public:
-//     std::unordered_map<uint32_t, PlayerDisplay> players;
-//     uint32_t myPlayerId = 0;
-// };
-
-// #endif
-
 struct Position {
     float x;
     float y;

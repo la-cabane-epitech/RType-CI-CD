@@ -26,15 +26,9 @@ inline bool recvAll(int sock, void* buffer, size_t length)
     size_t total = 0;
 
     while (total < length) {
-#ifdef _WIN32
-        int bytes = recv(sock, buf + total, static_cast<int>(length - total), 0);
-        if (bytes == SOCKET_ERROR || bytes == 0)
-            return false;
-#else
         ssize_t bytes = recv(sock, buf + total, length - total, 0);
         if (bytes <= 0)
             return false;
-#endif
         total += bytes;
     }
     return true;
@@ -49,20 +43,14 @@ inline bool sendAll(int sock, const void* buffer, size_t length)
     size_t total = 0;
 
     while (total < length) {
-#ifdef _WIN32
-        int bytes = send(sock, buf + total, static_cast<int>(length - total), 0);
-        if (bytes == SOCKET_ERROR || bytes == 0)
-            return false;
-#else
         ssize_t bytes = send(sock, buf + total, length - total, 0);
         if (bytes <= 0)
             return false;
-#endif
         total += bytes;
     }
     return true;
 }
 
-} // namespace NetworkUtils
+}
 
 #endif /* !UTILS_HPP_ */

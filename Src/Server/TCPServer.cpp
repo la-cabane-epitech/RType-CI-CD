@@ -78,7 +78,6 @@ void TCPServer::acceptLoop()
 void TCPServer::handleClient(int clientSock)
 {
     ConnectRequest req {};
-    // Ce qu'envoie le client sur la socket
     if (!recvAll(clientSock, &req, sizeof(req))) {
         std::cerr << "[TCP] Failed to receive ConnectRequest" << std::endl;
         close(clientSock);
@@ -87,7 +86,6 @@ void TCPServer::handleClient(int clientSock)
     std::cout << "[TCP] Type request = " << static_cast<int>(req.type) << std::endl;
     std::cout << "[TCP] Username = " << req.username << std::endl;
 
-    // Check si le client veut se connecter
     if (req.type != 1) {
         ErrorResponse err {};
         err.type = 3;
@@ -98,7 +96,6 @@ void TCPServer::handleClient(int clientSock)
         return;
     }
 
-    // Attribuer un ID joueur et définir un port UDP (port a modif ptet)
     ConnectResponse res {};
     res.type = 2;
     res.playerId = _nextPlayerId++;
@@ -107,7 +104,6 @@ void TCPServer::handleClient(int clientSock)
 
     _game.addPlayer(res.playerId);
 
-    // Le serveur ecrit sur la socket du client
     if (!sendAll(clientSock, &res, sizeof(res))) {
         std::cerr << "[TCP] Failed to send ConnectResponse" << std::endl;
     }

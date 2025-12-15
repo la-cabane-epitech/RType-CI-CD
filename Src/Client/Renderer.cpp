@@ -19,7 +19,6 @@ Renderer::Renderer(GameState& gameState) : _gameState(gameState)
 
 Renderer::~Renderer()
 {
-    // On décharge toutes les textures de la map
     for (auto const& [key, val] : _textures)
     {
         UnloadTexture(val);

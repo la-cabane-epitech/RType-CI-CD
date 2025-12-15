@@ -41,21 +41,17 @@ bool TCPClient::sendConnectRequest(const std::string& username, ConnectResponse&
         std::strncpy(req.username, username.c_str(), sizeof(req.username) - 1);
         req.username[sizeof(req.username) - 1] = '\0';
 
-        // -------- SEND FULL REQUEST --------
         asio::write(_socket, asio::buffer(&req, sizeof(req)));
 
-        // -------- RECEIVE PACKET TYPE --------
         uint8_t type = 0;
         asio::read(_socket, asio::buffer(&type, 1));
 
-        // -------- CONNECT RESPONSE --------
         if (type == 2) {
             outResponse.type = 2;
             asio::read(_socket, asio::buffer(reinterpret_cast<char*>(&outResponse) + 1, sizeof(outResponse) - 1));
             return true;
         }
 
-        // -------- ERROR RESPONSE --------
         if (type == 3) {
             ErrorResponse err{};
             err.type = 3;

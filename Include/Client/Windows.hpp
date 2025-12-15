@@ -66,21 +66,6 @@ typedef struct tagMSG* LPMSG;
 // 4. On inclut Windows
 #include <windows.h>
 
-// Types manquants à cause des #define NO...
-// typedef struct tagBITMAPINFOHEADER {
-//     DWORD biSize;
-//     LONG biWidth;
-//     LONG biHeight;
-//     WORD biPlanes;
-//     WORD biBitCount;
-//     DWORD biCompression;
-//     DWORD biSizeImage;
-//     LONG biXPelsPerMeter;
-//     LONG biYPelsPerMeter;
-//     DWORD biClrUsed;
-//     DWORD biClrImportant;
-// } BITMAPINFOHEADER, *PBITMAPINFOHEADER;
-
 #include <io.h>
 #include <basetsd.h>
 

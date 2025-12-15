@@ -51,7 +51,6 @@ void Game::setPlayerLastProcessedTick(uint32_t playerId, uint32_t tick) {
     std::lock_guard<std::mutex> lock(_playersMutex);
     for (auto& player : _players) {
         if (player.id == playerId) {
-            // On ne met à jour que si le tick est plus récent pour éviter les paquets en désordre
             if (tick > player.lastProcessedTick)
                 player.lastProcessedTick = tick;
             return;
@@ -96,12 +95,12 @@ void Game::createPlayerShot(uint32_t playerId, UDPServer& udpServer) {
 void Game::createEnemy(UDPServer& udpServer) {
     std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
     uint32_t entityId = _nextEntityId++;
- 
+
     float spawnX = 1920.0f;
     float spawnY = rand() % 1000 + 40;
- 
+
     _entities.push_back({entityId, 2, spawnX, spawnY, -5.0f, 0.0f, 32, 32});
- 
+
     EntitySpawnPacket spawnPkt;
     spawnPkt.entityId = entityId;
     spawnPkt.entityType = 2;
@@ -125,8 +124,6 @@ void Game::updateEntities(UDPServer& udpServer) {
         entity.x += entity.velocityX;
         entity.y += entity.velocityY;
 
-        // Supprime l'entité si elle sort de l'écran
-        // if (entity.x > 850) {
         if (entity.x > 1920 || entity.x < -20 || entity.is_collide) {
             destroyedEntities.push_back(entity.id);
             EntityDestroyPacket destroyPkt;

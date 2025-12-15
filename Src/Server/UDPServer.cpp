@@ -109,7 +109,6 @@ void UDPServer::sendLoop()
 void UDPServer::processLoop()
 {
     while (_running) {
-        std::cout << "The server is running since " << _clock.getElapsedTimeMs() << " ms.\n";
         if (_incoming.isEmpty())
             continue;
         auto pktOpt = _incoming.pop();
@@ -130,7 +129,6 @@ void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in&
                 const auto* p = reinterpret_cast<const PlayerInputPacket*>(data);
                 _game.updatePlayerUdpAddr(p->playerId, clientAddr);
 
-                // On met à jour le dernier tick traité pour ce joueur
                 _game.setPlayerLastProcessedTick(p->playerId, p->tick);
 
                 if (Player* player = _game.getPlayer(p->playerId)) {

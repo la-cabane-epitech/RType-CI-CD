@@ -21,7 +21,7 @@ class RingBuffer {
         bool push(const T& item) {
             std::lock_guard<std::mutex> lock(_mutex);
             if (_count == Capacity) {
-                return false; // Buffer is full
+                return false;
             }
             _buffer[_head] = item;
             _head = (_head + 1) % Capacity;
@@ -32,7 +32,7 @@ class RingBuffer {
         std::optional<T> pop() {
             std::lock_guard<std::mutex> lock(_mutex);
             if (_count == 0) {
-                return std::nullopt; // Buffer is empty
+                return std::nullopt;
             }
             T item = _buffer[_tail];
             _tail = (_tail + 1) % Capacity;
