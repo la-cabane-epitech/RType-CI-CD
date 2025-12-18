@@ -7,6 +7,7 @@
 
 #include "Server/Game.hpp"
 #include "Server/UDPServer.hpp"
+#include <cmath>
 
 
 void Game::addPlayer(uint32_t playerId) {
@@ -99,7 +100,7 @@ void Game::createEnemy(UDPServer& udpServer) {
     float spawnX = 1920.0f;
     float spawnY = rand() % 1000 + 40;
 
-    _entities.push_back({entityId, 2, spawnX, spawnY, -5.0f, 0.0f, 32, 32});
+    _entities.push_back({entityId, 2, spawnX, spawnY, -5.0f, 0.0f, 32, spawnX, 32});
 
     EntitySpawnPacket spawnPkt;
     spawnPkt.entityId = entityId;
@@ -146,6 +147,19 @@ void Game::updateEntities(UDPServer& udpServer) {
                 }
             }
             ++it;
+        }
+    }
+}
+
+void Game::updateGameLevel(float elapsedTime) {
+    _gameTime += elapsedTime;
+
+    if (_gameTime > 60.0f) {
+        std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
+        for (auto& entity : _entities) {
+            if (entity.type == 2) {
+                entity.velocityY = 5.0f * std::sin(_gameTime * 2.0f + entity.id);
+            }
         }
     }
 }

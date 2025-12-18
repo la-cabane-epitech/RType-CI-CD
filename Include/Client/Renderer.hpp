@@ -10,6 +10,15 @@
 
 #include "GameState.hpp"
 #include <map>
+#include <vector>
+#include "Client/Ray.hpp"
+
+struct Star {
+    float x;
+    float y;
+    float speed;
+    float scale;
+};
 
 class Renderer {
 public:
@@ -20,6 +29,8 @@ public:
 private:
     GameState& _gameState;
     std::map<uint16_t, Texture2D> _textures;
+    std::vector<Star> _stars;
+    Texture2D _starTexture;
 };
 
 #endif

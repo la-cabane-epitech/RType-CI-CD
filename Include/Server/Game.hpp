@@ -38,6 +38,7 @@ struct Entity {
     float velocityX = 10.0f;
     float velocityY = 0.0f;
     int height = 0;
+    float initialX;
     int width = 0;
     bool is_collide = false;
 };
@@ -55,6 +56,7 @@ public:
     void createEnemy(UDPServer& udpServer);
     void disconnectPlayer(uint32_t playerId, UDPServer& udpServer);
     void handleCollision();
+    void updateGameLevel(float elapsedTime);
 private:
     std::vector<Player> _players;
     std::mutex _playersMutex;
@@ -63,6 +65,7 @@ private:
     std::mutex _entitiesMutex;
     uint32_t _nextEntityId = 1;
     bool checkCollision(float x1, float y1, int w1, int h1, float x2, float y2, int w2, int h2);
+    float _gameTime = 0.0f;
 };
 
 
