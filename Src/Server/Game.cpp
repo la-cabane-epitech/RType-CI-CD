@@ -7,6 +7,7 @@
 
 #include "Server/Game.hpp"
 #include "Server/UDPServer.hpp"
+#include <cmath>
 
 
 void Game::addPlayer(uint32_t playerId) {
@@ -146,6 +147,19 @@ void Game::updateEntities(UDPServer& udpServer) {
                 }
             }
             ++it;
+        }
+    }
+}
+
+void Game::updateGameLevel(float elapsedTime) {
+    _gameTime += elapsedTime;
+
+    if (_gameTime > 60.0f) {
+        std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
+        for (auto& entity : _entities) {
+            if (entity.type == 2) {
+                entity.velocityY = 5.0f * std::sin(_gameTime * 2.0f + entity.id);
+            }
         }
     }
 }

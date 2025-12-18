@@ -33,6 +33,7 @@ int main(void)
             game.broadcastGameState(udpServer);
             game.updateEntities(udpServer);
             game.handleCollision();
+            game.updateGameLevel(0.016f);
             if (std::chrono::steady_clock::now() - lastEnemySpawnTime > std::chrono::seconds(2)) {
                 game.createEnemy(udpServer);
                 lastEnemySpawnTime = std::chrono::steady_clock::now();

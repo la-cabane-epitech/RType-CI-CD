@@ -15,6 +15,16 @@ Renderer::Renderer(GameState& gameState) : _gameState(gameState)
     _textures[0] = LoadTexture("Assets/r-typesheet42.gif");
     _textures[1] = LoadTexture("Assets/attack.png");
     _textures[2] = LoadTexture("Assets/r-typesheet3.gif");
+    _starTexture = LoadTexture("Assets/star_white_giant01.png");
+
+    for (int i = 0; i < 10; ++i) {
+        _stars.push_back({
+            static_cast<float>(GetRandomValue(1920, 5000)),
+            static_cast<float>(GetRandomValue(0, 1080)),
+            5.0f,
+            static_cast<float>(GetRandomValue(1, 5)) / 50.0f
+        });
+    }
 }
 
 Renderer::~Renderer()
@@ -23,6 +33,7 @@ Renderer::~Renderer()
     {
         UnloadTexture(val);
     }
+    UnloadTexture(_starTexture);
 }
 
 void Renderer::draw()
@@ -30,7 +41,16 @@ void Renderer::draw()
 
     BeginDrawing();
 
-    ClearBackground(RAYWHITE);
+    ClearBackground(BLACK);
+
+    for (auto& star : _stars) {
+        star.x -= star.speed;
+        if (star.x < -50) {
+            star.x = 1920 + 50;
+            star.y = GetRandomValue(0, 1080);
+        }
+        DrawTextureEx(_starTexture, {star.x, star.y}, 0.0f, star.scale, WHITE);
+    }
 
     DrawText("R-Type", 10, 10, 20, DARKGRAY);
 

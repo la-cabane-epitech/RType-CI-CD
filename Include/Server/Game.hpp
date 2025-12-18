@@ -124,6 +124,7 @@ public:
      * @brief Checks and resolves collisions between entities and players.
      */
     void handleCollision();
+    void updateGameLevel(float elapsedTime);
 private:
     std::vector<Player> _players;
     std::mutex _playersMutex;
@@ -132,6 +133,7 @@ private:
     std::mutex _entitiesMutex;
     uint32_t _nextEntityId = 1;
     bool checkCollision(float x1, float y1, int w1, int h1, float x2, float y2, int w2, int h2);
+    float _gameTime = 0.0f;
 };
 
 
