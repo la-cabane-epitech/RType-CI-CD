@@ -5,3 +5,5 @@ CMakeUserPresets.json
 # binaries
 rtype_server
 rtype_client
+
+Document/doc_generated
