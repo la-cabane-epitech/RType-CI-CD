@@ -5,6 +5,14 @@
 ** Windows
 */
 
+/**
+ * @file Windows.hpp
+ * @brief Windows-specific configuration and includes.
+ *
+ * This file handles the inclusion of Windows headers and defines necessary macros
+ * to prevent conflicts with Raylib and other libraries (e.g., disabling GDI, MinMax).
+ */
+
 #ifndef WINDOWS_HPP_
 #define WINDOWS_HPP_
 

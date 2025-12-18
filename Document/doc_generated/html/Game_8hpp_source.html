@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>R-Type:  Fichier source de Include/Server/Game.hpp</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/javascript" src="darkmode_toggle.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">R-Type
+   </div>
+   <div id="projectbrief">Architecture Client/Serveur de jeu de tir spatial</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- Généré par Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','Recherche');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('Game_8hpp_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">Chargement...</div>
+<div class="SRStatus" id="Searching">Recherche...</div>
+<div class="SRStatus" id="NoMatches">Aucune correspondance</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">Game.hpp</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="Game_8hpp.html">Aller à la documentation de ce fichier.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">/*</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="comment">** EPITECH PROJECT, 2025</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="comment">** RType-CI-CD</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="comment">** File description:</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="comment">** Game.hpp</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="comment">*/</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#ifndef GAME_HPP_</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#define GAME_HPP_</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;cstdint&gt;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;mutex&gt;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;iostream&gt;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;algorithm&gt;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &quot;<a class="code" href="CrossPlatformSocket_8hpp.html">CrossPlatformSocket.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &quot;<a class="code" href="ProtocoleUDP_8hpp.html">Protocole/ProtocoleUDP.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="keyword">class </span><a class="code hl_class" href="classUDPServer.html">UDPServer</a>;</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
+<div class="foldopen" id="foldopen00030" data-start="{" data-end="};">
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno"><a class="line" href="structPlayer.html">   30</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structPlayer.html">Player</a> {</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno"><a class="line" href="structPlayer.html#a370e8ae6120f85b601d7b0dcc372cdb9">   31</a></span>    uint32_t <a class="code hl_variable" href="structPlayer.html#a370e8ae6120f85b601d7b0dcc372cdb9">id</a>;                     </div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="structPlayer.html#a59eec29c87225f768b3767451ceb84da">   32</a></span>    <span class="keywordtype">float</span> <a class="code hl_variable" href="structPlayer.html#a59eec29c87225f768b3767451ceb84da">x</a> = 400;                   </div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno"><a class="line" href="structPlayer.html#a28c357b9a2636f8bf9c5377de8245c80">   33</a></span>    <span class="keywordtype">float</span> <a class="code hl_variable" href="structPlayer.html#a28c357b9a2636f8bf9c5377de8245c80">y</a> = 225;                   </div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="structPlayer.html#a296a6c24d630d681c965fbd75896e978">   34</a></span>    <span class="keywordtype">float</span> <a class="code hl_variable" href="structPlayer.html#a296a6c24d630d681c965fbd75896e978">velocity</a> = 5;              </div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="structPlayer.html#adee9beaa3679eb3573acad54bea5ca64">   35</a></span>    sockaddr_in <a class="code hl_variable" href="structPlayer.html#adee9beaa3679eb3573acad54bea5ca64">udpAddr</a>;             </div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno"><a class="line" href="structPlayer.html#a14c5033252176c27c24b3161e4ba140c">   36</a></span>    uint32_t <a class="code hl_variable" href="structPlayer.html#a14c5033252176c27c24b3161e4ba140c">lastProcessedTick</a> = 0;  </div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno"><a class="line" href="structPlayer.html#aee31d361512e6d53ea47972d369b6b6c">   37</a></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="structPlayer.html#aee31d361512e6d53ea47972d369b6b6c">addrSet</a> = <span class="keyword">false</span>;            </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno"><a class="line" href="structPlayer.html#a682cd9664c9ea2e27c0f269d762bfa28">   38</a></span>    <span class="keywordtype">int</span> <a class="code hl_variable" href="structPlayer.html#a682cd9664c9ea2e27c0f269d762bfa28">height</a> = 32;                 </div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno"><a class="line" href="structPlayer.html#ab112e078741802afd6c095ddea241b2f">   39</a></span>    <span class="keywordtype">int</span> <a class="code hl_variable" href="structPlayer.html#ab112e078741802afd6c095ddea241b2f">width</a> = 32;                  </div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>};</div>
+</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
+<div class="foldopen" id="foldopen00046" data-start="{" data-end="};">
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno"><a class="line" href="structEntity.html">   46</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structEntity.html">Entity</a> {</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno"><a class="line" href="structEntity.html#acc08af95e32ae999517fa26b01840a54">   47</a></span>    uint32_t <a class="code hl_variable" href="structEntity.html#acc08af95e32ae999517fa26b01840a54">id</a>;             </div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno"><a class="line" href="structEntity.html#a01b61ad5a0610c02c4fd9ebba7a0ce1c">   48</a></span>    uint16_t <a class="code hl_variable" href="structEntity.html#a01b61ad5a0610c02c4fd9ebba7a0ce1c">type</a>;           </div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno"><a class="line" href="structEntity.html#abc2d19ee6ff26b8520428894da6a8f68">   49</a></span>    <span class="keywordtype">float</span> <a class="code hl_variable" href="structEntity.html#abc2d19ee6ff26b8520428894da6a8f68">x</a>;                 </div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno"><a class="line" href="structEntity.html#af4966f81d91cc8f8d5eb9e9002240c49">   50</a></span>    <span class="keywordtype">float</span> <a class="code hl_variable" href="structEntity.html#af4966f81d91cc8f8d5eb9e9002240c49">y</a>;                 </div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno"><a class="line" href="structEntity.html#a489f84ea2f7b049c466ec25d1bd5957d">   51</a></span>    <span class="keywordtype">float</span> <a class="code hl_variable" href="structEntity.html#a489f84ea2f7b049c466ec25d1bd5957d">velocityX</a> = 10.0f; </div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno"><a class="line" href="structEntity.html#a7eee17062ce809ed32030b344c6232fe">   52</a></span>    <span class="keywordtype">float</span> <a class="code hl_variable" href="structEntity.html#a7eee17062ce809ed32030b344c6232fe">velocityY</a> = 0.0f;  </div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno"><a class="line" href="structEntity.html#a5591f1e3ea630c4d8063038728587ab8">   53</a></span>    <span class="keywordtype">int</span> <a class="code hl_variable" href="structEntity.html#a5591f1e3ea630c4d8063038728587ab8">height</a> = 0;          </div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno"><a class="line" href="structEntity.html#a58bf3e06b7431307e26c4adccae8cf11">   54</a></span>    <span class="keywordtype">int</span> <a class="code hl_variable" href="structEntity.html#a58bf3e06b7431307e26c4adccae8cf11">width</a> = 0;           </div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno"><a class="line" href="structEntity.html#aa58f1699d73c60aebacf4c451f78f4bd">   55</a></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="structEntity.html#aa58f1699d73c60aebacf4c451f78f4bd">is_collide</a> = <span class="keyword">false</span>; </div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>};</div>
+</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span> </div>
+<div class="foldopen" id="foldopen00062" data-start="{" data-end="};">
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno"><a class="line" href="classGame.html">   62</a></span><span class="keyword">class </span><a class="code hl_class" href="classGame.html">Game</a> {</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classGame.html#a3a8d636e4a5172bfe206a06cc500a720">addPlayer</a>(uint32_t playerId);</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span> </div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classGame.html#a132a5b3d1f01454c08899c90e289a5af">updatePlayerUdpAddr</a>(uint32_t playerId, <span class="keyword">const</span> sockaddr_in&amp; udpAddr);</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span> </div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    <a class="code hl_struct" href="structPlayer.html">Player</a>* <a class="code hl_function" href="classGame.html#a88f17641268a7bafb750bcdbf66601e3">getPlayer</a>(uint32_t playerId);</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span> </div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classGame.html#ac99e2bab5b3e8699882d3098643b8ff6">broadcastGameState</a>(<a class="code hl_class" href="classUDPServer.html">UDPServer</a>&amp; udpServer);</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span> </div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classGame.html#a6764e2a54d6ce82a122ab43a24dad4d7">setPlayerLastProcessedTick</a>(uint32_t playerId, uint32_t tick);</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classGame.html#a38bf0b5975eb4638f0a6b8dfc2c3a48d">createPlayerShot</a>(uint32_t playerId, <a class="code hl_class" href="classUDPServer.html">UDPServer</a>&amp; udpServer);</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span> </div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classGame.html#aa49cd42b25dca26e7da6e33ceab68da5">updateEntities</a>(<a class="code hl_class" href="classUDPServer.html">UDPServer</a>&amp; udpServer);</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span> </div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classGame.html#a70357d47680d0da78bca8954e3e22439">createEnemy</a>(<a class="code hl_class" href="classUDPServer.html">UDPServer</a>&amp; udpServer);</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span> </div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classGame.html#a20a00e2c12febf177c092512a481ddfe">disconnectPlayer</a>(uint32_t playerId, <a class="code hl_class" href="classUDPServer.html">UDPServer</a>&amp; udpServer);</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span> </div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classGame.html#a40fa71458ccf2c6c5683d21df8d1adfa">handleCollision</a>();</div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno"><a class="line" href="classGame.html#a56f48b4fc8928ef67c1309a2477d6f91">  128</a></span>    std::vector&lt;Player&gt; <a class="code hl_variable" href="classGame.html#a56f48b4fc8928ef67c1309a2477d6f91">_players</a>;</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno"><a class="line" href="classGame.html#acf9498469dbe24c5f1b72cbe3b76c96b">  129</a></span>    std::mutex <a class="code hl_variable" href="classGame.html#acf9498469dbe24c5f1b72cbe3b76c96b">_playersMutex</a>;</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span> </div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno"><a class="line" href="classGame.html#ac54b479380fa67d0ce2590b96cfa315b">  131</a></span>    std::vector&lt;Entity&gt; <a class="code hl_variable" href="classGame.html#ac54b479380fa67d0ce2590b96cfa315b">_entities</a>;</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno"><a class="line" href="classGame.html#a45c12f43c108b810b68a4777666474de">  132</a></span>    std::mutex <a class="code hl_variable" href="classGame.html#a45c12f43c108b810b68a4777666474de">_entitiesMutex</a>;</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno"><a class="line" href="classGame.html#a8c72803e76a929ee137d42b3b6d25b69">  133</a></span>    uint32_t <a class="code hl_variable" href="classGame.html#a8c72803e76a929ee137d42b3b6d25b69">_nextEntityId</a> = 1;</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classGame.html#a9f5e3644a97f053ae7dcc80f9f35439f">checkCollision</a>(<span class="keywordtype">float</span> x1, <span class="keywordtype">float</span> y1, <span class="keywordtype">int</span> w1, <span class="keywordtype">int</span> h1, <span class="keywordtype">float</span> x2, <span class="keywordtype">float</span> y2, <span class="keywordtype">int</span> w2, <span class="keywordtype">int</span> h2);</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span>};</div>
+</div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span> </div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span> </div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span><span class="preprocessor">#endif </span><span class="comment">/* !GAME_HPP_ */</span><span class="preprocessor"></span></div>
+<div class="ttc" id="aCrossPlatformSocket_8hpp_html"><div class="ttname"><a href="CrossPlatformSocket_8hpp.html">CrossPlatformSocket.hpp</a></div><div class="ttdoc">Abstraction layer for socket headers on Windows and Linux.</div></div>
+<div class="ttc" id="aProtocoleUDP_8hpp_html"><div class="ttname"><a href="ProtocoleUDP_8hpp.html">ProtocoleUDP.hpp</a></div><div class="ttdoc">UDP protocol definitions for the R-Type game.</div></div>
+<div class="ttc" id="aclassGame_html"><div class="ttname"><a href="classGame.html">Game</a></div><div class="ttdoc">Manages the game world, players, and entities.</div><div class="ttdef"><b>Definition</b> Game.hpp:62</div></div>
+<div class="ttc" id="aclassGame_html_a132a5b3d1f01454c08899c90e289a5af"><div class="ttname"><a href="classGame.html#a132a5b3d1f01454c08899c90e289a5af">Game::updatePlayerUdpAddr</a></div><div class="ttdeci">void updatePlayerUdpAddr(uint32_t playerId, const sockaddr_in &amp;udpAddr)</div><div class="ttdoc">Updates the UDP address associated with a player.</div><div class="ttdef"><b>Definition</b> Game.cpp:36</div></div>
+<div class="ttc" id="aclassGame_html_a20a00e2c12febf177c092512a481ddfe"><div class="ttname"><a href="classGame.html#a20a00e2c12febf177c092512a481ddfe">Game::disconnectPlayer</a></div><div class="ttdeci">void disconnectPlayer(uint32_t playerId, UDPServer &amp;udpServer)</div><div class="ttdoc">Removes a player from the game.</div><div class="ttdef"><b>Definition</b> Game.cpp:153</div></div>
+<div class="ttc" id="aclassGame_html_a38bf0b5975eb4638f0a6b8dfc2c3a48d"><div class="ttname"><a href="classGame.html#a38bf0b5975eb4638f0a6b8dfc2c3a48d">Game::createPlayerShot</a></div><div class="ttdeci">void createPlayerShot(uint32_t playerId, UDPServer &amp;udpServer)</div><div class="ttdoc">Creates a projectile fired by a player.</div><div class="ttdef"><b>Definition</b> Game.cpp:71</div></div>
+<div class="ttc" id="aclassGame_html_a3a8d636e4a5172bfe206a06cc500a720"><div class="ttname"><a href="classGame.html#a3a8d636e4a5172bfe206a06cc500a720">Game::addPlayer</a></div><div class="ttdeci">void addPlayer(uint32_t playerId)</div><div class="ttdoc">Adds a new player to the game.</div><div class="ttdef"><b>Definition</b> Game.cpp:12</div></div>
+<div class="ttc" id="aclassGame_html_a40fa71458ccf2c6c5683d21df8d1adfa"><div class="ttname"><a href="classGame.html#a40fa71458ccf2c6c5683d21df8d1adfa">Game::handleCollision</a></div><div class="ttdeci">void handleCollision()</div><div class="ttdoc">Checks and resolves collisions between entities and players.</div><div class="ttdef"><b>Definition</b> Game.cpp:181</div></div>
+<div class="ttc" id="aclassGame_html_a45c12f43c108b810b68a4777666474de"><div class="ttname"><a href="classGame.html#a45c12f43c108b810b68a4777666474de">Game::_entitiesMutex</a></div><div class="ttdeci">std::mutex _entitiesMutex</div><div class="ttdef"><b>Definition</b> Game.hpp:132</div></div>
+<div class="ttc" id="aclassGame_html_a56f48b4fc8928ef67c1309a2477d6f91"><div class="ttname"><a href="classGame.html#a56f48b4fc8928ef67c1309a2477d6f91">Game::_players</a></div><div class="ttdeci">std::vector&lt; Player &gt; _players</div><div class="ttdef"><b>Definition</b> Game.hpp:128</div></div>
+<div class="ttc" id="aclassGame_html_a6764e2a54d6ce82a122ab43a24dad4d7"><div class="ttname"><a href="classGame.html#a6764e2a54d6ce82a122ab43a24dad4d7">Game::setPlayerLastProcessedTick</a></div><div class="ttdeci">void setPlayerLastProcessedTick(uint32_t playerId, uint32_t tick)</div><div class="ttdoc">Updates the last processed input tick for a player.</div><div class="ttdef"><b>Definition</b> Game.cpp:50</div></div>
+<div class="ttc" id="aclassGame_html_a70357d47680d0da78bca8954e3e22439"><div class="ttname"><a href="classGame.html#a70357d47680d0da78bca8954e3e22439">Game::createEnemy</a></div><div class="ttdeci">void createEnemy(UDPServer &amp;udpServer)</div><div class="ttdoc">Spawns a new enemy entity.</div><div class="ttdef"><b>Definition</b> Game.cpp:95</div></div>
+<div class="ttc" id="aclassGame_html_a88f17641268a7bafb750bcdbf66601e3"><div class="ttname"><a href="classGame.html#a88f17641268a7bafb750bcdbf66601e3">Game::getPlayer</a></div><div class="ttdeci">Player * getPlayer(uint32_t playerId)</div><div class="ttdoc">Retrieves a player by ID.</div><div class="ttdef"><b>Definition</b> Game.cpp:61</div></div>
+<div class="ttc" id="aclassGame_html_a8c72803e76a929ee137d42b3b6d25b69"><div class="ttname"><a href="classGame.html#a8c72803e76a929ee137d42b3b6d25b69">Game::_nextEntityId</a></div><div class="ttdeci">uint32_t _nextEntityId</div><div class="ttdef"><b>Definition</b> Game.hpp:133</div></div>
+<div class="ttc" id="aclassGame_html_a9f5e3644a97f053ae7dcc80f9f35439f"><div class="ttname"><a href="classGame.html#a9f5e3644a97f053ae7dcc80f9f35439f">Game::checkCollision</a></div><div class="ttdeci">bool checkCollision(float x1, float y1, int w1, int h1, float x2, float y2, int w2, int h2)</div><div class="ttdef"><b>Definition</b> Game.cpp:174</div></div>
+<div class="ttc" id="aclassGame_html_aa49cd42b25dca26e7da6e33ceab68da5"><div class="ttname"><a href="classGame.html#aa49cd42b25dca26e7da6e33ceab68da5">Game::updateEntities</a></div><div class="ttdeci">void updateEntities(UDPServer &amp;udpServer)</div><div class="ttdoc">Updates positions and states of all entities.</div><div class="ttdef"><b>Definition</b> Game.cpp:118</div></div>
+<div class="ttc" id="aclassGame_html_ac54b479380fa67d0ce2590b96cfa315b"><div class="ttname"><a href="classGame.html#ac54b479380fa67d0ce2590b96cfa315b">Game::_entities</a></div><div class="ttdeci">std::vector&lt; Entity &gt; _entities</div><div class="ttdef"><b>Definition</b> Game.hpp:131</div></div>
+<div class="ttc" id="aclassGame_html_ac99e2bab5b3e8699882d3098643b8ff6"><div class="ttname"><a href="classGame.html#ac99e2bab5b3e8699882d3098643b8ff6">Game::broadcastGameState</a></div><div class="ttdeci">void broadcastGameState(UDPServer &amp;udpServer)</div><div class="ttdoc">Broadcasts the current game state to all connected players via UDP.</div><div class="ttdef"><b>Definition</b> Game.cpp:17</div></div>
+<div class="ttc" id="aclassGame_html_acf9498469dbe24c5f1b72cbe3b76c96b"><div class="ttname"><a href="classGame.html#acf9498469dbe24c5f1b72cbe3b76c96b">Game::_playersMutex</a></div><div class="ttdeci">std::mutex _playersMutex</div><div class="ttdef"><b>Definition</b> Game.hpp:129</div></div>
+<div class="ttc" id="aclassUDPServer_html"><div class="ttname"><a href="classUDPServer.html">UDPServer</a></div><div class="ttdoc">Server class managing UDP communication.</div><div class="ttdef"><b>Definition</b> UDPServer.hpp:49</div></div>
+<div class="ttc" id="astructEntity_html"><div class="ttname"><a href="structEntity.html">Entity</a></div><div class="ttdoc">Represents a game entity (enemy, projectile, etc.).</div><div class="ttdef"><b>Definition</b> Game.hpp:46</div></div>
+<div class="ttc" id="astructEntity_html_a01b61ad5a0610c02c4fd9ebba7a0ce1c"><div class="ttname"><a href="structEntity.html#a01b61ad5a0610c02c4fd9ebba7a0ce1c">Entity::type</a></div><div class="ttdeci">uint16_t type</div><div class="ttdoc">Entity type.</div><div class="ttdef"><b>Definition</b> Game.hpp:48</div></div>
+<div class="ttc" id="astructEntity_html_a489f84ea2f7b049c466ec25d1bd5957d"><div class="ttname"><a href="structEntity.html#a489f84ea2f7b049c466ec25d1bd5957d">Entity::velocityX</a></div><div class="ttdeci">float velocityX</div><div class="ttdoc">Horizontal velocity.</div><div class="ttdef"><b>Definition</b> Game.hpp:51</div></div>
+<div class="ttc" id="astructEntity_html_a5591f1e3ea630c4d8063038728587ab8"><div class="ttname"><a href="structEntity.html#a5591f1e3ea630c4d8063038728587ab8">Entity::height</a></div><div class="ttdeci">int height</div><div class="ttdoc">Hitbox height.</div><div class="ttdef"><b>Definition</b> Game.hpp:53</div></div>
+<div class="ttc" id="astructEntity_html_a58bf3e06b7431307e26c4adccae8cf11"><div class="ttname"><a href="structEntity.html#a58bf3e06b7431307e26c4adccae8cf11">Entity::width</a></div><div class="ttdeci">int width</div><div class="ttdoc">Hitbox width.</div><div class="ttdef"><b>Definition</b> Game.hpp:54</div></div>
+<div class="ttc" id="astructEntity_html_a7eee17062ce809ed32030b344c6232fe"><div class="ttname"><a href="structEntity.html#a7eee17062ce809ed32030b344c6232fe">Entity::velocityY</a></div><div class="ttdeci">float velocityY</div><div class="ttdoc">Vertical velocity.</div><div class="ttdef"><b>Definition</b> Game.hpp:52</div></div>
+<div class="ttc" id="astructEntity_html_aa58f1699d73c60aebacf4c451f78f4bd"><div class="ttname"><a href="structEntity.html#aa58f1699d73c60aebacf4c451f78f4bd">Entity::is_collide</a></div><div class="ttdeci">bool is_collide</div><div class="ttdoc">Collision state.</div><div class="ttdef"><b>Definition</b> Game.hpp:55</div></div>
+<div class="ttc" id="astructEntity_html_abc2d19ee6ff26b8520428894da6a8f68"><div class="ttname"><a href="structEntity.html#abc2d19ee6ff26b8520428894da6a8f68">Entity::x</a></div><div class="ttdeci">float x</div><div class="ttdoc">X position.</div><div class="ttdef"><b>Definition</b> Game.hpp:49</div></div>
+<div class="ttc" id="astructEntity_html_acc08af95e32ae999517fa26b01840a54"><div class="ttname"><a href="structEntity.html#acc08af95e32ae999517fa26b01840a54">Entity::id</a></div><div class="ttdeci">uint32_t id</div><div class="ttdoc">Unique entity identifier.</div><div class="ttdef"><b>Definition</b> Game.hpp:47</div></div>
+<div class="ttc" id="astructEntity_html_af4966f81d91cc8f8d5eb9e9002240c49"><div class="ttname"><a href="structEntity.html#af4966f81d91cc8f8d5eb9e9002240c49">Entity::y</a></div><div class="ttdeci">float y</div><div class="ttdoc">Y position.</div><div class="ttdef"><b>Definition</b> Game.hpp:50</div></div>
+<div class="ttc" id="astructPlayer_html"><div class="ttname"><a href="structPlayer.html">Player</a></div><div class="ttdoc">Represents a player in the game session.</div><div class="ttdef"><b>Definition</b> Game.hpp:30</div></div>
+<div class="ttc" id="astructPlayer_html_a14c5033252176c27c24b3161e4ba140c"><div class="ttname"><a href="structPlayer.html#a14c5033252176c27c24b3161e4ba140c">Player::lastProcessedTick</a></div><div class="ttdeci">uint32_t lastProcessedTick</div><div class="ttdoc">Last input tick processed.</div><div class="ttdef"><b>Definition</b> Game.hpp:36</div></div>
+<div class="ttc" id="astructPlayer_html_a28c357b9a2636f8bf9c5377de8245c80"><div class="ttname"><a href="structPlayer.html#a28c357b9a2636f8bf9c5377de8245c80">Player::y</a></div><div class="ttdeci">float y</div><div class="ttdoc">Y position.</div><div class="ttdef"><b>Definition</b> Game.hpp:33</div></div>
+<div class="ttc" id="astructPlayer_html_a296a6c24d630d681c965fbd75896e978"><div class="ttname"><a href="structPlayer.html#a296a6c24d630d681c965fbd75896e978">Player::velocity</a></div><div class="ttdeci">float velocity</div><div class="ttdoc">Movement speed.</div><div class="ttdef"><b>Definition</b> Game.hpp:34</div></div>
+<div class="ttc" id="astructPlayer_html_a370e8ae6120f85b601d7b0dcc372cdb9"><div class="ttname"><a href="structPlayer.html#a370e8ae6120f85b601d7b0dcc372cdb9">Player::id</a></div><div class="ttdeci">uint32_t id</div><div class="ttdoc">Unique player identifier.</div><div class="ttdef"><b>Definition</b> Game.hpp:31</div></div>
+<div class="ttc" id="astructPlayer_html_a59eec29c87225f768b3767451ceb84da"><div class="ttname"><a href="structPlayer.html#a59eec29c87225f768b3767451ceb84da">Player::x</a></div><div class="ttdeci">float x</div><div class="ttdoc">X position.</div><div class="ttdef"><b>Definition</b> Game.hpp:32</div></div>
+<div class="ttc" id="astructPlayer_html_a682cd9664c9ea2e27c0f269d762bfa28"><div class="ttname"><a href="structPlayer.html#a682cd9664c9ea2e27c0f269d762bfa28">Player::height</a></div><div class="ttdeci">int height</div><div class="ttdoc">Hitbox height.</div><div class="ttdef"><b>Definition</b> Game.hpp:38</div></div>
+<div class="ttc" id="astructPlayer_html_ab112e078741802afd6c095ddea241b2f"><div class="ttname"><a href="structPlayer.html#ab112e078741802afd6c095ddea241b2f">Player::width</a></div><div class="ttdeci">int width</div><div class="ttdoc">Hitbox width.</div><div class="ttdef"><b>Definition</b> Game.hpp:39</div></div>
+<div class="ttc" id="astructPlayer_html_adee9beaa3679eb3573acad54bea5ca64"><div class="ttname"><a href="structPlayer.html#adee9beaa3679eb3573acad54bea5ca64">Player::udpAddr</a></div><div class="ttdeci">sockaddr_in udpAddr</div><div class="ttdoc">Player's UDP address for updates.</div><div class="ttdef"><b>Definition</b> Game.hpp:35</div></div>
+<div class="ttc" id="astructPlayer_html_aee31d361512e6d53ea47972d369b6b6c"><div class="ttname"><a href="structPlayer.html#aee31d361512e6d53ea47972d369b6b6c">Player::addrSet</a></div><div class="ttdeci">bool addrSet</div><div class="ttdoc">Whether the UDP address has been resolved.</div><div class="ttdef"><b>Definition</b> Game.hpp:37</div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_856524284ebe840938865dc061f982fb.html">Include</a></li><li class="navelem"><a class="el" href="dir_21088e69cde01e2ffa65ae4a5e19fd85.html">Server</a></li><li class="navelem"><a class="el" href="Game_8hpp.html">Game.hpp</a></li>
+    <li class="footer">Généré par <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

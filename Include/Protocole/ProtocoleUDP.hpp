@@ -14,6 +14,11 @@
 
 #include <cstdint>
 
+/**
+ * @file ProtocoleUDP.hpp
+ * @brief UDP protocol definitions for the R-Type game.
+ */
+
 // -----------------------------------------
 // Ensure structures are packed without padding
 // -----------------------------------------
@@ -28,11 +33,11 @@
  * of the `PlayerInputPacket`.
  */
 enum Input : uint8_t {
-    UP = 1 << 0,    ///< Represents bit 0 (value 1)
-    DOWN = 1 << 1,  ///< Represents bit 1 (value 2)
-    LEFT = 1 << 2,  ///< Represents bit 2 (value 4)
-    RIGHT = 1 << 3, ///< Represents bit 3 (value 8)
-    SHOOT = 1 << 4  ///< Represents bit 4 (value 16)
+    UP = 1 << 0,    ///< Move Up (Bit 0)
+    DOWN = 1 << 1,  ///< Move Down (Bit 1)
+    LEFT = 1 << 2,  ///< Move Left (Bit 2)
+    RIGHT = 1 << 3, ///< Move Right (Bit 3)
+    SHOOT = 1 << 4  ///< Shoot (Bit 4)
 };
 
 /**
@@ -40,14 +45,14 @@ enum Input : uint8_t {
  * @brief Identifies the type of each UDP packet sent between client and server.
  */
 enum UDPMessageType : uint8_t {
-    PLAYER_INPUT      = 1,  // Sent by client → player's commands
-    PLAYER_STATE      = 2,  // Sent by server → authoritative player position
-    ENTITY_SPAWN      = 3,  // Sent by server → spawn of an entity
-    ENTITY_UPDATE     = 4,  // Sent by server → update entity state
-    ENTITY_DESTROY    = 5,  // Sent by server → destroy entity
-    PING              = 6,  // Client → Server
-    PONG              = 7,  // Server → Client
-    PLAYER_DISCONNECT = 8   // Sent by client → player is disconnecting
+    PLAYER_INPUT      = 1,  ///< Sent by client: player's commands
+    PLAYER_STATE      = 2,  ///< Sent by server: authoritative player position
+    ENTITY_SPAWN      = 3,  ///< Sent by server: spawn of an entity
+    ENTITY_UPDATE     = 4,  ///< Sent by server: update entity state
+    ENTITY_DESTROY    = 5,  ///< Sent by server: destroy entity
+    PING              = 6,  ///< Client to Server ping
+    PONG              = 7,  ///< Server to Client pong
+    PLAYER_DISCONNECT = 8   ///< Sent by client: player is disconnecting
 };
 
 /**
@@ -61,10 +66,10 @@ enum UDPMessageType : uint8_t {
  * - inputs: A bitmask representing all player actions (up, down, left, right, shoot).
  */
 struct PlayerInputPacket {
-    uint8_t type = PLAYER_INPUT;
-    uint32_t playerId;
-    uint32_t tick;
-    uint8_t inputs; // Bit 0: UP, Bit 1: DOWN, Bit 2: LEFT, Bit 3: RIGHT, Bit 4: SHOOT
+    uint8_t type = PLAYER_INPUT; ///< Packet type (PLAYER_INPUT)
+    uint32_t playerId;           ///< Player identifier
+    uint32_t tick;               ///< Input tick counter
+    uint8_t inputs;              ///< Bitmask of actions (Input enum)
 };
 
 /**
@@ -79,12 +84,12 @@ struct PlayerInputPacket {
  * - x / y: Authoritative position on the map
  */
 struct PlayerStatePacket {
-    uint8_t type = PLAYER_STATE;
-    uint32_t playerId;
-    uint32_t lastProcessedTick;
-    uint32_t timestamp;
-    float x;
-    float y;
+    uint8_t type = PLAYER_STATE; ///< Packet type (PLAYER_STATE)
+    uint32_t playerId;           ///< Player identifier
+    uint32_t lastProcessedTick;  ///< Last input tick processed by server
+    uint32_t timestamp;          ///< Server timestamp
+    float x;                     ///< X position
+    float y;                     ///< Y position
 };
 
 /**
@@ -99,12 +104,12 @@ struct PlayerStatePacket {
  * - x / y: Spawn coordinates
  */
 struct EntitySpawnPacket {
-    uint8_t type = ENTITY_SPAWN;
-    uint32_t entityId;
-    uint16_t entityType;
-    uint32_t timestamp;
-    float x;
-    float y;
+    uint8_t type = ENTITY_SPAWN; ///< Packet type (ENTITY_SPAWN)
+    uint32_t entityId;           ///< Unique entity ID
+    uint16_t entityType;         ///< Type of entity
+    uint32_t timestamp;          ///< Server timestamp
+    float x;                     ///< Spawn X position
+    float y;                     ///< Spawn Y position
 };
 
 /**
@@ -118,11 +123,11 @@ struct EntitySpawnPacket {
  * - x / y: New authoritative position
  */
 struct EntityUpdatePacket {
-    uint8_t type = ENTITY_UPDATE;
-    uint32_t entityId;
-    uint32_t timestamp;
-    float x;
-    float y;
+    uint8_t type = ENTITY_UPDATE; ///< Packet type (ENTITY_UPDATE)
+    uint32_t entityId;            ///< Entity ID
+    uint32_t timestamp;           ///< Server timestamp
+    float x;                      ///< New X position
+    float y;                      ///< New Y position
 };
 
 /**
@@ -134,8 +139,8 @@ struct EntityUpdatePacket {
  * - entityId: Entity to destroy
  */
 struct EntityDestroyPacket {
-    uint8_t type = ENTITY_DESTROY;
-    uint32_t entityId;
+    uint8_t type = ENTITY_DESTROY; ///< Packet type (ENTITY_DESTROY)
+    uint32_t entityId;             ///< Entity ID to destroy
 };
 
 /**
@@ -143,8 +148,8 @@ struct EntityDestroyPacket {
  * @brief Used to measure latency.
  */
 struct PingPacket {
-    uint8_t type = PING;
-    uint32_t timestamp; // client clock
+    uint8_t type = PING; ///< Packet type (PING)
+    uint32_t timestamp;  ///< Client timestamp
 };
 
 /**
@@ -152,8 +157,8 @@ struct PingPacket {
  * @brief Server reply to PingPacket.
  */
 struct PongPacket {
-    uint8_t type = PONG;
-    uint32_t timestamp;
+    uint8_t type = PONG; ///< Packet type (PONG)
+    uint32_t timestamp;  ///< Original client timestamp
 };
 
 /**
@@ -165,8 +170,8 @@ struct PongPacket {
  * - playerId: Player identifier
  */
 struct PlayerDisconnectPacket {
-    uint8_t type = PLAYER_DISCONNECT;
-    uint32_t playerId;
+    uint8_t type = PLAYER_DISCONNECT; ///< Packet type (PLAYER_DISCONNECT)
+    uint32_t playerId;                ///< Player identifier
 };
 
 // Restore packing

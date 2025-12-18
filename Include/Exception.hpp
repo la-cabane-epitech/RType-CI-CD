@@ -10,6 +10,11 @@
     #include <exception>
     #include <string>
 
+/**
+ * @file Exception.hpp
+ * @brief Custom exception class definition.
+ */
+
 namespace RType {
 
     /**

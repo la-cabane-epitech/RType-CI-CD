@@ -15,6 +15,11 @@
 #include <cstdint>
 #include "Clock.hpp"
 
+/**
+ * @file ProtocoleTCP.hpp
+ * @brief TCP protocol definitions for the R-Type game.
+ */
+
 // -----------------------------------------
 // Ensure structures are packed without padding
 // to guarantee identical memory layout across client and server.
@@ -30,8 +35,8 @@
  * - username: Null-terminated username of the player (max 31 chars)
  */
 struct ConnectRequest {
-    uint8_t type = 1;     // CONNECT
-    char username[32];    // Player username
+    uint8_t type = 1;     ///< Packet type identifier (1 = CONNECT)
+    char username[32];    ///< Player username
 };
 
 /**
@@ -44,10 +49,10 @@ struct ConnectRequest {
  * - udpPort: UDP port number assigned for gameplay communication
  */
 struct ConnectResponse {
-    uint8_t type = 2;     // CONNECT_OK
-    uint32_t playerId;    // Unique player ID
-    uint16_t udpPort;     // Assigned UDP port for gameplay
-    Clock clock;          // 
+    uint8_t type = 2;     ///< Packet type identifier (2 = CONNECT_OK)
+    uint32_t playerId;    ///< Unique player ID
+    uint16_t udpPort;     ///< Assigned UDP port for gameplay
+    Clock clock;          ///< Server clock snapshot for synchronization
 };
 
 /**
@@ -59,8 +64,8 @@ struct ConnectResponse {
  * - message: Null-terminated error message (max 63 characters)
  */
 struct ErrorResponse {
-    uint8_t type = 3;     // CONNECT_ERROR
-    char message[64];     // Error message text
+    uint8_t type = 3;     ///< Packet type identifier (3 = CONNECT_ERROR)
+    char message[64];     ///< Error message text
 };
 
 // Restore default packing

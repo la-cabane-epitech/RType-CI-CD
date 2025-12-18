@@ -1,0 +1,65 @@
+#---------------------------------------------------------------------------
+# PROJET R-TYPE - CONFIGURATION DOXYGEN
+#---------------------------------------------------------------------------
+
+# --- Informations Générales ---
+PROJECT_NAME           = "R-Type"
+PROJECT_BRIEF          = "Architecture Client/Serveur de jeu de tir spatial"
+OUTPUT_DIRECTORY       = Document/doc_generated
+OUTPUT_LANGUAGE        = French
+DOXYFILE_ENCODING      = UTF-8
+
+# --- Entrées (Où sont tes fichiers) ---
+# On inclut les headers, les sources et tes fichiers de doc Markdown
+INPUT                  = Include \
+                         Src \
+                         Document/README.md \
+                         Document/HOWTOCONTRIBUTE.md \
+                         Document/RFC_Protocol.md
+
+# On scanne les sous-dossiers (Client, Server, Protocole, etc.)
+RECURSIVE              = YES
+
+# On définit les types de fichiers à analyser
+FILE_PATTERNS          = *.hpp *.cpp *.md
+
+# --- Exclusions (Très important pour éviter le bruit) ---
+# On ignore le dossier build, les outils Conan et les fichiers CMake
+EXCLUDE                = build \
+                         .conan \
+                         CMakeFiles \
+                         _deps
+
+# --- Extraction de la documentation ---
+# Extraire tout même ce qui n'est pas documenté (pour avoir une vue d'ensemble)
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+# Pour le C++, c'est plus propre d'avoir les membres dans l'ordre du fichier
+SORT_MEMBER_DOCS       = NO
+
+# --- Mise en page et navigation ---
+# Utilise ton README comme page d'accueil de la doc
+USE_MDFILE_AS_MAINPAGE = Document/README.md
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = YES
+HTML_COLORSTYLE        = TOGGLE
+
+# --- Graphes et Diagrammes (Nécessite Graphviz / dot) ---
+HAVE_DOT               = YES
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+# Génère des diagrammes au look UML
+UML_LOOK               = YES
+UML_LIMIT_NUM_FIELDS   = 15
+# Montre les dépendances d'include (très utile pour ton dossier Include)
+INCLUDE_GRAPH          = YES
+INCLUDED_BY_GRAPH      = YES
+# Optionnel : active les graphes d'appels (peut ralentir la génération)
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+
+# --- Formats de sortie ---
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO

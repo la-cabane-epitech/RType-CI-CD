@@ -1,0 +1,184 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>R-Type:  Fichier source de Include/Client/RTypeClient.hpp</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/javascript" src="darkmode_toggle.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">R-Type
+   </div>
+   <div id="projectbrief">Architecture Client/Serveur de jeu de tir spatial</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- Généré par Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','Recherche');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('RTypeClient_8hpp_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">Chargement...</div>
+<div class="SRStatus" id="Searching">Recherche...</div>
+<div class="SRStatus" id="NoMatches">Aucune correspondance</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">RTypeClient.hpp</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="RTypeClient_8hpp.html">Aller à la documentation de ce fichier.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="comment">/*</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="comment">** EPITECH PROJECT, 2025</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="comment">** RType-CI-CD</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="comment">** File description:</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="comment">** RTypeClient.hpp</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="comment">*/</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#ifndef RTYPECLIENT_HPP_</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#define RTYPECLIENT_HPP_</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &quot;<a class="code" href="UDPClient_8hpp.html">./UDPClient.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &quot;<a class="code" href="GameState_8hpp.html">GameState.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &quot;<a class="code" href="Renderer_8hpp.html">Renderer.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &quot;<a class="code" href="ProtocoleTCP_8hpp.html">Protocole/ProtocoleTCP.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &lt;iostream&gt;</span></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &quot;<a class="code" href="Clock_8hpp.html">Clock.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &lt;deque&gt;</span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
+<div class="foldopen" id="foldopen00024" data-start="{" data-end="};">
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno"><a class="line" href="classRTypeClient.html">   24</a></span><span class="keyword">class </span><a class="code hl_class" href="classRTypeClient.html">RTypeClient</a> {</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>    <a class="code hl_class" href="classRTypeClient.html">RTypeClient</a>(<span class="keyword">const</span> std::string&amp; serverIp, <span class="keyword">const</span> <a class="code hl_struct" href="structConnectResponse.html">ConnectResponse</a>&amp; connectResponse);</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classRTypeClient.html#a45a0ba173b3d9472e2deb1ce2d613bcb">applyInput</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structPlayerInputPacket.html">PlayerInputPacket</a>&amp; packet);</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classRTypeClient.html#a3b23c8358dce33db7f6c24475c14a950">run</a>();</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classRTypeClient.html#a837aa4bdad872e252d64558889346bbb">handleInput</a>();</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classRTypeClient.html#aa5a3619aa3c88e0564e0839c363f7f3e">update</a>();</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span> </div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classRTypeClient.html#ac9da7b8d4ca313d6cfa345dfecc561da">render</a>();</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno"><a class="line" href="classRTypeClient.html#ad49d91489071324f9176dd2d472ece03">   61</a></span>    <a class="code hl_class" href="classUDPClient.html">UDPClient</a> <a class="code hl_variable" href="classRTypeClient.html#ad49d91489071324f9176dd2d472ece03">_udpClient</a>; </div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno"><a class="line" href="classRTypeClient.html#a1bcf172ae135ce0efd571bed33833918">   62</a></span>    <a class="code hl_struct" href="structGameState.html">GameState</a> <a class="code hl_variable" href="classRTypeClient.html#a1bcf172ae135ce0efd571bed33833918">_gameState</a>; </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno"><a class="line" href="classRTypeClient.html#a8dd027e8f7f2cc46598fe17f77db6d1a">   63</a></span>    <a class="code hl_class" href="classRenderer.html">Renderer</a> <a class="code hl_variable" href="classRTypeClient.html#a8dd027e8f7f2cc46598fe17f77db6d1a">_renderer</a>;   </div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno"><a class="line" href="classRTypeClient.html#acc7ecad10cb62c1694482a3bf2300a5e">   64</a></span>    uint32_t <a class="code hl_variable" href="classRTypeClient.html#acc7ecad10cb62c1694482a3bf2300a5e">_tick</a> = 0;   </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno"><a class="line" href="classRTypeClient.html#ae0666d9b901c74357acf0cf2b7b1ae47">   65</a></span>    <a class="code hl_class" href="classClock.html">Clock</a> <a class="code hl_variable" href="classRTypeClient.html#ae0666d9b901c74357acf0cf2b7b1ae47">_clock</a>;         </div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno"><a class="line" href="classRTypeClient.html#acac9f69801ced628dae9ad9017c8f035">   67</a></span>    std::deque&lt;PlayerInputPacket&gt; <a class="code hl_variable" href="classRTypeClient.html#acac9f69801ced628dae9ad9017c8f035">_pendingInputs</a>; </div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno"><a class="line" href="classRTypeClient.html#a3c268a0e977be6f5a5fc7b1877fec0bc">   69</a></span>    uint32_t <a class="code hl_variable" href="classRTypeClient.html#a3c268a0e977be6f5a5fc7b1877fec0bc">_lastPingTime</a> = 0; </div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno"><a class="line" href="classRTypeClient.html#aeb2c1b7cedecab6741287e1c630db0d3">   70</a></span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> uint32_t <a class="code hl_variable" href="classRTypeClient.html#aeb2c1b7cedecab6741287e1c630db0d3">PING_INTERVAL_MS</a> = 1000; </div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>};</div>
+</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span> </div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span><span class="preprocessor">#endif </span><span class="comment">// RTYPECLIENT_HPP_</span></div>
+<div class="ttc" id="aClock_8hpp_html"><div class="ttname"><a href="Clock_8hpp.html">Clock.hpp</a></div><div class="ttdoc">Simple high-resolution timer class.</div></div>
+<div class="ttc" id="aGameState_8hpp_html"><div class="ttname"><a href="GameState_8hpp.html">GameState.hpp</a></div></div>
+<div class="ttc" id="aProtocoleTCP_8hpp_html"><div class="ttname"><a href="ProtocoleTCP_8hpp.html">ProtocoleTCP.hpp</a></div><div class="ttdoc">TCP protocol definitions for the R-Type game.</div></div>
+<div class="ttc" id="aRenderer_8hpp_html"><div class="ttname"><a href="Renderer_8hpp.html">Renderer.hpp</a></div></div>
+<div class="ttc" id="aUDPClient_8hpp_html"><div class="ttname"><a href="UDPClient_8hpp.html">UDPClient.hpp</a></div></div>
+<div class="ttc" id="aclassClock_html"><div class="ttname"><a href="classClock.html">Clock</a></div><div class="ttdoc">A simple high-resolution clock for measuring elapsed time.</div><div class="ttdef"><b>Definition</b> Clock.hpp:27</div></div>
+<div class="ttc" id="aclassRTypeClient_html"><div class="ttname"><a href="classRTypeClient.html">RTypeClient</a></div><div class="ttdoc">Main client class that orchestrates the game loop, networking, and rendering.</div><div class="ttdef"><b>Definition</b> RTypeClient.hpp:24</div></div>
+<div class="ttc" id="aclassRTypeClient_html_a1bcf172ae135ce0efd571bed33833918"><div class="ttname"><a href="classRTypeClient.html#a1bcf172ae135ce0efd571bed33833918">RTypeClient::_gameState</a></div><div class="ttdeci">GameState _gameState</div><div class="ttdef"><b>Definition</b> RTypeClient.hpp:62</div></div>
+<div class="ttc" id="aclassRTypeClient_html_a3b23c8358dce33db7f6c24475c14a950"><div class="ttname"><a href="classRTypeClient.html#a3b23c8358dce33db7f6c24475c14a950">RTypeClient::run</a></div><div class="ttdeci">void run()</div><div class="ttdoc">Starts the main game loop.</div><div class="ttdef"><b>Definition</b> RTypeClient.cpp:20</div></div>
+<div class="ttc" id="aclassRTypeClient_html_a3c268a0e977be6f5a5fc7b1877fec0bc"><div class="ttname"><a href="classRTypeClient.html#a3c268a0e977be6f5a5fc7b1877fec0bc">RTypeClient::_lastPingTime</a></div><div class="ttdeci">uint32_t _lastPingTime</div><div class="ttdef"><b>Definition</b> RTypeClient.hpp:69</div></div>
+<div class="ttc" id="aclassRTypeClient_html_a45a0ba173b3d9472e2deb1ce2d613bcb"><div class="ttname"><a href="classRTypeClient.html#a45a0ba173b3d9472e2deb1ce2d613bcb">RTypeClient::applyInput</a></div><div class="ttdeci">void applyInput(const PlayerInputPacket &amp;packet)</div><div class="ttdoc">Applies a player input packet to the local state (prediction).</div><div class="ttdef"><b>Definition</b> RTypeClient.cpp:36</div></div>
+<div class="ttc" id="aclassRTypeClient_html_a837aa4bdad872e252d64558889346bbb"><div class="ttname"><a href="classRTypeClient.html#a837aa4bdad872e252d64558889346bbb">RTypeClient::handleInput</a></div><div class="ttdeci">void handleInput()</div><div class="ttdoc">Captures and processes local player input.</div><div class="ttdef"><b>Definition</b> RTypeClient.cpp:45</div></div>
+<div class="ttc" id="aclassRTypeClient_html_a8dd027e8f7f2cc46598fe17f77db6d1a"><div class="ttname"><a href="classRTypeClient.html#a8dd027e8f7f2cc46598fe17f77db6d1a">RTypeClient::_renderer</a></div><div class="ttdeci">Renderer _renderer</div><div class="ttdef"><b>Definition</b> RTypeClient.hpp:63</div></div>
+<div class="ttc" id="aclassRTypeClient_html_aa5a3619aa3c88e0564e0839c363f7f3e"><div class="ttname"><a href="classRTypeClient.html#aa5a3619aa3c88e0564e0839c363f7f3e">RTypeClient::update</a></div><div class="ttdeci">void update()</div><div class="ttdoc">Updates the game logic and processes network messages.</div><div class="ttdef"><b>Definition</b> RTypeClient.cpp:67</div></div>
+<div class="ttc" id="aclassRTypeClient_html_ac9da7b8d4ca313d6cfa345dfecc561da"><div class="ttname"><a href="classRTypeClient.html#ac9da7b8d4ca313d6cfa345dfecc561da">RTypeClient::render</a></div><div class="ttdeci">void render()</div><div class="ttdoc">Renders the current frame.</div><div class="ttdef"><b>Definition</b> RTypeClient.cpp:132</div></div>
+<div class="ttc" id="aclassRTypeClient_html_acac9f69801ced628dae9ad9017c8f035"><div class="ttname"><a href="classRTypeClient.html#acac9f69801ced628dae9ad9017c8f035">RTypeClient::_pendingInputs</a></div><div class="ttdeci">std::deque&lt; PlayerInputPacket &gt; _pendingInputs</div><div class="ttdef"><b>Definition</b> RTypeClient.hpp:67</div></div>
+<div class="ttc" id="aclassRTypeClient_html_acc7ecad10cb62c1694482a3bf2300a5e"><div class="ttname"><a href="classRTypeClient.html#acc7ecad10cb62c1694482a3bf2300a5e">RTypeClient::_tick</a></div><div class="ttdeci">uint32_t _tick</div><div class="ttdef"><b>Definition</b> RTypeClient.hpp:64</div></div>
+<div class="ttc" id="aclassRTypeClient_html_ad49d91489071324f9176dd2d472ece03"><div class="ttname"><a href="classRTypeClient.html#ad49d91489071324f9176dd2d472ece03">RTypeClient::_udpClient</a></div><div class="ttdeci">UDPClient _udpClient</div><div class="ttdef"><b>Definition</b> RTypeClient.hpp:61</div></div>
+<div class="ttc" id="aclassRTypeClient_html_ae0666d9b901c74357acf0cf2b7b1ae47"><div class="ttname"><a href="classRTypeClient.html#ae0666d9b901c74357acf0cf2b7b1ae47">RTypeClient::_clock</a></div><div class="ttdeci">Clock _clock</div><div class="ttdef"><b>Definition</b> RTypeClient.hpp:65</div></div>
+<div class="ttc" id="aclassRTypeClient_html_aeb2c1b7cedecab6741287e1c630db0d3"><div class="ttname"><a href="classRTypeClient.html#aeb2c1b7cedecab6741287e1c630db0d3">RTypeClient::PING_INTERVAL_MS</a></div><div class="ttdeci">static constexpr uint32_t PING_INTERVAL_MS</div><div class="ttdef"><b>Definition</b> RTypeClient.hpp:70</div></div>
+<div class="ttc" id="aclassRenderer_html"><div class="ttname"><a href="classRenderer.html">Renderer</a></div><div class="ttdoc">Responsible for rendering the game state to the screen.</div><div class="ttdef"><b>Definition</b> Renderer.hpp:20</div></div>
+<div class="ttc" id="aclassUDPClient_html"><div class="ttname"><a href="classUDPClient.html">UDPClient</a></div><div class="ttdoc">Handles UDP communication for real-time game updates.</div><div class="ttdef"><b>Definition</b> UDPClient.hpp:18</div></div>
+<div class="ttc" id="astructConnectResponse_html"><div class="ttname"><a href="structConnectResponse.html">ConnectResponse</a></div><div class="ttdoc">Sent by the server to confirm a successful connection.</div><div class="ttdef"><b>Definition</b> ProtocoleTCP.hpp:51</div></div>
+<div class="ttc" id="astructGameState_html"><div class="ttname"><a href="structGameState.html">GameState</a></div><div class="ttdoc">Holds the synchronized state of the game on the client side.</div><div class="ttdef"><b>Definition</b> GameState.hpp:39</div></div>
+<div class="ttc" id="astructPlayerInputPacket_html"><div class="ttname"><a href="structPlayerInputPacket.html">PlayerInputPacket</a></div><div class="ttdoc">Sent by the client to inform the server about the player's actions.</div><div class="ttdef"><b>Definition</b> ProtocoleUDP.hpp:68</div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_856524284ebe840938865dc061f982fb.html">Include</a></li><li class="navelem"><a class="el" href="dir_177db36a0d34bc5c5c4b972c1108b319.html">Client</a></li><li class="navelem"><a class="el" href="RTypeClient_8hpp.html">RTypeClient.hpp</a></li>
+    <li class="footer">Généré par <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

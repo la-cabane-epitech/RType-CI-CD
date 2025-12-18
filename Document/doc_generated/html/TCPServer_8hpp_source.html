@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="fr">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.9.8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>R-Type:  Fichier source de Include/Server/TCPServer.hpp</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="resize.js"></script>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<script type="text/javascript" src="darkmode_toggle.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">R-Type
+   </div>
+   <div id="projectbrief">Architecture Client/Serveur de jeu de tir spatial</div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- Généré par Doxygen 1.9.8 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(function() {
+  initMenu('',true,false,'search.php','Recherche');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */
+</script>
+<div id="main-nav"></div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function() { init_codefold(0); });
+/* @license-end */
+</script>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
+$(document).ready(function(){initNavTree('TCPServer_8hpp_source.html',''); initResizable(); });
+/* @license-end */
+</script>
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">Chargement...</div>
+<div class="SRStatus" id="Searching">Recherche...</div>
+<div class="SRStatus" id="NoMatches">Aucune correspondance</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">TCPServer.hpp</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="TCPServer_8hpp.html">Aller à la documentation de ce fichier.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef TCPSERVER_HPP_</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define TCPSERVER_HPP_</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">    #include &lt;sys/socket.h&gt;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">    #include &lt;arpa/inet.h&gt;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">    #include &lt;unistd.h&gt;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span> </div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;thread&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &quot;<a class="code" href="Game_8hpp.html">Server/Game.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &quot;<a class="code" href="ProtocoleTCP_8hpp.html">Protocole/ProtocoleTCP.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &quot;<a class="code" href="Game_8hpp.html">Server/Game.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &quot;<a class="code" href="Clock_8hpp.html">Clock.hpp</a>&quot;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
+<div class="foldopen" id="foldopen00030" data-start="{" data-end="};">
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno"><a class="line" href="classTCPServer.html">   30</a></span><span class="keyword">class </span><a class="code hl_class" href="classTCPServer.html">TCPServer</a> {</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <a class="code hl_class" href="classTCPServer.html">TCPServer</a>(<span class="keywordtype">int</span> port, <a class="code hl_class" href="classGame.html">Game</a>&amp; game, <a class="code hl_class" href="classClock.html">Clock</a>&amp; clock);</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <a class="code hl_function" href="classTCPServer.html#abc497ac52355e53986a6a1bd1acb9581">~TCPServer</a>();</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classTCPServer.html#a02a481f18a96c41fda63f2caf97df239">start</a>();</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classTCPServer.html#a9c0f55968624ea4dd49467b656e23807">stop</a>();</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span> </div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classTCPServer.html#a2ed75abcbde91005d96293420a65b73e">acceptLoop</a>();</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="classTCPServer.html#a44a8774e636c0d1e58d0797302431dbb">handleClient</a>(<span class="keywordtype">int</span> clientSock);</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span> </div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno"><a class="line" href="classTCPServer.html#a7f888a32f40e23902e5ca10fccafc21a">   59</a></span>    <span class="keywordtype">int</span> <a class="code hl_variable" href="classTCPServer.html#a7f888a32f40e23902e5ca10fccafc21a">_sockfd</a>; </div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno"><a class="line" href="classTCPServer.html#ac983ce2dda0c9b968ebd7fce43d40ced">   60</a></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="classTCPServer.html#ac983ce2dda0c9b968ebd7fce43d40ced">_running</a>; </div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno"><a class="line" href="classTCPServer.html#ae4083a8dc1dc2d72ea07d9455a4f50fa">   61</a></span>    <a class="code hl_class" href="classGame.html">Game</a>&amp; <a class="code hl_variable" href="classTCPServer.html#ae4083a8dc1dc2d72ea07d9455a4f50fa">_game</a>; </div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno"><a class="line" href="classTCPServer.html#a8acc5b69efd671c08805dba62fe2cc5f">   62</a></span>    uint32_t <a class="code hl_variable" href="classTCPServer.html#a8acc5b69efd671c08805dba62fe2cc5f">_nextPlayerId</a> = 1; </div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno"><a class="line" href="classTCPServer.html#acc3ef2ed0417d8e161c6856104d317a8">   64</a></span>    std::thread <a class="code hl_variable" href="classTCPServer.html#acc3ef2ed0417d8e161c6856104d317a8">_acceptThread</a>; </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno"><a class="line" href="classTCPServer.html#a62338de5dee7e0474a9ea95281f9cb70">   65</a></span>    std::vector&lt;std::thread&gt; <a class="code hl_variable" href="classTCPServer.html#a62338de5dee7e0474a9ea95281f9cb70">_clientThread</a>; </div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno"><a class="line" href="classTCPServer.html#a9bb544ad01def529231e27c5144efd66">   66</a></span>    <span class="keyword">const</span> <a class="code hl_class" href="classClock.html">Clock</a>&amp; <a class="code hl_variable" href="classTCPServer.html#a9bb544ad01def529231e27c5144efd66">_clock</a>; </div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>};</div>
+</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span><span class="preprocessor">#endif</span></div>
+<div class="ttc" id="aClock_8hpp_html"><div class="ttname"><a href="Clock_8hpp.html">Clock.hpp</a></div><div class="ttdoc">Simple high-resolution timer class.</div></div>
+<div class="ttc" id="aGame_8hpp_html"><div class="ttname"><a href="Game_8hpp.html">Game.hpp</a></div><div class="ttdoc">Server-side game logic and state management.</div></div>
+<div class="ttc" id="aProtocoleTCP_8hpp_html"><div class="ttname"><a href="ProtocoleTCP_8hpp.html">ProtocoleTCP.hpp</a></div><div class="ttdoc">TCP protocol definitions for the R-Type game.</div></div>
+<div class="ttc" id="aclassClock_html"><div class="ttname"><a href="classClock.html">Clock</a></div><div class="ttdoc">A simple high-resolution clock for measuring elapsed time.</div><div class="ttdef"><b>Definition</b> Clock.hpp:27</div></div>
+<div class="ttc" id="aclassGame_html"><div class="ttname"><a href="classGame.html">Game</a></div><div class="ttdoc">Manages the game world, players, and entities.</div><div class="ttdef"><b>Definition</b> Game.hpp:62</div></div>
+<div class="ttc" id="aclassTCPServer_html"><div class="ttname"><a href="classTCPServer.html">TCPServer</a></div><div class="ttdoc">Server class managing TCP connections.</div><div class="ttdef"><b>Definition</b> TCPServer.hpp:30</div></div>
+<div class="ttc" id="aclassTCPServer_html_a02a481f18a96c41fda63f2caf97df239"><div class="ttname"><a href="classTCPServer.html#a02a481f18a96c41fda63f2caf97df239">TCPServer::start</a></div><div class="ttdeci">void start()</div><div class="ttdoc">Starts the server and the acceptance thread.</div><div class="ttdef"><b>Definition</b> TCPServer.cpp:56</div></div>
+<div class="ttc" id="aclassTCPServer_html_a2ed75abcbde91005d96293420a65b73e"><div class="ttname"><a href="classTCPServer.html#a2ed75abcbde91005d96293420a65b73e">TCPServer::acceptLoop</a></div><div class="ttdeci">void acceptLoop()</div><div class="ttdef"><b>Definition</b> TCPServer.cpp:66</div></div>
+<div class="ttc" id="aclassTCPServer_html_a44a8774e636c0d1e58d0797302431dbb"><div class="ttname"><a href="classTCPServer.html#a44a8774e636c0d1e58d0797302431dbb">TCPServer::handleClient</a></div><div class="ttdeci">void handleClient(int clientSock)</div><div class="ttdef"><b>Definition</b> TCPServer.cpp:78</div></div>
+<div class="ttc" id="aclassTCPServer_html_a62338de5dee7e0474a9ea95281f9cb70"><div class="ttname"><a href="classTCPServer.html#a62338de5dee7e0474a9ea95281f9cb70">TCPServer::_clientThread</a></div><div class="ttdeci">std::vector&lt; std::thread &gt; _clientThread</div><div class="ttdef"><b>Definition</b> TCPServer.hpp:65</div></div>
+<div class="ttc" id="aclassTCPServer_html_a7f888a32f40e23902e5ca10fccafc21a"><div class="ttname"><a href="classTCPServer.html#a7f888a32f40e23902e5ca10fccafc21a">TCPServer::_sockfd</a></div><div class="ttdeci">int _sockfd</div><div class="ttdef"><b>Definition</b> TCPServer.hpp:59</div></div>
+<div class="ttc" id="aclassTCPServer_html_a8acc5b69efd671c08805dba62fe2cc5f"><div class="ttname"><a href="classTCPServer.html#a8acc5b69efd671c08805dba62fe2cc5f">TCPServer::_nextPlayerId</a></div><div class="ttdeci">uint32_t _nextPlayerId</div><div class="ttdef"><b>Definition</b> TCPServer.hpp:62</div></div>
+<div class="ttc" id="aclassTCPServer_html_a9bb544ad01def529231e27c5144efd66"><div class="ttname"><a href="classTCPServer.html#a9bb544ad01def529231e27c5144efd66">TCPServer::_clock</a></div><div class="ttdeci">const Clock &amp; _clock</div><div class="ttdef"><b>Definition</b> TCPServer.hpp:66</div></div>
+<div class="ttc" id="aclassTCPServer_html_a9c0f55968624ea4dd49467b656e23807"><div class="ttname"><a href="classTCPServer.html#a9c0f55968624ea4dd49467b656e23807">TCPServer::stop</a></div><div class="ttdeci">void stop()</div><div class="ttdoc">Stops the server and joins threads.</div><div class="ttdef"><b>Definition</b> TCPServer.cpp:38</div></div>
+<div class="ttc" id="aclassTCPServer_html_abc497ac52355e53986a6a1bd1acb9581"><div class="ttname"><a href="classTCPServer.html#abc497ac52355e53986a6a1bd1acb9581">TCPServer::~TCPServer</a></div><div class="ttdeci">~TCPServer()</div><div class="ttdoc">Destroy the TCPServer object.</div><div class="ttdef"><b>Definition</b> TCPServer.cpp:33</div></div>
+<div class="ttc" id="aclassTCPServer_html_ac983ce2dda0c9b968ebd7fce43d40ced"><div class="ttname"><a href="classTCPServer.html#ac983ce2dda0c9b968ebd7fce43d40ced">TCPServer::_running</a></div><div class="ttdeci">bool _running</div><div class="ttdef"><b>Definition</b> TCPServer.hpp:60</div></div>
+<div class="ttc" id="aclassTCPServer_html_acc3ef2ed0417d8e161c6856104d317a8"><div class="ttname"><a href="classTCPServer.html#acc3ef2ed0417d8e161c6856104d317a8">TCPServer::_acceptThread</a></div><div class="ttdeci">std::thread _acceptThread</div><div class="ttdef"><b>Definition</b> TCPServer.hpp:64</div></div>
+<div class="ttc" id="aclassTCPServer_html_ae4083a8dc1dc2d72ea07d9455a4f50fa"><div class="ttname"><a href="classTCPServer.html#ae4083a8dc1dc2d72ea07d9455a4f50fa">TCPServer::_game</a></div><div class="ttdeci">Game &amp; _game</div><div class="ttdef"><b>Definition</b> TCPServer.hpp:61</div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a class="el" href="dir_856524284ebe840938865dc061f982fb.html">Include</a></li><li class="navelem"><a class="el" href="dir_21088e69cde01e2ffa65ae4a5e19fd85.html">Server</a></li><li class="navelem"><a class="el" href="TCPServer_8hpp.html">TCPServer.hpp</a></li>
+    <li class="footer">Généré par <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
+  </ul>
+</div>
+</body>
+</html>

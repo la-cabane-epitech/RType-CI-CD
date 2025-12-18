@@ -5,6 +5,11 @@
 ** Ray
 */
 
+/**
+ * @file Ray.hpp
+ * @brief Wrapper for Raylib inclusion to handle Windows conflicts.
+ */
+
 #ifndef RAY_HPP_
 #define RAY_HPP_
 

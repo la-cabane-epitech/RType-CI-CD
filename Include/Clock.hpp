@@ -12,6 +12,11 @@
 #include <cstdint>
 
 /**
+ * @file Clock.hpp
+ * @brief Simple high-resolution timer class.
+ */
+
+/**
  * @class Clock
  * @brief A simple high-resolution clock for measuring elapsed time.
  *

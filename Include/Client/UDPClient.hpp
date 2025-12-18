@@ -10,17 +10,35 @@
 #include "CrossPlatformSocket.hpp"
 #include "Client/Asio.hpp"
 
+/**
+ * @class UDPClient
+ * @brief Handles UDP communication for real-time game updates.
+ */
 class UDPClient
 {
 private:
-    asio::io_context _io_context;
-    asio::ip::udp::socket _socket;
-    asio::ip::udp::endpoint _server_endpoint;
+    asio::io_context _io_context; /**< ASIO IO context */
+    asio::ip::udp::socket _socket; /**< UDP socket */
+    asio::ip::udp::endpoint _server_endpoint; /**< Endpoint of the server */
 
 public:
+    /**
+     * @brief Construct a new UDPClient object.
+     * @param serverIp IP address of the server.
+     * @param port UDP port of the server.
+     */
     UDPClient(const std::string& serverIp, uint16_t port);
+
+    /**
+     * @brief Destroy the UDPClient object.
+     */
     ~UDPClient();
 
+    /**
+     * @brief Receives a message from the server.
+     * @tparam BufferSize Size of the buffer to use for receiving.
+     * @return std::optional<std::array<char, BufferSize>> The received data if successful, nullopt otherwise.
+     */
     template<size_t BufferSize>
     std::optional<std::array<char, BufferSize>> receiveMessage() noexcept
     {
@@ -46,6 +64,12 @@ public:
         return std::nullopt;
     }
 
+    /**
+     * @brief Sends a packet to the server.
+     * @tparam T Type of the packet structure.
+     * @param packet The packet to send.
+     * @return true if sent successfully, false otherwise.
+     */
     template<typename T>
     bool sendMessage(const T& packet) noexcept
     {

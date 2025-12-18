@@ -11,22 +11,36 @@
 #include <unordered_map>
 #include <cstdint>
 
+/**
+ * @struct Position
+ * @brief Represents a 2D coordinate in the game world.
+ */
 struct Position {
-    float x;
-    float y;
+    float x; /**< X coordinate */
+    float y; /**< Y coordinate */
 };
 
+/**
+ * @struct EntityState
+ * @brief Represents the state of a game entity.
+ */
 struct EntityState {
-    float x;
-    float y;
-    uint16_t type;
+    float x;       /**< X coordinate */
+    float y;       /**< Y coordinate */
+    uint16_t type; /**< Type identifier of the entity */
 };
 
+/**
+ * @struct GameState
+ * @brief Holds the synchronized state of the game on the client side.
+ *
+ * Contains information about players, entities, and network statistics like RTT.
+ */
 struct GameState {
-    uint32_t myPlayerId = 0;
-    std::unordered_map<uint32_t, Position> players;
-    std::unordered_map<uint32_t, EntityState> entities;
-    uint32_t rtt = 0;
+    uint32_t myPlayerId = 0; /**< The ID of the local player */
+    std::unordered_map<uint32_t, Position> players; /**< Map of player IDs to their positions */
+    std::unordered_map<uint32_t, EntityState> entities; /**< Map of entity IDs to their states */
+    uint32_t rtt = 0; /**< Round Trip Time in milliseconds */
 };
 
 #endif

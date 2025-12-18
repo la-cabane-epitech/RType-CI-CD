@@ -8,6 +8,11 @@
 #ifndef CROSSPLATFORMSOCKET_HPP_
 #define CROSSPLATFORMSOCKET_HPP_
 
+/**
+ * @file CrossPlatformSocket.hpp
+ * @brief Abstraction layer for socket headers on Windows and Linux.
+ */
+
 #ifdef _WIN32
     #include <winsock2.h>
     #include <ws2tcpip.h>
