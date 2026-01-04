@@ -9,6 +9,7 @@
 #define RENDERER_HPP_
 
 #include "GameState.hpp"
+#include "ParallaxLayer.hpp"
 #include <map>
 
 class Renderer {
@@ -20,6 +21,7 @@ public:
 private:
     GameState& _gameState;
     std::map<uint16_t, Texture2D> _textures;
+    std::vector<ParallaxLayer> _parallaxLayers;
 };
 
 #endif

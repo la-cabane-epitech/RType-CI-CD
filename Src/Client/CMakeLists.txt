@@ -10,6 +10,7 @@ set (
     TCPClient.cpp
     UDPClient.cpp
     Renderer.cpp
+    ParallaxLayer.cpp
 )
 
 add_executable(rtype_client ${SOURCES})
