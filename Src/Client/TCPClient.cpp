@@ -70,3 +70,109 @@ bool TCPClient::sendConnectRequest(const std::string& username, ConnectResponse&
         return false;
     }
 }
+
+std::vector<RoomInfo> TCPClient::getRooms()
+{
+    std::vector<RoomInfo> rooms;
+    try {
+        ListRoomsRequest req;
+        asio::write(_socket, asio::buffer(&req, sizeof(req)));
+
+        uint8_t respType = 0;
+        asio::read(_socket, asio::buffer(&respType, 1));
+        if (respType != TCPMessageType::LIST_ROOMS_RESPONSE) return rooms;
+
+        int count = 0;
+        asio::read(_socket, asio::buffer(&count, sizeof(count)));
+
+        for (int i = 0; i < count; ++i) {
+            RoomInfo info;
+            asio::read(_socket, asio::buffer(&info, sizeof(info)));
+            rooms.push_back(info);
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "getRooms failed: " << e.what() << std::endl;
+    }
+    return rooms;
+}
+
+int TCPClient::createRoom()
+{
+    try {
+        CreateRoomRequest req;
+        asio::write(_socket, asio::buffer(&req, sizeof(req)));
+
+        uint8_t respType = 0;
+        asio::read(_socket, asio::buffer(&respType, 1));
+        if (respType != TCPMessageType::CREATE_ROOM_RESPONSE) return -1;
+
+        int roomId = 0;
+        asio::read(_socket, asio::buffer(&roomId, sizeof(roomId)));
+        return roomId;
+    } catch (const std::exception& e) {
+        std::cerr << "createRoom failed: " << e.what() << std::endl;
+        return -1;
+    }
+}
+
+bool TCPClient::joinRoom(int roomId)
+{
+    try {
+        JoinRoomRequest req;
+        req.roomId = roomId;
+        asio::write(_socket, asio::buffer(&req, sizeof(req)));
+
+        uint8_t respType = 0;
+        asio::read(_socket, asio::buffer(&respType, 1));
+        if (respType != TCPMessageType::JOIN_ROOM_RESPONSE) return false;
+
+        int status = 0;
+        asio::read(_socket, asio::buffer(&status, sizeof(status)));
+        return status == 1;
+    } catch (const std::exception& e) {
+        std::cerr << "joinRoom failed: " << e.what() << std::endl;
+        return false;
+    }
+}
+
+LobbyState TCPClient::getLobbyState()
+{
+    LobbyState state;
+    try {
+        GetLobbyStateRequest req;
+        asio::write(_socket, asio::buffer(&req, sizeof(req)));
+
+        uint8_t respType = 0;
+        asio::read(_socket, asio::buffer(&respType, 1));
+
+        if (respType == TCPMessageType::GAME_STARTING_NOTIFICATION) {
+            state.gameIsStarting = true;
+            return state;
+        }
+
+        if (respType == TCPMessageType::LOBBY_STATE_RESPONSE) {
+            LobbyStateResponse resp;
+            asio::read(_socket, asio::buffer(reinterpret_cast<char*>(&resp) + 1, sizeof(resp) - 1));
+            state.hostId = resp.hostId;
+            for (int i = 0; i < resp.playerCount; ++i) {
+                LobbyPlayerInfo info;
+                asio::read(_socket, asio::buffer(&info, sizeof(info)));
+                state.players.push_back(info);
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "getLobbyState failed: " << e.what() << std::endl;
+        state.gameIsStarting = true;
+    }
+    return state;
+}
+
+void TCPClient::sendStartGameRequest()
+{
+    try {
+        StartGameRequest req;
+        asio::write(_socket, asio::buffer(&req, sizeof(req)));
+    } catch (const std::exception& e) {
+        std::cerr << "sendStartGameRequest failed: " << e.what() << std::endl;
+    }
+}

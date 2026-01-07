@@ -8,6 +8,9 @@
 
 #include <thread>
 #include <vector>
+#include <map>
+#include <memory>
+#include <mutex>
 #include "Server/Game.hpp"
 
 #include "Protocole/ProtocoleTCP.hpp"
@@ -32,10 +35,10 @@ public:
     /**
      * @brief Construct a new TCPServer object.
      * @param port The TCP port to listen on.
-     * @param game Reference to the Game instance.
+     * @param rooms Reference to the map of rooms.
      * @param clock Reference to the shared Clock.
      */
-    TCPServer(int port, Game& game, Clock& clock);
+    TCPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock);
 
     /**
      * @brief Destroy the TCPServer object.
@@ -52,14 +55,21 @@ public:
      */
     void stop();
 
+    int createRoom();
+
+    void handleInRoomClient(int clientSock, int roomId, uint32_t playerId);
+
 private:
     void acceptLoop();
     void handleClient(int clientSock);
 
     int _sockfd; /**< Server socket file descriptor */
     bool _running; /**< Running state flag */
-    Game& _game; /**< Reference to the game logic */
+    std::map<int, std::shared_ptr<Game>>& _rooms; /**< Reference to the rooms */
     uint32_t _nextPlayerId = 1; /**< Counter for assigning unique player IDs */
+    int _nextRoomId = 0;
+    std::map<uint32_t, std::string> _playerUsernames;
+    std::mutex _serverMutex;
 
     std::thread _acceptThread; /**< Thread for accepting new connections */
     std::vector<std::thread> _clientThread; /**< Threads for handling individual client handshakes */

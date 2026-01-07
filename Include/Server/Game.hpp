@@ -13,6 +13,7 @@
 #include <mutex>
 #include <iostream>
 #include <algorithm>
+#include <chrono>
 
 #include "CrossPlatformSocket.hpp"
 #include "Protocole/ProtocoleUDP.hpp"
@@ -29,6 +30,7 @@ class UDPServer;
  */
 struct Player {
     uint32_t id;                     ///< Unique player identifier
+    char username[32];               ///< Player username
     float x = 400;                   ///< X position
     float y = 225;                   ///< Y position
     float velocity = 5;              ///< Movement speed
@@ -55,17 +57,24 @@ struct Entity {
     bool is_collide = false; ///< Collision state
 };
 
+enum class GameStatus {
+    LOBBY,
+    PLAYING
+};
+
 /**
  * @class Game
  * @brief Manages the game world, players, and entities.
  */
 class Game {
 public:
+    Game() : _status(GameStatus::LOBBY) {}
+
     /**
      * @brief Adds a new player to the game.
      * @param playerId The unique ID of the player.
      */
-    void addPlayer(uint32_t playerId);
+    void addPlayer(uint32_t playerId, const char* username);
 
     /**
      * @brief Updates the UDP address associated with a player.
@@ -121,10 +130,34 @@ public:
     void disconnectPlayer(uint32_t playerId, UDPServer& udpServer);
 
     /**
+     * @brief Removes a player from the lobby (without UDP notification).
+     * @param playerId The ID of the player to remove.
+     */
+    void removePlayerFromLobby(uint32_t playerId);
+
+    /**
+     * @brief Gets the current number of players in the game.
+     * @return The number of players.
+     */
+    int getPlayerCount();
+
+    /**
      * @brief Checks and resolves collisions between entities and players.
      */
     void handleCollision();
     void updateGameLevel(float elapsedTime);
+
+    /**
+     * @brief Updates the game state (entities, collisions, spawning).
+     * @param udpServer Reference to the UDP server.
+     */
+    void update(UDPServer& udpServer);
+
+    GameStatus getStatus() const;
+    void setStatus(GameStatus status);
+    uint32_t getHostId() const;
+    const std::vector<Player>& getPlayers() const;
+
 private:
     std::vector<Player> _players;
     std::mutex _playersMutex;
@@ -134,6 +167,8 @@ private:
     uint32_t _nextEntityId = 1;
     bool checkCollision(float x1, float y1, int w1, int h1, float x2, float y2, int w2, int h2);
     float _gameTime = 0.0f;
+    std::chrono::steady_clock::time_point _lastEnemySpawnTime = std::chrono::steady_clock::now();
+    GameStatus _status;
 };
 
 

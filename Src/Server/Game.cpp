@@ -10,9 +10,11 @@
 #include <cmath>
 
 
-void Game::addPlayer(uint32_t playerId) {
+void Game::addPlayer(uint32_t playerId, const char* username) {
     std::lock_guard<std::mutex> lock(_playersMutex);
-    _players.push_back({playerId});
+    Player newPlayer{ .id = playerId };
+    strncpy(newPlayer.username, username, sizeof(newPlayer.username) - 1);
+    _players.push_back(newPlayer);
 }
 
 void Game::broadcastGameState(UDPServer& udpServer) {
@@ -67,6 +69,33 @@ Player* Game::getPlayer(uint32_t playerId) {
         }
     }
     return nullptr;
+}
+
+int Game::getPlayerCount()
+{
+    std::lock_guard<std::mutex> lock(_playersMutex);
+    return _players.size();
+}
+
+GameStatus Game::getStatus() const
+{
+    return _status;
+}
+
+void Game::setStatus(GameStatus status)
+{
+    _status = status;
+}
+
+uint32_t Game::getHostId() const
+{
+    std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(_playersMutex));
+    return _players.empty() ? 0 : _players.front().id;
+}
+
+const std::vector<Player>& Game::getPlayers() const
+{
+    return _players;
 }
 
 void Game::createPlayerShot(uint32_t playerId, UDPServer& udpServer) {
@@ -164,6 +193,21 @@ void Game::updateGameLevel(float elapsedTime) {
     }
 }
 
+void Game::update(UDPServer& udpServer) {
+    if (_status != GameStatus::PLAYING)
+        return;
+
+    broadcastGameState(udpServer);
+    updateEntities(udpServer);
+    handleCollision();
+    updateGameLevel(0.016f);
+
+    if (std::chrono::steady_clock::now() - _lastEnemySpawnTime > std::chrono::seconds(2)) {
+        createEnemy(udpServer);
+        _lastEnemySpawnTime = std::chrono::steady_clock::now();
+    }
+}
+
 void Game::disconnectPlayer(uint32_t playerId, UDPServer& udpServer) {
     std::lock_guard<std::mutex> lock(_playersMutex);
     auto it = std::remove_if(_players.begin(), _players.end(),
@@ -182,6 +226,18 @@ void Game::disconnectPlayer(uint32_t playerId, UDPServer& udpServer) {
             udpServer.queueMessage(disconnectPkt, destPlayer.udpAddr);
             std::cout << "Send message disconnect to player " << destPlayer.id << "." << std::endl;
         }
+    }
+}
+
+void Game::removePlayerFromLobby(uint32_t playerId) {
+    std::lock_guard<std::mutex> lock(_playersMutex);
+    auto it = std::remove_if(_players.begin(), _players.end(),
+                             [playerId](const Player& player) {
+                                return player.id == playerId;
+                             });
+    if (it != _players.end()) {
+        _players.erase(it, _players.end());
+        std::cout << "[Game] Player " << playerId << " left lobby." << std::endl;
     }
 }
 

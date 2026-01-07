@@ -11,6 +11,8 @@
 #include "GameState.hpp"
 #include <map>
 #include <vector>
+#include "Client/TCPClient.hpp"
+#include "Protocole/ProtocoleTCP.hpp"
 #include "Client/Ray.hpp"
 
 struct Star {
@@ -43,6 +45,21 @@ public:
      * @brief Draws the current frame based on the game state.
      */
     void draw();
+
+    /**
+     * @brief Draws the room selection menu.
+     * @param rooms List of available rooms.
+     * @return int -1 if no action, -2 for create room, >= 0 for joined room ID.
+     */
+    int drawRoomMenu(const std::vector<RoomInfo>& rooms);
+
+    /**
+     * @brief Draws the lobby screen.
+     * @param lobbyState The current state of the lobby.
+     * @param myPlayerId The ID of the local player.
+     * @return true if the "Start Game" button was pressed, false otherwise.
+     */
+    bool drawLobby(const LobbyState& lobbyState, uint32_t myPlayerId);
 
 private:
     GameState& _gameState; /**< Reference to the game state to render */

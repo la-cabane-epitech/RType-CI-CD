@@ -93,3 +93,82 @@ void Renderer::draw()
 
     EndDrawing();
 }
+
+int Renderer::drawRoomMenu(const std::vector<RoomInfo>& rooms)
+{
+    BeginDrawing();
+    ClearBackground(BLACK);
+
+    DrawText("R-Type - Select Room", 50, 50, 40, WHITE);
+
+    Rectangle createBtn = { 50, 120, 250, 50 };
+    Vector2 mousePos = GetMousePosition();
+    bool hoverCreate = CheckCollisionPointRec(mousePos, createBtn);
+
+    DrawRectangleRec(createBtn, hoverCreate ? LIGHTGRAY : GRAY);
+    DrawText("Create Room", 60, 130, 30, BLACK);
+
+    int action = -1;
+    if (hoverCreate && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        action = -2;
+    }
+
+    int startY = 200;
+    for (const auto& room : rooms) {
+        Rectangle roomBtn = { 50, (float)startY, 600, 50 };
+        bool hoverRoom = CheckCollisionPointRec(mousePos, roomBtn);
+        
+        DrawRectangleRec(roomBtn, hoverRoom ? DARKGRAY : BLACK);
+        DrawRectangleLinesEx(roomBtn, 2, WHITE);
+
+        std::string text = "Room " + std::to_string(room.id) + "   Players: " + 
+                           std::to_string(room.playerCount) + "/" + std::to_string(room.maxPlayers);
+        DrawText(text.c_str(), 70, startY + 10, 30, WHITE);
+
+        if (hoverRoom && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            action = room.id;
+        }
+        startY += 60;
+    }
+
+    EndDrawing();
+    return action;
+}
+
+bool Renderer::drawLobby(const LobbyState& lobbyState, uint32_t myPlayerId)
+{
+    BeginDrawing();
+    ClearBackground(BLACK);
+
+    DrawText("Lobby - Waiting for players...", 50, 50, 40, WHITE);
+
+    int startY = 150;
+    for (const auto& player : lobbyState.players) {
+        std::string text = std::string(player.username) + " (ID: " + std::to_string(player.playerId) + ")";
+        if (player.playerId == lobbyState.hostId) {
+            text += " - HOST";
+        }
+        DrawText(text.c_str(), 70, startY, 30, WHITE);
+        startY += 40;
+    }
+
+    bool startGamePressed = false;
+    if (myPlayerId == lobbyState.hostId) {
+        Rectangle startBtn = { 50, (float)GetScreenHeight() - 100, 250, 50 };
+        Vector2 mousePos = GetMousePosition();
+        bool hoverStart = CheckCollisionPointRec(mousePos, startBtn);
+
+        DrawRectangleRec(startBtn, hoverStart ? SKYBLUE : BLUE);
+        DrawText("Start Game", 60, GetScreenHeight() - 90, 30, WHITE);
+
+        if (hoverStart && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            startGamePressed = true;
+        }
+    } else {
+        DrawText("Waiting for the host to start the game...", 50, GetScreenHeight() - 100, 20, LIGHTGRAY);
+    }
+
+
+    EndDrawing();
+    return startGamePressed;
+}

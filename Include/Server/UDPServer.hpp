@@ -18,6 +18,8 @@
 #include <cstring>
 #include <array>
 #include <unordered_map>
+#include <map>
+#include <memory>
 
 #include "Server/RingBuffer.hpp"
 #include "Server/Packet.hpp"
@@ -52,9 +54,10 @@ public:
      * @brief Construct a new UDPServer object.
      * @param port The UDP port to bind to.
      * @param game Reference to the Game instance.
+     * @param rooms Reference to the shared map of rooms.
      * @param clock Reference to the shared Clock.
      */
-    UDPServer(int port, Game& game, Clock& clock);
+    UDPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock);
 
     /**
      * @brief Destroy the UDPServer object.
@@ -93,7 +96,7 @@ public:
 private:
     int _sockfd; /**< UDP socket file descriptor */
     bool _running; /**< Running state flag */
-    Game& _game; /**< Reference to the game logic */
+    std::map<int, std::shared_ptr<Game>>& _rooms; /**< Reference to shared rooms */
     const Clock& _clock; /**< Reference to the server clock */
 
     std::thread _recvThread; /**< Thread for receiving packets */

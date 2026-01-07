@@ -5,43 +5,18 @@
 ** main
 */
 
-#include <fstream>
 #include <iostream>
-#include <thread>
-
-// #include "Server/Network.hpp"
 #include "Exception.hpp"
-#include "Server/Game.hpp"
-#include "Server/TCPServer.hpp"
-#include "Server/UDPServer.hpp"
-#include "Clock.hpp"
+#include "Server/ServerManager.hpp"
 
 int main(void)
 {
     try {
-        Clock clock;
-        Game game;
-        TCPServer tcpServer(4242, game, clock);
-        UDPServer udpServer(5252, game, clock);
-
-        tcpServer.start();
-        udpServer.start();
-
-        auto lastEnemySpawnTime = std::chrono::steady_clock::now();
-
-        while (true) {
-            game.broadcastGameState(udpServer);
-            game.updateEntities(udpServer);
-            game.handleCollision();
-            game.updateGameLevel(0.016f);
-            if (std::chrono::steady_clock::now() - lastEnemySpawnTime > std::chrono::seconds(2)) {
-                game.createEnemy(udpServer);
-                lastEnemySpawnTime = std::chrono::steady_clock::now();
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(16));
-        }
-    } catch (const RType::Exception& e) {
+        ServerManager serverManager;
+        serverManager.run();
+    } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 84;
     }
+    return 0;
 }

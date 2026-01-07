@@ -38,12 +38,58 @@ int main(int ac, char **av)
     InitWindow(screenWidth, screenHeight, "R-Type Client");
     SetTargetFPS(60);
 
+    bool inRoom = false;
+    GameState menuState;
+    Renderer menuRenderer(menuState);
+
     {
+        std::vector<RoomInfo> rooms;
+        double lastUpdate = 0;
+
+        while (!WindowShouldClose() && !inRoom) {
+            double now = GetTime();
+            if (now - lastUpdate > 1.0) {
+                rooms = tcpClient.getRooms();
+                lastUpdate = now;
+            }
+
+            int action = menuRenderer.drawRoomMenu(rooms);
+            if (action == -2) {
+                int newRoom = tcpClient.createRoom();
+                if (newRoom >= 0 && tcpClient.joinRoom(newRoom)) inRoom = true;
+            } else if (action >= 0) {
+                if (tcpClient.joinRoom(action)) inRoom = true;
+            }
+        }
+    }
+
+    bool gameStarted = false;
+    if (inRoom && !WindowShouldClose()) {
+        LobbyState lobbyState;
+        double lastLobbyUpdate = 0;
+
+        while(!WindowShouldClose() && !gameStarted) {
+            if (GetTime() - lastLobbyUpdate > 0.5) {
+                lobbyState = tcpClient.getLobbyState();
+                lastLobbyUpdate = GetTime();
+            }
+
+            if (lobbyState.gameIsStarting) {
+                gameStarted = true;
+                continue;
+            }
+
+            if (menuRenderer.drawLobby(lobbyState, res.playerId)) {
+                tcpClient.sendStartGameRequest();
+            }
+        }
+    }
+
+    if (gameStarted && !WindowShouldClose()) {
         RTypeClient client(serverIp, res);
         client.run();
     }
 
     CloseWindow();
-    // indiquer au server la fermeture + deconnecter
     return 0;
 }
