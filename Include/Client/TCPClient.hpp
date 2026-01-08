@@ -8,10 +8,17 @@
 #include "Protocole/ProtocoleTCP.hpp"
 #include "Client/Asio.hpp"
 
+/**
+ * @struct LobbyState
+ * @brief Represents the state of a game lobby.
+ *
+ * Contains information about whether the game is starting, the host's ID,
+ * and a list of players currently in the lobby.
+ */
 struct LobbyState {
-    bool gameIsStarting = false;
-    uint32_t hostId = 0;
-    std::vector<LobbyPlayerInfo> players;
+    bool gameIsStarting = false; /**< Flag indicating if the game is about to start. */
+    uint32_t hostId = 0; /**< The ID of the player who is the host of the lobby. */
+    std::vector<LobbyPlayerInfo> players; /**< A list of players in the lobby. */
 };
 
 /**
@@ -77,6 +84,10 @@ public:
      */
     LobbyState getLobbyState();
 
+    /**
+     * @brief Sends a request to the server to start the game.
+     * This can typically only be done by the host of the lobby.
+     */
     void sendStartGameRequest();
 
 };

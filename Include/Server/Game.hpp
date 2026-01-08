@@ -57,9 +57,13 @@ struct Entity {
     bool is_collide = false; ///< Collision state
 };
 
+/**
+ * @enum GameStatus
+ * @brief Represents the current status of a game room.
+ */
 enum class GameStatus {
-    LOBBY,
-    PLAYING
+    LOBBY,   ///< The game is in the lobby, waiting for players to join and the host to start.
+    PLAYING  ///< The game is currently in progress.
 };
 
 /**
@@ -68,6 +72,10 @@ enum class GameStatus {
  */
 class Game {
 public:
+    /**
+     * @brief Construct a new Game object.
+     * Initializes the game status to LOBBY.
+     */
     Game() : _status(GameStatus::LOBBY) {}
 
     /**
@@ -145,6 +153,10 @@ public:
      * @brief Checks and resolves collisions between entities and players.
      */
     void handleCollision();
+    /**
+     * @brief Updates the game level logic, such as enemy spawning patterns over time.
+     * @param elapsedTime The time elapsed since the last update.
+     */
     void updateGameLevel(float elapsedTime);
 
     /**
@@ -153,22 +165,51 @@ public:
      */
     void update(UDPServer& udpServer);
 
+    /**
+     * @brief Gets the current status of the game (Lobby or Playing).
+     * @return The current GameStatus.
+     */
     GameStatus getStatus() const;
+    /**
+     * @brief Sets the status of the game.
+     * @param status The new GameStatus to set.
+     */
     void setStatus(GameStatus status);
+    /**
+     * @brief Gets the ID of the host player.
+     * The host is typically the first player who joined the room.
+     * @return The player ID of the host.
+     */
     uint32_t getHostId() const;
+    /**
+     * @brief Gets a constant reference to the list of players in the game.
+     * @return A const reference to the vector of players.
+     */
     const std::vector<Player>& getPlayers() const;
 
 private:
-    std::vector<Player> _players;
-    std::mutex _playersMutex;
+    std::vector<Player> _players; /**< List of players in the game. */
+    std::mutex _playersMutex; /**< Mutex to protect access to the _players vector. */
 
-    std::vector<Entity> _entities;
-    std::mutex _entitiesMutex;
-    uint32_t _nextEntityId = 1;
+    std::vector<Entity> _entities; /**< List of all entities in the game (enemies, projectiles). */
+    std::mutex _entitiesMutex; /**< Mutex to protect access to the _entities vector. */
+    uint32_t _nextEntityId = 1; /**< Counter for assigning unique entity IDs. */
+    /**
+     * @brief Checks for AABB collision between two rectangular objects.
+     * @param x1 X position of the first object.
+     * @param y1 Y position of the first object.
+     * @param w1 Width of the first object.
+     * @param h1 Height of the first object.
+     * @param x2 X position of the second object.
+     * @param y2 Y position of the second object.
+     * @param w2 Width of the second object.
+     * @param h2 Height of the second object.
+     * @return true if the objects are colliding, false otherwise.
+     */
     bool checkCollision(float x1, float y1, int w1, int h1, float x2, float y2, int w2, int h2);
-    float _gameTime = 0.0f;
-    std::chrono::steady_clock::time_point _lastEnemySpawnTime = std::chrono::steady_clock::now();
-    GameStatus _status;
+    float _gameTime = 0.0f; /**< Total time the game has been running in the PLAYING state. */
+    std::chrono::steady_clock::time_point _lastEnemySpawnTime = std::chrono::steady_clock::now(); /**< Time point of the last enemy spawn. */
+    GameStatus _status; /**< Current status of the game (Lobby/Playing). */
 };
 
 

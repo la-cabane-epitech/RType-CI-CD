@@ -93,61 +93,109 @@ struct ErrorResponse {
  * @brief Information about a game room.
  */
 struct RoomInfo {
-    int32_t id;
-    int32_t playerCount;
-    int32_t maxPlayers;
+    int32_t id;           ///< Unique identifier for the room.
+    int32_t playerCount;  ///< Current number of players in the room.
+    int32_t maxPlayers;   ///< Maximum number of players allowed in the room.
 };
 
+/**
+ * @struct ListRoomsRequest
+ * @brief Sent by a client to request the list of available game rooms.
+ */
 struct ListRoomsRequest {
-    uint8_t type = TCPMessageType::LIST_ROOMS;
+    uint8_t type = TCPMessageType::LIST_ROOMS; ///< Packet type identifier.
 };
 
+/**
+ * @struct ListRoomsResponse
+ * @brief Sent by the server in response to a ListRoomsRequest.
+ *
+ * This packet is followed by `count` number of `RoomInfo` structs.
+ */
 struct ListRoomsResponse {
-    uint8_t type = TCPMessageType::LIST_ROOMS_RESPONSE;
-    int32_t count;
+    uint8_t type = TCPMessageType::LIST_ROOMS_RESPONSE; ///< Packet type identifier.
+    int32_t count; ///< Number of rooms available.
 };
 
+/**
+ * @struct CreateRoomRequest
+ * @brief Sent by a client to request the creation of a new game room.
+ */
 struct CreateRoomRequest {
-    uint8_t type = TCPMessageType::CREATE_ROOM;
+    uint8_t type = TCPMessageType::CREATE_ROOM; ///< Packet type identifier.
 };
 
+/**
+ * @struct CreateRoomResponse
+ * @brief Sent by the server to confirm room creation.
+ */
 struct CreateRoomResponse {
-    uint8_t type = TCPMessageType::CREATE_ROOM_RESPONSE;
-    int32_t roomId;
+    uint8_t type = TCPMessageType::CREATE_ROOM_RESPONSE; ///< Packet type identifier.
+    int32_t roomId; ///< The ID of the newly created room. -1 on failure.
 };
 
+/**
+ * @struct JoinRoomRequest
+ * @brief Sent by a client to join an existing game room.
+ */
 struct JoinRoomRequest {
-    uint8_t type = TCPMessageType::JOIN_ROOM;
-    int32_t roomId;
+    uint8_t type = TCPMessageType::JOIN_ROOM; ///< Packet type identifier.
+    int32_t roomId; ///< The ID of the room to join.
 };
 
+/**
+ * @struct JoinRoomResponse
+ * @brief Sent by the server to confirm if a player successfully joined a room.
+ */
 struct JoinRoomResponse {
-    uint8_t type = TCPMessageType::JOIN_ROOM_RESPONSE;
-    int32_t status;
+    uint8_t type = TCPMessageType::JOIN_ROOM_RESPONSE; ///< Packet type identifier.
+    int32_t status; ///< Status of the join request (e.g., 0 for success, -1 for full, -2 for not found).
 };
 
+/**
+ * @struct LobbyPlayerInfo
+ * @brief Contains basic information about a player in a lobby.
+ */
 struct LobbyPlayerInfo {
-    uint32_t playerId;
-    char username[32];
+    uint32_t playerId;  ///< The unique ID of the player.
+    char username[32];  ///< The username of the player.
 };
 
+/**
+ * @struct GetLobbyStateRequest
+ * @brief Sent by a client to get the current state of their lobby.
+ */
 struct GetLobbyStateRequest {
-    uint8_t type = TCPMessageType::GET_LOBBY_STATE;
+    uint8_t type = TCPMessageType::GET_LOBBY_STATE; ///< Packet type identifier.
 };
 
+/**
+ * @struct LobbyStateResponse
+ * @brief Sent by the server with the current state of the lobby.
+ *
+ * This packet is followed by `playerCount` number of `LobbyPlayerInfo` structs.
+ */
 struct LobbyStateResponse {
-    uint8_t type = TCPMessageType::LOBBY_STATE_RESPONSE;
-    uint32_t hostId;
-    int32_t playerCount;
+    uint8_t type = TCPMessageType::LOBBY_STATE_RESPONSE; ///< Packet type identifier.
+    uint32_t hostId; ///< The ID of the player who is the host.
+    int32_t playerCount; ///< The number of players in the lobby.
     // Followed by 'playerCount' LobbyPlayerInfo structs
 };
 
+/**
+ * @struct StartGameRequest
+ * @brief Sent by the host client to start the game.
+ */
 struct StartGameRequest {
-    uint8_t type = TCPMessageType::START_GAME_REQUEST;
+    uint8_t type = TCPMessageType::START_GAME_REQUEST; ///< Packet type identifier.
 };
 
+/**
+ * @struct GameStartingNotification
+ * @brief Broadcast by the server to all clients in a lobby when the game is starting.
+ */
 struct GameStartingNotification {
-    uint8_t type = TCPMessageType::GAME_STARTING_NOTIFICATION;
+    uint8_t type = TCPMessageType::GAME_STARTING_NOTIFICATION; ///< Packet type identifier.
 };
 
 
