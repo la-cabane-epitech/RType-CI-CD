@@ -9,9 +9,9 @@
 #include "Client/Renderer.hpp"
 #include <map>
 #include <string>
+#include <optional>
 
-Renderer::Renderer(GameState& gameState) : _gameState(gameState)
-{
+Renderer::Renderer(GameState& gameState) : _gameState(gameState), _actionToRemap(std::nullopt) {
     _textures[0] = LoadTexture("Assets/r-typesheet42.gif");
     _textures[1] = LoadTexture("Assets/attack.png");
     _textures[2] = LoadTexture("Assets/r-typesheet3.gif");
@@ -94,6 +94,93 @@ void Renderer::draw()
     EndDrawing();
 }
 
+MainMenuChoice Renderer::drawMainMenu()
+{
+    BeginDrawing();
+    ClearBackground(BLACK);
+
+    DrawText("R-Type", GetScreenWidth() / 2 - MeasureText("R-Type", 80) / 2, 100, 80, WHITE);
+
+    Vector2 mousePos = GetMousePosition();
+    MainMenuChoice choice = MainMenuChoice::NONE;
+
+    Rectangle startBtn = { (float)GetScreenWidth() / 2 - 125, 300, 250, 50 };
+    bool hoverStart = CheckCollisionPointRec(mousePos, startBtn);
+    DrawRectangleRec(startBtn, hoverStart ? LIGHTGRAY : GRAY);
+    DrawText("Start", startBtn.x + (startBtn.width - MeasureText("Start", 30)) / 2, startBtn.y + 10, 30, BLACK);
+    if (hoverStart && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        choice = MainMenuChoice::START;
+    }
+
+    Rectangle optionsBtn = { (float)GetScreenWidth() / 2 - 125, 370, 250, 50 };
+    bool hoverOptions = CheckCollisionPointRec(mousePos, optionsBtn);
+    DrawRectangleRec(optionsBtn, hoverOptions ? LIGHTGRAY : GRAY);
+    DrawText("Options", optionsBtn.x + (optionsBtn.width - MeasureText("Options", 30)) / 2, optionsBtn.y + 10, 30, BLACK);
+    if (hoverOptions && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        choice = MainMenuChoice::OPTIONS;
+    }
+
+    EndDrawing();
+    return choice;
+}
+
+bool Renderer::drawOptionsMenu(std::map<std::string, int>& keybinds)
+{
+    BeginDrawing();
+    ClearBackground(BLACK);
+
+    DrawText("Options - Keybinds", 50, 50, 40, WHITE);
+
+    Vector2 mousePos = GetMousePosition();
+    bool backPressed = false;
+
+    Rectangle backBtn = { 50, (float)GetScreenHeight() - 100, 150, 50 };
+    bool hoverBack = CheckCollisionPointRec(mousePos, backBtn);
+    DrawRectangleRec(backBtn, hoverBack ? LIGHTGRAY : GRAY);
+    DrawText("Back", backBtn.x + (backBtn.width - MeasureText("Back", 30)) / 2, backBtn.y + 10, 30, BLACK);
+    if (hoverBack && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        if (_actionToRemap.has_value()) {
+            _actionToRemap.reset();
+        } else {
+            backPressed = true;
+        }
+    }
+
+    if (_actionToRemap.has_value()) {
+        std::string waitText = "Press a key for " + _actionToRemap.value() + "...";
+        DrawText(waitText.c_str(), GetScreenWidth() / 2 - MeasureText(waitText.c_str(), 30) / 2, GetScreenHeight() / 2 - 15, 30, YELLOW);
+
+        int keyPressed = GetKeyPressed();
+        if (keyPressed != 0) {
+            keybinds[_actionToRemap.value()] = keyPressed;
+            _actionToRemap.reset();
+        }
+    } else {
+        int startY = 150;
+        for (auto const& [action, key] : keybinds) {
+            DrawText(action.c_str(), 100, startY, 30, WHITE);
+
+            const char *keyName = GetKeyName(key);
+            DrawText(keyName ? keyName : "N/A", 400, startY, 30, LIGHTGRAY);
+
+            Rectangle changeBtn = { 600, (float)startY - 5, 150, 40 };
+            bool hoverChange = CheckCollisionPointRec(mousePos, changeBtn);
+            DrawRectangleRec(changeBtn, hoverChange ? SKYBLUE : BLUE);
+            DrawText("Change", changeBtn.x + (changeBtn.width - MeasureText("Change", 20)) / 2, changeBtn.y + 10, 20, WHITE);
+
+            if (hoverChange && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                _actionToRemap = action;
+            }
+
+            startY += 50;
+        }
+    }
+
+    EndDrawing();
+    return backPressed;
+}
+
+
 int Renderer::drawRoomMenu(const std::vector<RoomInfo>& rooms)
 {
     BeginDrawing();
@@ -171,4 +258,95 @@ bool Renderer::drawLobby(const LobbyState& lobbyState, uint32_t myPlayerId)
 
     EndDrawing();
     return startGamePressed;
+}
+
+const char* Renderer::GetKeyName(int key) {
+    switch (key) {
+        // Alphanumeric
+        case KEY_APOSTROPHE:   return "'";
+        case KEY_COMMA:        return ",";
+        case KEY_MINUS:        return "-";
+        case KEY_PERIOD:       return ".";
+        case KEY_SLASH:        return "/";
+        case KEY_ZERO:         return "0";
+        case KEY_ONE:          return "1";
+        case KEY_TWO:          return "2";
+        case KEY_THREE:        return "3";
+        case KEY_FOUR:         return "4";
+        case KEY_FIVE:         return "5";
+        case KEY_SIX:          return "6";
+        case KEY_SEVEN:        return "7";
+        case KEY_EIGHT:        return "8";
+        case KEY_NINE:         return "9";
+        case KEY_SEMICOLON:    return ";";
+        case KEY_EQUAL:        return "=";
+        case KEY_A:            return "A";
+        case KEY_B:            return "B";
+        case KEY_C:            return "C";
+        case KEY_D:            return "D";
+        case KEY_E:            return "E";
+        case KEY_F:            return "F";
+        case KEY_G:            return "G";
+        case KEY_H:            return "H";
+        case KEY_I:            return "I";
+        case KEY_J:            return "J";
+        case KEY_K:            return "K";
+        case KEY_L:            return "L";
+        case KEY_M:            return "M";
+        case KEY_N:            return "N";
+        case KEY_O:            return "O";
+        case KEY_P:            return "P";
+        case KEY_Q:            return "Q";
+        case KEY_R:            return "R";
+        case KEY_S:            return "S";
+        case KEY_T:            return "T";
+        case KEY_U:            return "U";
+        case KEY_V:            return "V";
+        case KEY_W:            return "W";
+        case KEY_X:            return "X";
+        case KEY_Y:            return "Y";
+        case KEY_Z:            return "Z";
+
+        // Controls
+        case KEY_SPACE:        return "SPACE";
+        case KEY_ESCAPE:       return "ESC";
+        case KEY_ENTER:        return "ENTER";
+        case KEY_TAB:          return "TAB";
+        case KEY_BACKSPACE:    return "BACKSPACE";
+        case KEY_INSERT:       return "INSERT";
+        case KEY_DELETE:       return "DEL";
+        case KEY_RIGHT:        return "RIGHT";
+        case KEY_LEFT:         return "LEFT";
+        case KEY_DOWN:         return "DOWN";
+        case KEY_UP:           return "UP";
+        case KEY_PAGE_UP:      return "PAGE UP";
+        case KEY_PAGE_DOWN:    return "PAGE DOWN";
+        case KEY_HOME:         return "HOME";
+        case KEY_END:          return "END";
+        case KEY_CAPS_LOCK:    return "CAPS";
+        case KEY_SCROLL_LOCK:  return "SCROLL LOCK";
+        case KEY_NUM_LOCK:     return "NUM LOCK";
+        case KEY_PRINT_SCREEN: return "PRINT SCREEN";
+        case KEY_PAUSE:        return "PAUSE";
+        case KEY_F1:           return "F1";
+        case KEY_F2:           return "F2";
+        case KEY_F3:           return "F3";
+        case KEY_F4:           return "F4";
+        case KEY_F5:           return "F5";
+        case KEY_F6:           return "F6";
+        case KEY_F7:           return "F7";
+        case KEY_F8:           return "F8";
+        case KEY_F9:           return "F9";
+        case KEY_F10:          return "F10";
+        case KEY_F11:          return "F11";
+        case KEY_F12:          return "F12";
+        case KEY_LEFT_SHIFT:   return "L SHIFT";
+        case KEY_LEFT_CONTROL: return "L CTRL";
+        case KEY_LEFT_ALT:     return "L ALT";
+        case KEY_RIGHT_SHIFT:  return "R SHIFT";
+        case KEY_RIGHT_CONTROL:return "R CTRL";
+        case KEY_RIGHT_ALT:    return "R ALT";
+        
+        default:               return "UNKNOWN";
+    }
 }

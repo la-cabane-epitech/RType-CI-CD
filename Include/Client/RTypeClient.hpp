@@ -28,8 +28,9 @@ public:
      *
      * @param serverIp The IP address of the server.
      * @param connectResponse The response received from the TCP handshake containing initial config.
+     * @param keybinds The map of actions to key codes.
      */
-    RTypeClient(const std::string& serverIp, const ConnectResponse& connectResponse);
+    RTypeClient(const std::string& serverIp, const ConnectResponse& connectResponse, const std::map<std::string, int>& keybinds);
 
     /**
      * @brief Applies a player input packet to the local state (prediction).
@@ -63,6 +64,7 @@ private:
     Renderer _renderer;   /**< Renderer instance */
     uint32_t _tick = 0;   /**< Current game tick */
     Clock _clock;         /**< Clock for timing the game loop */
+    std::map<std::string, int> _keybinds; /**< Map of actions to key codes */
 
     std::deque<PlayerInputPacket> _pendingInputs; /**< Queue of inputs sent but not yet acknowledged */
 

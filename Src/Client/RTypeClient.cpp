@@ -9,10 +9,11 @@
 #include "Client/RTypeClient.hpp"
 #include "Protocole/ProtocoleUDP.hpp"
 
-RTypeClient::RTypeClient(const std::string& serverIp, const ConnectResponse& connectResponse)
+RTypeClient::RTypeClient(const std::string& serverIp, const ConnectResponse& connectResponse, const std::map<std::string, int>& keybinds)
     : _udpClient(serverIp, connectResponse.udpPort),
       _renderer(_gameState),
-      _clock(connectResponse.clock)
+      _clock(connectResponse.clock),
+      _keybinds(keybinds)
 {
     _gameState.myPlayerId = connectResponse.playerId;
 }
@@ -51,11 +52,11 @@ void RTypeClient::handleInput()
     packet.tick = _tick++;
     packet.inputs = 0;
 
-    if (IsKeyDown(KEY_UP))    packet.inputs |= UP;
-    if (IsKeyDown(KEY_DOWN))  packet.inputs |= DOWN;
-    if (IsKeyDown(KEY_LEFT))  packet.inputs |= LEFT;
-    if (IsKeyDown(KEY_RIGHT)) packet.inputs |= RIGHT;
-    if (IsKeyPressed(KEY_SPACE)) packet.inputs |= SHOOT;
+    if (IsKeyDown(_keybinds.at("UP")))    packet.inputs |= UP;
+    if (IsKeyDown(_keybinds.at("DOWN")))  packet.inputs |= DOWN;
+    if (IsKeyDown(_keybinds.at("LEFT")))  packet.inputs |= LEFT;
+    if (IsKeyDown(_keybinds.at("RIGHT"))) packet.inputs |= RIGHT;
+    if (IsKeyPressed(_keybinds.at("SHOOT"))) packet.inputs |= SHOOT;
 
     if (packet.inputs != 0) {
         applyInput(packet);
