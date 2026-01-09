@@ -111,6 +111,13 @@ public:
     void createPlayerShot(uint32_t playerId, UDPServer& udpServer);
 
     /**
+     * @brief Creates a charged projectile fired by a player.
+     * @param playerId The ID of the shooting player.
+     * @param udpServer Reference to the UDP server for spawn notification.
+     */
+    void createPlayerChargedShot(uint32_t playerId, UDPServer& udpServer);
+
+    /**
      * @brief Updates positions and states of all entities.
      * @param udpServer Reference to the UDP server for updates.
      */

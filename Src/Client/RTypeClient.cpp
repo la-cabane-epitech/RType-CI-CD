@@ -55,13 +55,28 @@ void RTypeClient::handleInput()
     if (IsKeyDown(KEY_DOWN))  packet.inputs |= DOWN;
     if (IsKeyDown(KEY_LEFT))  packet.inputs |= LEFT;
     if (IsKeyDown(KEY_RIGHT)) packet.inputs |= RIGHT;
-    if (IsKeyPressed(KEY_SPACE)) packet.inputs |= SHOOT;
 
-    if (packet.inputs != 0) {
-        applyInput(packet);
-        _udpClient.sendMessage(packet);
-        _pendingInputs.push_back(packet);
+    static uint32_t chargeStart = 0;
+    static bool isCharging = false;
+
+    if (IsKeyDown(KEY_SPACE)) {
+        if (!isCharging) {
+            chargeStart = _clock.getElapsedTimeMs();
+            isCharging = true;
+        }
+    } else if (isCharging) {
+        if (_clock.getElapsedTimeMs() - chargeStart > 500) // 500ms pour charger
+            packet.inputs |= CHARGE_SHOOT;
+        else
+            packet.inputs |= SHOOT;
+        isCharging = false;
     }
+ 
+     if (packet.inputs != 0) {
+         applyInput(packet);
+         _pendingInputs.push_back(packet);
+     }
+     _udpClient.sendMessage(packet);
 }
 
 void RTypeClient::update()
