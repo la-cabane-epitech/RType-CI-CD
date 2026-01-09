@@ -37,7 +37,8 @@ enum Input : uint8_t {
     DOWN = 1 << 1,  ///< Move Down (Bit 1)
     LEFT = 1 << 2,  ///< Move Left (Bit 2)
     RIGHT = 1 << 3, ///< Move Right (Bit 3)
-    SHOOT = 1 << 4  ///< Shoot (Bit 4)
+    SHOOT = 1 << 4,  ///< Shoot (Bit 4)
+    CHARGE_SHOOT = 1 << 5
 };
 
 /**

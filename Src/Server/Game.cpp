@@ -122,6 +122,30 @@ void Game::createPlayerShot(uint32_t playerId, UDPServer& udpServer) {
     }
 }
 
+void Game::createPlayerChargedShot(uint32_t playerId, UDPServer& udpServer) {
+    Player* player = getPlayer(playerId);
+
+    if (!player)
+        return;
+
+    std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
+    uint32_t entityId = _nextEntityId++;
+    _entities.push_back({entityId, 4, player->x + 25, player->y, 12.0f, 0.0f, 29, 30});
+
+    EntitySpawnPacket spawnPkt;
+    spawnPkt.entityId = entityId;
+    spawnPkt.entityType = 4;
+    spawnPkt.x = player->x + 25;
+    spawnPkt.y = player->y;
+
+    std::lock_guard<std::mutex> lock_players(_playersMutex);
+    for (const auto& destPlayer : _players) {
+        if (destPlayer.addrSet) {
+            udpServer.queueMessage(spawnPkt, destPlayer.udpAddr);
+        }
+    }
+}
+
 void Game::createEnemy(UDPServer& udpServer) {
     std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
     uint32_t entityId = _nextEntityId++;
@@ -129,11 +153,24 @@ void Game::createEnemy(UDPServer& udpServer) {
     float spawnX = 1920.0f;
     float spawnY = rand() % 1000 + 40;
 
-    _entities.push_back({entityId, 2, spawnX, spawnY, -5.0f, 0.0f, 32, 32});
+    // --- Système de Niveau ---
+    int type = 2;
+    float speed = -5.0f;
+    int width = 32;
+    int height = 32;
+
+    if (_gameTime > 30.0f) {
+        type = 3;
+        speed = -8.0f;
+        width = 40;
+        height = 40;
+    }
+
+    _entities.push_back({entityId, type, spawnX, spawnY, speed, 0.0f, width, height});
 
     EntitySpawnPacket spawnPkt;
     spawnPkt.entityId = entityId;
-    spawnPkt.entityType = 2;
+    spawnPkt.entityType = type;
     spawnPkt.x = spawnX;
     spawnPkt.y = spawnY;
 
@@ -186,7 +223,7 @@ void Game::updateGameLevel(float elapsedTime) {
     if (_gameTime > 60.0f) {
         std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
         for (auto& entity : _entities) {
-            if (entity.type == 2) {
+            if (entity.type == 2 || entity.type == 3) {
                 entity.velocityY = 5.0f * std::sin(_gameTime * 2.0f + entity.id);
             }
         }
@@ -253,12 +290,27 @@ void Game::handleCollision() {
     std::lock_guard<std::mutex> lock_players(_playersMutex);
 
     for (auto& projectile : _entities) {
-        if (projectile.type != 1) continue;
+        if (projectile.type != 1 && projectile.type != 4) continue;
         for (auto& enemy : _entities) {
-            if (enemy.type != 2) continue;
+            if (enemy.type != 2 && enemy.type != 3) continue;
             if (projectile.is_collide || enemy.is_collide) continue;
             if (checkCollision(projectile.x, projectile.y, projectile.width, projectile.height, enemy.x, enemy.y, enemy.width, enemy.height)) {
                 projectile.is_collide = true;
+                enemy.is_collide = true;
+            }
+        }
+    }
+
+    for (auto& player : _players) {
+        for (auto& enemy : _entities) {
+            if (enemy.type != 2 && enemy.type != 3) continue;
+            if (enemy.is_collide) continue;
+
+            // Hitbox du joueur (33x17 comme dans le Renderer)
+            if (checkCollision(player.x, player.y, 33, 17, enemy.x, enemy.y, enemy.width, enemy.height)) {
+                // Le joueur meurt -> Respawn au début
+                player.x = 100.0f;
+                player.y = 100.0f;
                 enemy.is_collide = true;
             }
         }

@@ -23,6 +23,18 @@ struct Star {
     float scale;
 };
 
+struct EntityRenderConfig {
+    int textureId;      // ID de la texture chargée
+    bool isAnimated;    // Utilise une spritesheet ?
+    int frameCount;     // Nombre de frames d'animation
+    float frameSpeed;   // Vitesse (frames par seconde)
+    float width;        // Largeur d'une frame (ou 0 pour toute la texture)
+    float height;       // Hauteur d'une frame
+    float scale;        // Échelle de rendu
+    float startX;       // Position X de départ dans la texture
+    float startY;       // Position Y de départ dans la texture
+};
+
 /**
  * @enum MainMenuChoice
  * @brief Represents the user's choice in the main menu.
@@ -110,6 +122,9 @@ public:
     bool drawUsernameInput(std::string& username);
 
     const char* GetKeyName(int key);
+
+    std::map<int, EntityRenderConfig> ENTITY_REGISTRY;
+
 
 private:
     GameState& _gameState; /**< Reference to the game state to render */
