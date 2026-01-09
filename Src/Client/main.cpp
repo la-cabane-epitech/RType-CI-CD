@@ -4,13 +4,14 @@
 ** File description:
 ** main
 */
-
 #include "Client/Ray.hpp"
 #include "Client/TCPClient.hpp"
 #include "Client/RTypeClient.hpp"
+#include "Client/ConfigManager.hpp"
 #include <iostream>
 
 enum class ClientState {
+    USERNAME_INPUT,
     MAIN_MENU,
     OPTIONS,
     ROOM_SELECTION,
@@ -30,11 +31,15 @@ int main(int ac, char **av)
     const int screenWidth = 1920;
     const int screenHeight = 1080;
     InitWindow(screenWidth, screenHeight, "R-Type Client");
+    SetExitKey(KEY_NULL);
     SetTargetFPS(60);
 
-    GameState dummyState; // For menu rendering before game state exists
+    const std::string CONFIG_FILE = "config_file";
+    Config config = ConfigManager::loadConfig(CONFIG_FILE);
+
+    GameState dummyState;
     Renderer renderer(dummyState);
-    ClientState currentState = ClientState::MAIN_MENU;
+    ClientState currentState = config.username.empty() ? ClientState::USERNAME_INPUT : ClientState::MAIN_MENU;
 
     TCPClient tcpClient(serverIp, 4242);
     if (!tcpClient.connectToServer()) {
@@ -44,31 +49,24 @@ int main(int ac, char **av)
     }
 
     ConnectResponse connectRes;
-    if (!tcpClient.sendConnectRequest("Player1", connectRes)) {
-        std::cerr << "Handshake TCP échoué\n";
-        CloseWindow();
-        return 1;
-    }
-
-    std::cout << "Connecté ! PlayerId: " << connectRes.playerId
-            << ", UDP Port: " << connectRes.udpPort << "\n";
-
-    std::map<std::string, int> keybinds = {
-        {"UP", KEY_W},
-        {"DOWN", KEY_S},
-        {"LEFT", KEY_A},
-        {"RIGHT", KEY_D},
-        {"SHOOT", KEY_SPACE}
-    };
 
     std::vector<RoomInfo> rooms;
     double lastRoomUpdate = 0;
 
     LobbyState lobbyState;
     double lastLobbyUpdate = 0;
+    bool connected = false;
 
     while (currentState != ClientState::EXITING && !WindowShouldClose()) {
+        BeginDrawing();
         switch (currentState) {
+            case ClientState::USERNAME_INPUT: {
+                if (renderer.drawUsernameInput(config.username)) {
+                    ConfigManager::saveConfig(config, CONFIG_FILE);
+                    currentState = ClientState::MAIN_MENU;
+                }
+                break;
+            }
             case ClientState::MAIN_MENU: {
                 MainMenuChoice choice = renderer.drawMainMenu();
                 if (choice == MainMenuChoice::START) {
@@ -80,14 +78,24 @@ int main(int ac, char **av)
             }
 
             case ClientState::OPTIONS: {
-                if (renderer.drawOptionsMenu(keybinds)) {
+                if (renderer.drawOptionsMenu(config.keybinds)) {
                     currentState = ClientState::MAIN_MENU;
-                    // Ici, vous pourriez sauvegarder les keybinds dans un fichier
+                    ConfigManager::saveConfig(config, CONFIG_FILE);
                 }
                 break;
             }
 
             case ClientState::ROOM_SELECTION: {
+                if (!connected) {
+                    if (!tcpClient.sendConnectRequest(config.username, connectRes)) {
+                        std::cerr << "Handshake TCP échoué\n";
+                        currentState = ClientState::EXITING;
+                        break;
+                    }
+                    std::cout << "Connecté ! PlayerId: " << connectRes.playerId << ", UDP Port: " << connectRes.udpPort << "\n";
+                    connected = true;
+                }
+
                 double now = GetTime();
                 if (now - lastRoomUpdate > 1.0) {
                     rooms = tcpClient.getRooms();
@@ -95,12 +103,12 @@ int main(int ac, char **av)
                 }
 
                 int action = renderer.drawRoomMenu(rooms);
-                if (action == -2) { // Create Room
+                if (action == -2) {
                     int newRoomId = tcpClient.createRoom();
                     if (newRoomId >= 0 && tcpClient.joinRoom(newRoomId)) {
                         currentState = ClientState::LOBBY;
                     }
-                } else if (action >= 0) { // Join Room
+                } else if (action >= 0) {
                     if (tcpClient.joinRoom(action)) {
                         currentState = ClientState::LOBBY;
                     }
@@ -126,14 +134,15 @@ int main(int ac, char **av)
             }
 
             case ClientState::IN_GAME: {
-                RTypeClient client(serverIp, connectRes, keybinds);
+                RTypeClient client(serverIp, connectRes, config.keybinds);
                 client.run();
-                currentState = ClientState::EXITING; // Ou retour au MAIN_MENU
+                currentState = ClientState::EXITING;
                 break;
             }
             case ClientState::EXITING:
                 break;
         }
+        EndDrawing();
     }
 
     CloseWindow();

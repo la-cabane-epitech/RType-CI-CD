@@ -24,10 +24,42 @@ void RTypeClient::run()
     _udpClient.sendMessage(packet);
     update();
 
-    while (!WindowShouldClose()) {
-        handleInput();
-        update();
-        render();
+    while (!WindowShouldClose() && _status != InGameStatus::QUITTING) {
+        switch (_status) {
+            case InGameStatus::PLAYING:
+                if (IsKeyPressed(KEY_ESCAPE)) {
+                    _status = InGameStatus::PAUSED;
+                }
+                handleInput();
+                update();
+                break;
+            case InGameStatus::PAUSED:
+                if (IsKeyPressed(KEY_ESCAPE)) {
+                    _status = InGameStatus::PLAYING;
+                }
+                break;
+            case InGameStatus::OPTIONS:
+                if (IsKeyPressed(KEY_ESCAPE)) {
+                    _status = InGameStatus::PAUSED;
+                }
+                break;
+            case InGameStatus::QUITTING:
+                break;
+        }
+
+        BeginDrawing();
+        _renderer.draw();
+
+        if (_status == InGameStatus::PAUSED) {
+            PauseMenuChoice choice = _renderer.drawPauseMenu();
+            if (choice == PauseMenuChoice::OPTIONS) _status = InGameStatus::OPTIONS;
+            if (choice == PauseMenuChoice::QUIT) _status = InGameStatus::QUITTING;
+        } else if (_status == InGameStatus::OPTIONS) {
+            if (_renderer.drawOptionsMenu(_keybinds)) {
+                _status = InGameStatus::PAUSED;
+            }
+        }
+        EndDrawing();
     }
     PlayerDisconnectPacket disconnectPacket{};
     disconnectPacket.playerId = _gameState.myPlayerId;
@@ -128,9 +160,4 @@ void RTypeClient::update()
             _gameState.rtt = currentTime - pongPkt->timestamp;
         }
     }
-}
-
-void RTypeClient::render()
-{
-    _renderer.draw();
 }

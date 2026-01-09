@@ -10,6 +10,7 @@ set (
     TCPClient.cpp
     UDPClient.cpp
     Renderer.cpp
+    ConfigManager.cpp
 )
 
 add_executable(rtype_client ${SOURCES})

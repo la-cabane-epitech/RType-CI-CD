@@ -38,9 +38,6 @@ Renderer::~Renderer()
 
 void Renderer::draw()
 {
-
-    BeginDrawing();
-
     ClearBackground(BLACK);
 
     for (auto& star : _stars) {
@@ -90,13 +87,39 @@ void Renderer::draw()
             DrawTexture(_textures.at(entity.type), static_cast<int>(entity.x), static_cast<int>(entity.y), WHITE);
         }
     }
+}
 
-    EndDrawing();
+PauseMenuChoice Renderer::drawPauseMenu()
+{
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.7f));
+    DrawText("PAUSED", GetScreenWidth() / 2 - MeasureText("PAUSED", 60) / 2, 150, 60, WHITE);
+
+    Vector2 mousePos = GetMousePosition();
+    PauseMenuChoice choice = PauseMenuChoice::NONE;
+
+    Rectangle optionsBtn = { (float)GetScreenWidth() / 2 - 125, 320, 250, 50 };
+    bool hoverOptions = CheckCollisionPointRec(mousePos, optionsBtn);
+    DrawRectangleRec(optionsBtn, hoverOptions ? LIGHTGRAY : GRAY);
+    DrawText("Options", optionsBtn.x + (optionsBtn.width - MeasureText("Options", 30)) / 2, optionsBtn.y + 10, 30, BLACK);
+    if (hoverOptions && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        choice = PauseMenuChoice::OPTIONS;
+    }
+
+    Rectangle quitBtn = { (float)GetScreenWidth() / 2 - 125, 390, 250, 50 };
+    bool hoverQuit = CheckCollisionPointRec(mousePos, quitBtn);
+    DrawRectangleRec(quitBtn, hoverQuit ? LIGHTGRAY : GRAY);
+    DrawText("Quit Game", quitBtn.x + (quitBtn.width - MeasureText("Quit Game", 30)) / 2, quitBtn.y + 10, 30, BLACK);
+    if (hoverQuit && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        choice = PauseMenuChoice::QUIT;
+    }
+
+    DrawText("Press ESC to resume", GetScreenWidth() / 2 - MeasureText("Press ESC to resume", 20) / 2, GetScreenHeight() - 50, 20, LIGHTGRAY);
+
+    return choice;
 }
 
 MainMenuChoice Renderer::drawMainMenu()
 {
-    BeginDrawing();
     ClearBackground(BLACK);
 
     DrawText("R-Type", GetScreenWidth() / 2 - MeasureText("R-Type", 80) / 2, 100, 80, WHITE);
@@ -120,13 +143,11 @@ MainMenuChoice Renderer::drawMainMenu()
         choice = MainMenuChoice::OPTIONS;
     }
 
-    EndDrawing();
     return choice;
 }
 
 bool Renderer::drawOptionsMenu(std::map<std::string, int>& keybinds)
 {
-    BeginDrawing();
     ClearBackground(BLACK);
 
     DrawText("Options - Keybinds", 50, 50, 40, WHITE);
@@ -176,14 +197,12 @@ bool Renderer::drawOptionsMenu(std::map<std::string, int>& keybinds)
         }
     }
 
-    EndDrawing();
     return backPressed;
 }
 
 
 int Renderer::drawRoomMenu(const std::vector<RoomInfo>& rooms)
 {
-    BeginDrawing();
     ClearBackground(BLACK);
 
     DrawText("R-Type - Select Room", 50, 50, 40, WHITE);
@@ -218,13 +237,11 @@ int Renderer::drawRoomMenu(const std::vector<RoomInfo>& rooms)
         startY += 60;
     }
 
-    EndDrawing();
     return action;
 }
 
 bool Renderer::drawLobby(const LobbyState& lobbyState, uint32_t myPlayerId)
 {
-    BeginDrawing();
     ClearBackground(BLACK);
 
     DrawText("Lobby - Waiting for players...", 50, 50, 40, WHITE);
@@ -255,14 +272,50 @@ bool Renderer::drawLobby(const LobbyState& lobbyState, uint32_t myPlayerId)
         DrawText("Waiting for the host to start the game...", 50, GetScreenHeight() - 100, 20, LIGHTGRAY);
     }
 
-
-    EndDrawing();
     return startGamePressed;
+}
+
+bool Renderer::drawUsernameInput(std::string& username)
+{
+    int key = GetCharPressed();
+    while (key > 0) {
+        if ((key >= 32) && (key <= 125) && (username.length() < 31)) {
+            username += (char)key;
+        }
+        key = GetCharPressed();
+    }
+
+    if (IsKeyPressed(KEY_BACKSPACE)) {
+        if (!username.empty()) {
+            username.pop_back();
+        }
+    }
+
+    ClearBackground(BLACK);
+    DrawText("CHOOSE YOUR USERNAME", GetScreenWidth() / 2 - MeasureText("CHOOSE YOUR USERNAME", 40) / 2, 150, 40, WHITE);
+
+    Rectangle textBox = { (float)GetScreenWidth() / 2 - 200, 300, 400, 50 };
+    DrawRectangleRec(textBox, LIGHTGRAY);
+    DrawRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, DARKGRAY);
+
+    DrawText(username.c_str(), (int)textBox.x + 10, (int)textBox.y + 10, 30, MAROON);
+
+    if (((int)(GetTime() * 2.0f)) % 2 == 0) {
+        DrawText("_", (int)textBox.x + 10 + MeasureText(username.c_str(), 30), (int)textBox.y + 15, 30, MAROON);
+    }
+
+    DrawText("Press ENTER to confirm", GetScreenWidth() / 2 - MeasureText("Press ENTER to confirm", 20) / 2, 370, 20, GRAY);
+    DrawText("Max 31 characters", GetScreenWidth() / 2 - MeasureText("Max 31 characters", 20) / 2, 400, 20, GRAY);
+
+    if (IsKeyPressed(KEY_ENTER) && !username.empty()) {
+        return true;
+    }
+
+    return false;
 }
 
 const char* Renderer::GetKeyName(int key) {
     switch (key) {
-        // Alphanumeric
         case KEY_APOSTROPHE:   return "'";
         case KEY_COMMA:        return ",";
         case KEY_MINUS:        return "-";
@@ -307,7 +360,6 @@ const char* Renderer::GetKeyName(int key) {
         case KEY_Y:            return "Y";
         case KEY_Z:            return "Z";
 
-        // Controls
         case KEY_SPACE:        return "SPACE";
         case KEY_ESCAPE:       return "ESC";
         case KEY_ENTER:        return "ENTER";

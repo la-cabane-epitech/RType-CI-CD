@@ -32,6 +32,17 @@ enum class MainMenuChoice {
     START,
     OPTIONS
 };
+
+/**
+ * @enum PauseMenuChoice
+ * @brief Represents the user's choice in the in-game pause menu.
+ */
+enum class PauseMenuChoice {
+    NONE,
+    OPTIONS,
+    QUIT
+};
+
 /**
  * @class Renderer
  * @brief Responsible for rendering the game state to the screen.
@@ -52,9 +63,16 @@ public:
     ~Renderer();
 
     /**
-     * @brief Draws the current frame based on the game state.
+     * @brief Draws the game world content (players, entities, background).
+     * @note This function should be called within a BeginDrawing()/EndDrawing() block.
      */
     void draw();
+
+    /**
+     * @brief Draws the pause menu.
+     * @return The user's choice from the pause menu.
+     */
+    PauseMenuChoice drawPauseMenu();
 
     /**
      * @brief Draws the main menu.
@@ -83,6 +101,13 @@ public:
      * @return true if the "Start Game" button was pressed, false otherwise.
      */
     bool drawLobby(const LobbyState& lobbyState, uint32_t myPlayerId);
+
+    /**
+     * @brief Draws the username input screen.
+     * @param username Reference to the string that will store the username.
+     * @return true if the user confirmed the username (pressed Enter), false otherwise.
+     */
+    bool drawUsernameInput(std::string& username);
 
     const char* GetKeyName(int key);
 
