@@ -11,8 +11,8 @@
 
 RTypeClient::RTypeClient(const std::string& serverIp, const ConnectResponse& connectResponse)
     : _udpClient(serverIp, connectResponse.udpPort),
-      _renderer(_gameState),
-      _clock(connectResponse.clock)
+        _renderer(_gameState),
+        _clock(connectResponse.clock)
 {
     _gameState.myPlayerId = connectResponse.playerId;
 }
@@ -59,9 +59,9 @@ void RTypeClient::handleInput()
     if (IsKeyPressed(KEY_SPACE)) packet.inputs |= SHOOT;
 
     if (packet.inputs != 0) {
-        applyInput(packet); // Prédiction: on bouge tout de suite
+        applyInput(packet);
         _udpClient.sendMessage(packet);
-        _pendingInputs.push_back(packet); // On stocke pour la réconciliation
+        _pendingInputs.push_back(packet);
     }
 }
 
@@ -83,23 +83,15 @@ void RTypeClient::update()
             const auto* serverState = reinterpret_cast<const PlayerStatePacket*>(data.data());
 
             if (serverState->playerId == _gameState.myPlayerId) {
-                // C'est une mise à jour de notre propre joueur (réconciliation)
                 _gameState.players[serverState->playerId] = {serverState->x, serverState->y};
 
-                // 1. On supprime les inputs qui ont été confirmés par le serveur
                 while (!_pendingInputs.empty() && _pendingInputs.front().tick <= serverState->lastProcessedTick) {
                     _pendingInputs.pop_front();
                 }
-
-                // 2. On re-applique les inputs qui n'ont pas encore été traités par le serveur
-                //    par-dessus l'état authoritaire du serveur.
                 for (const auto& input : _pendingInputs) {
                     applyInput(input);
                 }
-
             } else {
-                // C'est une mise à jour d'un autre joueur (interpolation/extrapolation)
-                // Pour l'instant, on applique directement la position.
                 _gameState.players[serverState->playerId] = {serverState->x, serverState->y};
             }
         }

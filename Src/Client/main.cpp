@@ -44,6 +44,5 @@ int main(int ac, char **av)
     }
 
     CloseWindow();
-    // indiquer au server la fermeture + deconnecter
     return 0;
 }
