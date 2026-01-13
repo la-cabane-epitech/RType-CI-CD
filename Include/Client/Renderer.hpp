@@ -121,6 +121,11 @@ public:
      */
     bool drawUsernameInput(std::string& username);
 
+    /**
+     * @brief Draws a screen informing the user they have been kicked.
+     */
+    void drawKickedScreen();
+
     const char* GetKeyName(int key);
 
     std::map<int, EntityRenderConfig> ENTITY_REGISTRY;

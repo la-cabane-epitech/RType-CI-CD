@@ -11,6 +11,8 @@
 #include <map>
 #include <memory>
 #include <atomic>
+#include <thread>
+#include <mutex>
 #include "Server/Game.hpp"
 #include "Server/TCPServer.hpp"
 #include "Server/UDPServer.hpp"
@@ -39,11 +41,16 @@ public:
     void run();
 
 private:
+    void shellLoop();
+    void processCommand(const std::string& command);
+
     Clock _clock; /**< A shared clock for timestamping and synchronization. */
     std::map<int, std::shared_ptr<Game>> _rooms; /**< A map of room IDs to Game instances. */
+    std::mutex _roomsMutex; /**< A mutex to protect the rooms map. */
     TCPServer _tcpServer; /**< The TCP server instance for handling connections and lobbies. */
     UDPServer _udpServer; /**< The UDP server instance for handling real-time game data. */
     std::atomic<bool> _running; /**< Atomic flag to control the main server loop. */
+    std::thread _shellThread; /**< Thread for the server shell. */
 };
 
 #endif /* !SERVERMANAGER_HPP_ */

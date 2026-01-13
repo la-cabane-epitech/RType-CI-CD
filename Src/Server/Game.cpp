@@ -6,6 +6,7 @@
 */
 
 #include "Server/Game.hpp"
+#include <optional>
 #include "Server/UDPServer.hpp"
 #include <cmath>
 
@@ -79,22 +80,25 @@ int Game::getPlayerCount()
 
 GameStatus Game::getStatus() const
 {
+    std::lock_guard<std::mutex> lock(_statusMutex);
     return _status;
 }
 
 void Game::setStatus(GameStatus status)
 {
+    std::lock_guard<std::mutex> lock(_statusMutex);
     _status = status;
 }
 
 uint32_t Game::getHostId() const
 {
-    std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(_playersMutex));
+    std::lock_guard<std::mutex> lock(_playersMutex);
     return _players.empty() ? 0 : _players.front().id;
 }
 
-const std::vector<Player>& Game::getPlayers() const
+std::vector<Player> Game::getPlayers() const
 {
+    std::lock_guard<std::mutex> lock(_playersMutex);
     return _players;
 }
 
@@ -261,6 +265,45 @@ void Game::disconnectPlayer(uint32_t playerId, UDPServer& udpServer) {
             disconnectPkt.playerId = playerId;
             udpServer.queueMessage(disconnectPkt, destPlayer.udpAddr);
             std::cout << "Send message disconnect to player " << destPlayer.id << "." << std::endl;
+        }
+    }
+}
+
+void Game::kickPlayer(uint32_t playerId, UDPServer& udpServer)
+{
+    std::optional<sockaddr_in> kickedPlayerAddr;
+    bool playerFoundAndRemoved = false;
+
+    {
+        std::lock_guard<std::mutex> lock(_playersMutex);
+        auto it = std::find_if(_players.begin(), _players.end(),
+                             [playerId](const Player& p) { return p.id == playerId; });
+
+        if (it != _players.end()) {
+            if (it->addrSet) {
+                kickedPlayerAddr = it->udpAddr;
+            }
+            _players.erase(it);
+            playerFoundAndRemoved = true;
+            std::cout << "[Game] Player " << playerId << " was kicked." << std::endl;
+        }
+    }
+
+    if (playerFoundAndRemoved) {
+        // Notify the kicked player
+        if (kickedPlayerAddr) {
+            YouHaveBeenKickedPacket kickPkt;
+            udpServer.queueMessage(kickPkt, *kickedPlayerAddr);
+        }
+
+        // Notify remaining players
+        PlayerDisconnectPacket disconnectPkt{};
+        disconnectPkt.playerId = playerId;
+        std::lock_guard<std::mutex> lock(_playersMutex);
+        for (const auto& destPlayer : _players) {
+            if (destPlayer.addrSet) {
+                udpServer.queueMessage(disconnectPkt, destPlayer.udpAddr);
+            }
         }
     }
 }

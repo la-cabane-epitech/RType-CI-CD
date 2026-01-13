@@ -345,6 +345,16 @@ bool Renderer::drawUsernameInput(std::string& username)
     return false;
 }
 
+void Renderer::drawKickedScreen()
+{
+    ClearBackground(BLACK);
+    const char* msg = "You have been kicked from the game.";
+    const char* prompt = "Press ENTER or click to exit.";
+    DrawText(msg, GetScreenWidth() / 2 - MeasureText(msg, 40) / 2, GetScreenHeight() / 2 - 40, 40, WHITE);
+    DrawText(prompt, GetScreenWidth() / 2 - MeasureText(prompt, 20) / 2, GetScreenHeight() / 2 + 20, 20, LIGHTGRAY);
+}
+
+
 const char* Renderer::GetKeyName(int key) {
     switch (key) {
         case KEY_APOSTROPHE:   return "'";

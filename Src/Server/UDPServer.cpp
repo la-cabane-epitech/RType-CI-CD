@@ -8,8 +8,8 @@
 #include "Server/UDPServer.hpp"
 #include "Server/Game.hpp"
 
-UDPServer::UDPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock)
-    : _rooms(rooms), _clock(clock)
+UDPServer::UDPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock, std::mutex& roomsMutex)
+    : _rooms(rooms), _roomsMutex(roomsMutex), _clock(clock)
 {
     _sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -120,6 +120,8 @@ void UDPServer::processLoop()
 void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in& clientAddr)
 {
     if (length < 1) return;
+
+    std::lock_guard<std::mutex> lock(_roomsMutex);
 
     uint8_t type = *reinterpret_cast<const uint8_t*>(data);
 

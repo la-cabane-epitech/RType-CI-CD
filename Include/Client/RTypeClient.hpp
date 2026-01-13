@@ -29,6 +29,15 @@ enum class InGameStatus {
 };
 
 /**
+ * @enum GameExitReason
+ * @brief Describes why the game session ended.
+ */
+enum class GameExitReason {
+    QUIT,   ///< The user chose to quit the game.
+    KICKED  ///< The user was kicked by the server.
+};
+
+/**
  * @class RTypeClient
  * @brief Main client class that orchestrates the game loop, networking, and rendering.
  */
@@ -52,7 +61,7 @@ public:
     /**
      * @brief Starts the main game loop.
      */
-    void run();
+    GameExitReason run();
 
 private:
     /**
@@ -72,6 +81,7 @@ private:
     Clock _clock;         /**< Clock for timing the game loop */
     std::map<std::string, int> _keybinds; /**< Map of actions to key codes */
     InGameStatus _status = InGameStatus::PLAYING; /**< Current status of the in-game client */
+    GameExitReason _exitReason = GameExitReason::QUIT; /**< Reason for exiting the game loop */
 
     std::deque<PlayerInputPacket> _pendingInputs; /**< Queue of inputs sent but not yet acknowledged */
 

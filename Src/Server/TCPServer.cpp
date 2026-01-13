@@ -13,8 +13,8 @@
 
 using namespace NetworkUtils;
 
-TCPServer::TCPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock)
-    : _rooms(rooms), _clock(clock)
+TCPServer::TCPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock, std::mutex& roomsMutex)
+    : _rooms(rooms), _clock(clock), _roomsMutex(roomsMutex)
 {
     _sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -37,11 +37,13 @@ TCPServer::~TCPServer()
 
 void TCPServer::stop()
 {
-    if (!_running)
+    if (!_running) {
         return;
+    }
     _running = false;
 
     std::cout << "[TCP] Server stopping..." << std::endl;
+
     close(_sockfd);
 
     if (_acceptThread.joinable())
@@ -49,7 +51,7 @@ void TCPServer::stop()
 
     for (auto& thread : _clientThread) {
         if (thread.joinable())
-            thread.join();
+            thread.detach();
     }
 }
 
@@ -120,7 +122,7 @@ void TCPServer::handleClient(int clientSock)
 
         switch (static_cast<TCPMessageType>(msgType)) {
             case TCPMessageType::LIST_ROOMS: {
-                std::lock_guard<std::mutex> lock(_serverMutex);
+                std::lock_guard<std::mutex> lock(_roomsMutex);
                 ListRoomsResponse resp;
                 resp.count = _rooms.size();
                 sendAll(clientSock, &resp, sizeof(resp));
@@ -134,7 +136,7 @@ void TCPServer::handleClient(int clientSock)
                 break;
             }
             case TCPMessageType::CREATE_ROOM: {
-                std::lock_guard<std::mutex> lock(_serverMutex);
+                std::lock_guard<std::mutex> lock(_roomsMutex);
                 int newRoomId = createRoom();
                 CreateRoomResponse resp;
                 resp.roomId = newRoomId;
@@ -149,7 +151,7 @@ void TCPServer::handleClient(int clientSock)
                 }
                 JoinRoomResponse resp;
                 {
-                    std::lock_guard<std::mutex> lock(_serverMutex);
+                    std::lock_guard<std::mutex> lock(_roomsMutex);
                     auto it = _rooms.find(req.roomId);
                     if (it != _rooms.end() && it->second->getStatus() == GameStatus::LOBBY) {
                         it->second->addPlayer(playerId, _playerUsernames[playerId].c_str());
@@ -182,7 +184,7 @@ void TCPServer::handleInRoomClient(int clientSock, int roomId, uint32_t playerId
 {
     std::shared_ptr<Game> game = nullptr;
     {
-        std::lock_guard<std::mutex> lock(_serverMutex);
+        std::lock_guard<std::mutex> lock(_roomsMutex);
         game = _rooms.at(roomId);
     }
 
@@ -204,7 +206,7 @@ void TCPServer::handleInRoomClient(int clientSock, int roomId, uint32_t playerId
             case TCPMessageType::GET_LOBBY_STATE: {
                 LobbyStateResponse resp;
                 resp.hostId = game->getHostId();
-                const auto& players = game->getPlayers();
+                const auto players = game->getPlayers();
                 resp.playerCount = players.size();
                 sendAll(clientSock, &resp, sizeof(resp));
                 for(const auto& player : players) {

@@ -38,7 +38,7 @@ public:
      * @param rooms Reference to the map of rooms.
      * @param clock Reference to the shared Clock.
      */
-    TCPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock);
+    TCPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock, std::mutex& roomsMutex);
 
     /**
      * @brief Destroy the TCPServer object.
@@ -89,7 +89,7 @@ private:
     uint32_t _nextPlayerId = 1; /**< Counter for assigning unique player IDs */
     int _nextRoomId = 0; /**< Counter for assigning unique room IDs. */
     std::map<uint32_t, std::string> _playerUsernames; /**< Map of player IDs to their usernames. */
-    std::mutex _serverMutex; /**< Mutex to protect shared server resources like player/room counters. */
+    std::mutex& _roomsMutex; /**< Mutex to protect shared server resources like player/room counters. */
 
     std::thread _acceptThread; /**< Thread for accepting new connections */
     std::vector<std::thread> _clientThread; /**< Threads for handling individual clients. */

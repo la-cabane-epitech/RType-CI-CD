@@ -57,7 +57,7 @@ public:
      * @param rooms Reference to the shared map of rooms.
      * @param clock Reference to the shared Clock.
      */
-    UDPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock);
+    UDPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock, std::mutex& roomsMutex);
 
     /**
      * @brief Destroy the UDPServer object.
@@ -97,6 +97,7 @@ private:
     int _sockfd; /**< UDP socket file descriptor */
     bool _running; /**< Running state flag */
     std::map<int, std::shared_ptr<Game>>& _rooms; /**< Reference to shared rooms */
+    std::mutex& _roomsMutex; /**< Mutex to protect the rooms map. */
     const Clock& _clock; /**< Reference to the server clock */
 
     std::thread _recvThread; /**< Thread for receiving packets */

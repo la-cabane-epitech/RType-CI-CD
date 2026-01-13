@@ -53,7 +53,8 @@ enum UDPMessageType : uint8_t {
     ENTITY_DESTROY    = 5,  ///< Sent by server: destroy entity
     PING              = 6,  ///< Client to Server ping
     PONG              = 7,  ///< Server to Client pong
-    PLAYER_DISCONNECT = 8   ///< Sent by client: player is disconnecting
+    PLAYER_DISCONNECT = 8,  ///< Sent by client: player is disconnecting
+    YOU_HAVE_BEEN_KICKED = 9  ///< Sent by server: to a player that has been kicked
 };
 
 /**
@@ -173,6 +174,14 @@ struct PongPacket {
 struct PlayerDisconnectPacket {
     uint8_t type = PLAYER_DISCONNECT; ///< Packet type (PLAYER_DISCONNECT)
     uint32_t playerId;                ///< Player identifier
+};
+
+/**
+ * @struct YouHaveBeenKickedPacket
+ * @brief Sent by the server to a player who has been kicked from a room.
+ */
+struct YouHaveBeenKickedPacket {
+    uint8_t type = YOU_HAVE_BEEN_KICKED; ///< Packet type (YOU_HAVE_BEEN_KICKED)
 };
 
 // Restore packing

@@ -17,6 +17,7 @@ enum class ClientState {
     ROOM_SELECTION,
     LOBBY,
     IN_GAME,
+    KICKED_SCREEN,
     EXITING
 };
 
@@ -135,8 +136,19 @@ int main(int ac, char **av)
 
             case ClientState::IN_GAME: {
                 RTypeClient client(serverIp, connectRes, config.keybinds);
-                client.run();
-                currentState = ClientState::EXITING;
+                GameExitReason reason = client.run();
+                if (reason == GameExitReason::KICKED) {
+                    currentState = ClientState::KICKED_SCREEN;
+                } else {
+                    currentState = ClientState::EXITING;
+                }
+                break;
+            }
+            case ClientState::KICKED_SCREEN: {
+                renderer.drawKickedScreen();
+                if (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                    currentState = ClientState::EXITING;
+                }
                 break;
             }
             case ClientState::EXITING:

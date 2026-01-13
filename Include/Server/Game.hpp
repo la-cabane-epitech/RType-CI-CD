@@ -145,6 +145,13 @@ public:
     void disconnectPlayer(uint32_t playerId, UDPServer& udpServer);
 
     /**
+     * @brief Forcibly removes a player from the game (kick).
+     * @param playerId The ID of the player to kick.
+     * @param udpServer Reference to the UDP server for notification.
+     */
+    void kickPlayer(uint32_t playerId, UDPServer& udpServer);
+
+    /**
      * @brief Removes a player from the lobby (without UDP notification).
      * @param playerId The ID of the player to remove.
      */
@@ -182,7 +189,7 @@ public:
      * @param status The new GameStatus to set.
      */
     void setStatus(GameStatus status);
-    /**
+    /**_
      * @brief Gets the ID of the host player.
      * The host is typically the first player who joined the room.
      * @return The player ID of the host.
@@ -192,11 +199,11 @@ public:
      * @brief Gets a constant reference to the list of players in the game.
      * @return A const reference to the vector of players.
      */
-    const std::vector<Player>& getPlayers() const;
+    std::vector<Player> getPlayers() const;
 
 private:
     std::vector<Player> _players; /**< List of players in the game. */
-    std::mutex _playersMutex; /**< Mutex to protect access to the _players vector. */
+    mutable std::mutex _playersMutex; /**< Mutex to protect access to the _players vector. */
 
     std::vector<Entity> _entities; /**< List of all entities in the game (enemies, projectiles). */
     std::mutex _entitiesMutex; /**< Mutex to protect access to the _entities vector. */
@@ -217,6 +224,7 @@ private:
     float _gameTime = 0.0f; /**< Total time the game has been running in the PLAYING state. */
     std::chrono::steady_clock::time_point _lastEnemySpawnTime = std::chrono::steady_clock::now(); /**< Time point of the last enemy spawn. */
     GameStatus _status; /**< Current status of the game (Lobby/Playing). */
+    mutable std::mutex _statusMutex; /**< Mutex to protect access to the _status. */
 };
 
 

@@ -18,7 +18,7 @@ RTypeClient::RTypeClient(const std::string& serverIp, const ConnectResponse& con
     _gameState.myPlayerId = connectResponse.playerId;
 }
 
-void RTypeClient::run()
+GameExitReason RTypeClient::run()
 {
     PlayerInputPacket packet{};
     _udpClient.sendMessage(packet);
@@ -61,9 +61,12 @@ void RTypeClient::run()
         }
         EndDrawing();
     }
-    PlayerDisconnectPacket disconnectPacket{};
-    disconnectPacket.playerId = _gameState.myPlayerId;
-    _udpClient.sendMessage(disconnectPacket);
+    if (_exitReason != GameExitReason::KICKED) {
+        PlayerDisconnectPacket disconnectPacket{};
+        disconnectPacket.playerId = _gameState.myPlayerId;
+        _udpClient.sendMessage(disconnectPacket);
+    }
+    return _exitReason;
 }
 
 void RTypeClient::applyInput(const PlayerInputPacket& packet)
@@ -174,6 +177,13 @@ void RTypeClient::update()
             const auto* pongPkt = reinterpret_cast<const PongPacket*>(data.data());
             uint32_t currentTime = _clock.getElapsedTimeMs();
             _gameState.rtt = currentTime - pongPkt->timestamp;
+        }
+
+        if (type == UDPMessageType::YOU_HAVE_BEEN_KICKED) {
+            std::cout << "You have been kicked from the game by the server." << std::endl;
+            _status = InGameStatus::QUITTING;
+            _exitReason = GameExitReason::KICKED;
+            break;
         }
     }
 }
