@@ -9,18 +9,12 @@
 #define RENDERER_HPP_
 
 #include "GameState.hpp"
+#include "ParallaxLayer.hpp"
 #include <map>
 #include <vector>
 #include "Client/TCPClient.hpp"
 #include "Protocole/ProtocoleTCP.hpp"
 #include "Client/Ray.hpp"
-
-struct Star {
-    float x;
-    float y;
-    float speed;
-    float scale;
-};
 
 /**
  * @class Renderer
@@ -62,10 +56,9 @@ public:
     bool drawLobby(const LobbyState& lobbyState, uint32_t myPlayerId);
 
 private:
-    GameState& _gameState; /**< Reference to the game state to render */
-    std::map<uint16_t, Texture2D> _textures; /**< Cache of textures indexed by entity type */
-    std::vector<Star> _stars; /**< List of star entities for the background animation */
-    Texture2D _starTexture; /**< Texture resource for the star sprite */
+    GameState& _gameState;
+    std::map<uint16_t, Texture2D> _textures;
+    std::vector<ParallaxLayer> _parallaxLayers;
 };
 
 #endif

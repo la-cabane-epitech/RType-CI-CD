@@ -7,7 +7,9 @@
 
 #include "Client/Ray.hpp"
 #include "Client/Renderer.hpp"
+#include "Client/ParallaxLayer.hpp"
 #include <map>
+
 #include <string>
 #include <vector>
 
@@ -32,16 +34,15 @@ Renderer::Renderer(GameState& gameState) : _gameState(gameState)
     _textures[2] = LoadTexture("Assets/r-typesheet3.gif");
     _textures[3] = LoadTexture("Assets/r-typesheet5.gif");
     _textures[4] = LoadTexture("Assets/r-typesheet1.gif");
-    _starTexture = LoadTexture("Assets/star_white_giant01.png");
+    
+    // Background Textures
+    _textures[10] = LoadTexture("Assets/blue-back.png");
+    _textures[11] = LoadTexture("Assets/blue-stars.png");
+    _textures[12] = LoadTexture("Assets/asteroid-1.png");
 
-    for (int i = 0; i < 10; ++i) {
-        _stars.push_back({
-            static_cast<float>(GetRandomValue(1920, 5000)),
-            static_cast<float>(GetRandomValue(0, 1080)),
-            5.0f,
-            static_cast<float>(GetRandomValue(1, 5)) / 50.0f
-        });
-    }
+    float bgScale = (float)GetScreenHeight() / _textures[10].height;
+    _parallaxLayers.emplace_back(0.2f, _textures[10], bgScale, 0.0f);
+    _parallaxLayers.emplace_back(0.4f, _textures[11], 6.0f, 0.0f);
 
     // --- Configuration des Entités (Data-Driven) ---
     if (ENTITY_REGISTRY.empty()) {
@@ -53,30 +54,30 @@ Renderer::Renderer(GameState& gameState) : _gameState(gameState)
 }
 
 Renderer::~Renderer()
-{
-    for (auto const& [key, val] : _textures)
-    {
-        UnloadTexture(val);
+{ 
+    if (IsWindowReady()) {
+        for (auto const& [key, val] : _textures)
+        {
+            UnloadTexture(val);
+        }
     }
-    UnloadTexture(_starTexture);
 }
 
 void Renderer::draw()
 {
+    float dt = GetFrameTime();
+    float scrollSpeed = 150.0f;
 
-    BeginDrawing();
-
-    ClearBackground(BLACK);
-
-    for (auto& star : _stars) {
-        star.x -= star.speed;
-        if (star.x < -50) {
-            star.x = 1920 + 50;
-            star.y = GetRandomValue(0, 1080);
-        }
-        DrawTextureEx(_starTexture, {star.x, star.y}, 0.0f, star.scale, WHITE);
+    for (auto& layer : _parallaxLayers) {
+        layer.update(dt, scrollSpeed);
     }
 
+    BeginDrawing();
+    ClearBackground(BLACK);
+
+    for (auto& layer : _parallaxLayers) {
+        layer.draw();
+    }
     DrawText("R-Type", 10, 10, 20, DARKGRAY);
 
     std::string pingText = "Ping: " + std::to_string(_gameState.rtt) + " ms";
@@ -87,6 +88,7 @@ void Renderer::draw()
         
         if (_textures.count(0) && _textures.at(0).id != 0) {
             const Texture2D& texture = _textures.at(0);
+            float scale = 2.0f;
             Rectangle sourceRec = { 0.0f, 0.0f, 33.0f, 17.0f };
             Vector2 position = { pair.second.x - sourceRec.width / 2, pair.second.y - sourceRec.height / 2 };
             DrawTextureRec(texture, sourceRec, position, WHITE);
@@ -102,10 +104,10 @@ void Renderer::draw()
             }
         }
 
-        DrawText(std::to_string(pair.first).c_str(), 
+        DrawText(std::to_string(pair.first).c_str(),
                 static_cast<int>(pair.second.x - 10),
                 static_cast<int>(pair.second.y - 10),
-                20, 
+                20,
                 WHITE);
     }
 
