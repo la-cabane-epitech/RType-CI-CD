@@ -392,7 +392,7 @@ const char* Renderer::GetKeyName(int key) {
         case KEY_Z:            return "Z";
 
         case KEY_SPACE:        return "SPACE";
-        case KEY_ESCAPE:       return "ESC";
+        // case KEY_ESCAPE:       return "ESC";
         case KEY_ENTER:        return "ENTER";
         case KEY_TAB:          return "TAB";
         case KEY_BACKSPACE:    return "BACKSPACE";

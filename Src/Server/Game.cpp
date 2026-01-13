@@ -153,8 +153,7 @@ void Game::createEnemy(UDPServer& udpServer) {
     float spawnX = 1920.0f;
     float spawnY = rand() % 1000 + 40;
 
-    // --- Système de Niveau ---
-    int type = 2;
+    uint16_t type = 2;
     float speed = -5.0f;
     int width = 32;
     int height = 32;
