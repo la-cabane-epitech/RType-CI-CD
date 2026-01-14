@@ -14,11 +14,9 @@ int main(void)
 {
     try {
         auto serverManager = std::make_unique<ServerManager>();
-        serverManager.run();
+        serverManager->run();
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
-    std::cout << "\nServer has stopped. Press Enter to exit..." << std::endl;
-    std::cin.get();
     return 0;
 }
