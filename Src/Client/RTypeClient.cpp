@@ -105,12 +105,11 @@ void RTypeClient::handleInput()
             packet.inputs |= SHOOT;
         isCharging = false;
     }
- 
-     if (packet.inputs != 0) {
-         applyInput(packet);
-         _pendingInputs.push_back(packet);
-     }
-     _udpClient.sendMessage(packet);
+    if (packet.inputs != 0) {
+        applyInput(packet);
+        _udpClient.sendMessage(packet);
+        _pendingInputs.push_back(packet);
+    }
 }
 
 void RTypeClient::update()
@@ -140,7 +139,6 @@ void RTypeClient::update()
                 for (const auto& input : _pendingInputs) {
                     applyInput(input);
                 }
-
             } else {
                 _gameState.players[serverState->playerId] = {serverState->x, serverState->y};
             }

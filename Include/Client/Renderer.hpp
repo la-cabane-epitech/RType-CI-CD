@@ -9,10 +9,12 @@
 #define RENDERER_HPP_
 
 #include "GameState.hpp"
+#include "ParallaxLayer.hpp"
 #include <map>
 #include <vector>
 #include "Client/TCPClient.hpp"
 #include <optional>
+#include <string>
 #include "Protocole/ProtocoleTCP.hpp"
 #include "Client/Ray.hpp"
 
@@ -127,11 +129,10 @@ public:
 
 
 private:
-    GameState& _gameState; /**< Reference to the game state to render */
-    std::map<uint16_t, Texture2D> _textures; /**< Cache of textures indexed by entity type */
-    std::vector<Star> _stars; /**< List of star entities for the background animation */
-    std::optional<std::string> _actionToRemap; /**< The action currently being remapped by the user */
-    Texture2D _starTexture; /**< Texture resource for the star sprite */
+    GameState& _gameState;
+    std::map<uint16_t, Texture2D> _textures;
+    std::vector<ParallaxLayer> _parallaxLayers;
+    std::optional<std::string> _actionToRemap;
 };
 
 #endif

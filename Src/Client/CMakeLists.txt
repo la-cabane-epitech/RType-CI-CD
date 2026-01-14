@@ -11,6 +11,7 @@ set (
     UDPClient.cpp
     Renderer.cpp
     ConfigManager.cpp
+    ParallaxLayer.cpp
 )
 
 add_executable(rtype_client ${SOURCES})
