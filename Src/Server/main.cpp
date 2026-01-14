@@ -18,5 +18,7 @@ int main(void)
         std::cerr << "Error: " << e.what() << std::endl;
         return 84;
     }
+    std::cout << "\nServer has stopped. Press Enter to exit..." << std::endl;
+    std::cin.get();
     return 0;
 }
