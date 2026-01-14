@@ -16,7 +16,7 @@ cmake -S . -B build \
     -DCMAKE_BUILD_TYPE=Release
 
 # 3. Build the project
-cmake --build build --config Release
+cmake --build ./build --config Release --target rtype_client rtype_server
 
 cp build/Src/Client/rtype_client .
 cp build/Src/Server/rtype_server .
