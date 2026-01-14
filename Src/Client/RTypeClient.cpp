@@ -88,28 +88,30 @@ void RTypeClient::handleInput()
     if (IsKeyDown(_keybinds.at("DOWN")))  packet.inputs |= DOWN;
     if (IsKeyDown(_keybinds.at("LEFT")))  packet.inputs |= LEFT;
     if (IsKeyDown(_keybinds.at("RIGHT"))) packet.inputs |= RIGHT;
-    if (IsKeyPressed(_keybinds.at("SHOOT"))) packet.inputs |= SHOOT;
 
     static uint32_t chargeStart = 0;
     static bool isCharging = false;
 
-    if (IsKeyDown(KEY_SPACE)) {
+    if (IsKeyPressed(KEY_SPACE)) {
         if (!isCharging) {
             chargeStart = _clock.getElapsedTimeMs();
             isCharging = true;
         }
-    } else if (isCharging) {
-        if (_clock.getElapsedTimeMs() - chargeStart > 500)
+    } else if (IsKeyReleased(KEY_SPACE)) {
+        if (isCharging) {
+            if (_clock.getElapsedTimeMs() - chargeStart > 500)
             packet.inputs |= CHARGE_SHOOT;
-        else
+            else
             packet.inputs |= SHOOT;
-        isCharging = false;
+            isCharging = false;
+        }
     }
-    if (packet.inputs != 0) {
-        applyInput(packet);
-        _udpClient.sendMessage(packet);
-        _pendingInputs.push_back(packet);
-    }
+
+     if (packet.inputs != 0) {
+         applyInput(packet);
+         _pendingInputs.push_back(packet);
+     }
+     _udpClient.sendMessage(packet);
 }
 
 void RTypeClient::update()
@@ -172,6 +174,23 @@ void RTypeClient::update()
             const auto* pongPkt = reinterpret_cast<const PongPacket*>(data.data());
             uint32_t currentTime = _clock.getElapsedTimeMs();
             _gameState.rtt = currentTime - pongPkt->timestamp;
+        }
+
+        if (type == UDPMessageType::GLOBAL_STATE_SYNC && data.size() >= sizeof(GlobalStateSyncPacket)) {
+            const auto* syncPkt = reinterpret_cast<const GlobalStateSyncPacket*>(data.data());
+            size_t offset = sizeof(GlobalStateSyncPacket);
+            _gameState.entities.clear();
+
+            for (uint32_t i = 0; i < syncPkt->entityCount; ++i) {
+                if (offset + sizeof(SyncedEntityState) <= data.size()) {
+                    const auto* entityState = reinterpret_cast<const SyncedEntityState*>(data.data() + offset);
+                    _gameState.entities[entityState->entityId] = {entityState->x, entityState->y, entityState->entityType};
+                    offset += sizeof(SyncedEntityState);
+                } else {
+                    std::cerr << "Malformed GLOBAL_STATE_SYNC packet: not enough data for entity " << i << std::endl;
+                    break;
+                }
+            }
         }
     }
 }

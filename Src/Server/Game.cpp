@@ -4,6 +4,7 @@
 ** File description:
 ** Game
 */
+#include <chrono>
 
 #include "Server/Game.hpp"
 #include "Server/UDPServer.hpp"
@@ -230,6 +231,38 @@ void Game::updateGameLevel(float elapsedTime) {
     }
 }
 
+void Game::sendGlobalStateSync(UDPServer& udpServer) {
+    std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
+
+    size_t totalPacketSize = sizeof(GlobalStateSyncPacket) + (_entities.size() * sizeof(SyncedEntityState));
+
+    if (totalPacketSize > MAX_UDP_PACKET_SIZE) {
+        std::cerr << "Warning: Global state sync packet size (" << totalPacketSize
+                  << ") exceeds MAX_UDP_PACKET_SIZE (" << MAX_UDP_PACKET_SIZE
+                  << "). Fragmentation or reduction of data sent per packet is required." << std::endl;
+    }
+
+    std::vector<char> packetBuffer(totalPacketSize);
+    GlobalStateSyncPacket header;
+    header.entityCount = _entities.size();
+
+    std::memcpy(packetBuffer.data(), &header, sizeof(GlobalStateSyncPacket));
+
+    size_t offset = sizeof(GlobalStateSyncPacket);
+    for (const auto& entity : _entities) {
+        SyncedEntityState state = {entity.id, entity.type, entity.x, entity.y};
+        std::memcpy(packetBuffer.data() + offset, &state, sizeof(SyncedEntityState));
+        offset += sizeof(SyncedEntityState);
+    }
+
+    std::lock_guard<std::mutex> lock_players(_playersMutex);
+    for (const auto& destPlayer : _players) {
+        if (destPlayer.addrSet) {
+            udpServer.queueMessage(packetBuffer.data(), packetBuffer.size(), destPlayer.udpAddr);
+        }
+    }
+}
+
 void Game::update(UDPServer& udpServer) {
     if (_status != GameStatus::PLAYING)
         return;
@@ -242,6 +275,11 @@ void Game::update(UDPServer& udpServer) {
     if (std::chrono::steady_clock::now() - _lastEnemySpawnTime > std::chrono::seconds(2)) {
         createEnemy(udpServer);
         _lastEnemySpawnTime = std::chrono::steady_clock::now();
+    }
+
+    if (std::chrono::steady_clock::now() - _lastGlobalSyncTime >= GLOBAL_SYNC_INTERVAL) {
+        sendGlobalStateSync(udpServer);
+        _lastGlobalSyncTime = std::chrono::steady_clock::now();
     }
 }
 
