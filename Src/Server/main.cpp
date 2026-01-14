@@ -16,7 +16,6 @@ int main(void)
         serverManager.run();
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
-        return 84;
     }
     std::cout << "\nServer has stopped. Press Enter to exit..." << std::endl;
     std::cin.get();
