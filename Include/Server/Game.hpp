@@ -216,7 +216,11 @@ private:
     bool checkCollision(float x1, float y1, int w1, int h1, float x2, float y2, int w2, int h2);
     float _gameTime = 0.0f; /**< Total time the game has been running in the PLAYING state. */
     std::chrono::steady_clock::time_point _lastEnemySpawnTime = std::chrono::steady_clock::now(); /**< Time point of the last enemy spawn. */
+    std::chrono::steady_clock::time_point _lastGlobalSyncTime = std::chrono::steady_clock::now(); /**< Time point of the last global state synchronization. */
+    static constexpr std::chrono::milliseconds GLOBAL_SYNC_INTERVAL = std::chrono::milliseconds(100); /**< Interval for global state synchronization. */
     GameStatus _status; /**< Current status of the game (Lobby/Playing). */
+
+    void sendGlobalStateSync(UDPServer& udpServer); /**< Sends a global state synchronization packet to all clients. */
 };
 
 

@@ -176,5 +176,22 @@ void RTypeClient::update()
             uint32_t currentTime = _clock.getElapsedTimeMs();
             _gameState.rtt = currentTime - pongPkt->timestamp;
         }
+
+        if (type == UDPMessageType::GLOBAL_STATE_SYNC && data.size() >= sizeof(GlobalStateSyncPacket)) {
+            const auto* syncPkt = reinterpret_cast<const GlobalStateSyncPacket*>(data.data());
+            size_t offset = sizeof(GlobalStateSyncPacket);
+            _gameState.entities.clear();
+
+            for (uint32_t i = 0; i < syncPkt->entityCount; ++i) {
+                if (offset + sizeof(SyncedEntityState) <= data.size()) {
+                    const auto* entityState = reinterpret_cast<const SyncedEntityState*>(data.data() + offset);
+                    _gameState.entities[entityState->entityId] = {entityState->x, entityState->y, entityState->entityType};
+                    offset += sizeof(SyncedEntityState);
+                } else {
+                    std::cerr << "Malformed GLOBAL_STATE_SYNC packet: not enough data for entity " << i << std::endl;
+                    break;
+                }
+            }
+        }
     }
 }

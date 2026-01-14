@@ -24,6 +24,8 @@
 // -----------------------------------------
 #pragma pack(push, 1)
 
+static constexpr size_t MAX_UDP_PACKET_SIZE = 1024; // Maximum size for UDP packets
+
 /**
  * @enum Input
  * @brief Defines bitmasks for player actions.
@@ -53,7 +55,8 @@ enum UDPMessageType : uint8_t {
     ENTITY_DESTROY    = 5,  ///< Sent by server: destroy entity
     PING              = 6,  ///< Client to Server ping
     PONG              = 7,  ///< Server to Client pong
-    PLAYER_DISCONNECT = 8   ///< Sent by client: player is disconnecting
+    PLAYER_DISCONNECT = 8,  ///< Sent by client: player is disconnecting
+    GLOBAL_STATE_SYNC = 9   ///< Sent by server: full game state synchronization
 };
 
 /**
@@ -173,6 +176,32 @@ struct PongPacket {
 struct PlayerDisconnectPacket {
     uint8_t type = PLAYER_DISCONNECT; ///< Packet type (PLAYER_DISCONNECT)
     uint32_t playerId;                ///< Player identifier
+};
+
+/**
+ * @struct SyncedEntityState
+ * @brief Represents the minimal state of an entity for global synchronization.
+ *
+ * Fields:
+ * - entityId: Unique ID of the entity
+ * - entityType: Defines what type of entity (enemy, bullet, etc.)
+ * - x / y: Current coordinates
+ */
+struct SyncedEntityState {
+    uint32_t entityId;           ///< Unique entity ID
+    uint16_t entityType;         ///< Type of entity
+    float x;                     ///< X position
+    float y;                     ///< Y position
+};
+
+/**
+ * @struct GlobalStateSyncPacket
+ * @brief Sent by the server to synchronize the entire game state.
+ * The actual entity data (SyncedEntityState) follows this header.
+ */
+struct GlobalStateSyncPacket {
+    uint8_t type = GLOBAL_STATE_SYNC; ///< Packet type (GLOBAL_STATE_SYNC)
+    uint32_t entityCount;              ///< Number of entities included in this packet
 };
 
 // Restore packing

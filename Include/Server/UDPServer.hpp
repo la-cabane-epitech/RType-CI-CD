@@ -93,6 +93,14 @@ public:
         _outgoing.push(pkt);
     }
 
+    /**
+     * @brief Queues a raw data message to be sent to a specific client.
+     * @param data Pointer to the raw data buffer.
+     * @param length The length of the data to send.
+     * @param clientAddr The destination address.
+     */
+    void queueMessage(const char* data, size_t length, const sockaddr_in& clientAddr);
+
 private:
     int _sockfd; /**< UDP socket file descriptor */
     bool _running; /**< Running state flag */
