@@ -7,16 +7,16 @@
 
 #include <iostream>
 #include "Exception.hpp"
+#include <memory>
 #include "Server/ServerManager.hpp"
 
 int main(void)
 {
     try {
-        ServerManager serverManager;
-        serverManager.run();
+        auto serverManager = std::make_unique<ServerManager>();
+        serverManager->run();
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
-        return 84;
     }
     return 0;
 }

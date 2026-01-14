@@ -8,10 +8,6 @@
 #ifndef UDPSERVER_HPP_
 #define UDPSERVER_HPP_
 
-    #include <sys/socket.h>
-    #include <arpa/inet.h>
-    #include <unistd.h>
-
 #include <cstdint>
 #include <iostream>
 #include <thread>
@@ -21,6 +17,7 @@
 #include <map>
 #include <memory>
 
+#include "Client/Asio.hpp"
 #include "Server/RingBuffer.hpp"
 #include "Server/Packet.hpp"
 #include "Protocole/ProtocoleUDP.hpp"
@@ -94,7 +91,9 @@ public:
     }
 
 private:
-    int _sockfd; /**< UDP socket file descriptor */
+    asio::io_context _io_context; /**< ASIO IO context */
+    asio::ip::udp::socket _socket; /**< UDP socket */
+
     bool _running; /**< Running state flag */
     std::map<int, std::shared_ptr<Game>>& _rooms; /**< Reference to shared rooms */
     const Clock& _clock; /**< Reference to the server clock */

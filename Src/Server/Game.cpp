@@ -154,7 +154,7 @@ void Game::createEnemy(UDPServer& udpServer) {
     float spawnY = rand() % 1000 + 40;
 
     // --- Système de Niveau ---
-    int type = 2;
+    uint16_t type = 2;
     float speed = -5.0f;
     int width = 32;
     int height = 32;
@@ -234,10 +234,10 @@ void Game::update(UDPServer& udpServer) {
     if (_status != GameStatus::PLAYING)
         return;
 
-    broadcastGameState(udpServer);
     updateEntities(udpServer);
-    handleCollision();
-    updateGameLevel(0.016f);
+    handleCollision(udpServer);
+    broadcastGameState(udpServer);
+    updateGameLevel(0.016f); // 60 FPS
 
     if (std::chrono::steady_clock::now() - _lastEnemySpawnTime > std::chrono::seconds(2)) {
         createEnemy(udpServer);
@@ -285,7 +285,7 @@ bool Game::checkCollision(float x1, float y1, int w1, int h1, float x2, float y2
             y1 + h1 > y2;
 }
 
-void Game::handleCollision() {
+void Game::handleCollision(UDPServer &udpServer) {
     std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
     std::lock_guard<std::mutex> lock_players(_playersMutex);
 
@@ -306,8 +306,7 @@ void Game::handleCollision() {
             if (enemy.type != 2 && enemy.type != 3) continue;
             if (enemy.is_collide) continue;
 
-            // Hitbox du joueur (33x17 comme dans le Renderer)
-            if (checkCollision(player.x, player.y, 33, 17, enemy.x, enemy.y, enemy.width, enemy.height)) {
+            if (checkCollision(player.x - player.width / 2.0f, player.y - player.height / 2.0f, player.width, player.height, enemy.x, enemy.y, enemy.width, enemy.height)) {
                 // Le joueur meurt -> Respawn au début
                 player.x = 100.0f;
                 player.y = 100.0f;
