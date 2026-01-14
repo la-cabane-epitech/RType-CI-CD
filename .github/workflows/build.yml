@@ -2,7 +2,7 @@ name: RType CI/CD
 
 on:
   push:
-    branches: [ "main", "test_conan" ]
+    branches: [ "main", "test_conan", "server_windows" ]
     tags:
       - "v*"
   pull_request:
