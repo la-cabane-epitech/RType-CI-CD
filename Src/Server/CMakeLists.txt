@@ -15,6 +15,12 @@ set (
 add_executable(rtype_server ${SOURCES})
 
 target_include_directories(rtype_server PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(rtype_server PRIVATE asio::asio)
+
+if (WIN32)
+    target_link_libraries(rtype_server PRIVATE asio::asio ws2_32 mswsock)
+else ()
+    target_link_libraries(rtype_server PRIVATE asio::asio)
+endif()
+
 
 install(TARGETS rtype_server DESTINATION ..)
