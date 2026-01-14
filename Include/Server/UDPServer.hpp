@@ -90,6 +90,14 @@ public:
         _outgoing.push(pkt);
     }
 
+    /**
+     * @brief Queues a raw data message to be sent to a specific client.
+     * @param data Pointer to the raw data buffer.
+     * @param length The length of the data to send.
+     * @param clientAddr The destination address.
+     */
+    void queueMessage(const char* data, size_t length, const sockaddr_in& clientAddr);
+
 private:
     asio::io_context _io_context; /**< ASIO IO context */
     asio::ip::udp::socket _socket; /**< UDP socket */

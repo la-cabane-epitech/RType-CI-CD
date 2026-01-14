@@ -4,6 +4,10 @@
 ** File description:
 ** UDPServer
 */
+#include <fcntl.h> // Pour fcntl (systèmes Unix-like)
+#ifdef _WIN32
+#include <winsock2.h> // Pour ioctlsocket (Windows)
+#endif
 
 #include "Server/UDPServer.hpp"
 #include "Server/Game.hpp"
@@ -159,3 +163,18 @@ void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in&
             break;
     }
 }
+
+// Nouvelle surcharge pour envoyer des paquets de données brutes (taille variable)
+void UDPServer::queueMessage(const char* data, size_t length, const sockaddr_in& clientAddr)
+{
+    if (length > MAX_UDP_PACKET_SIZE) {
+        std::cerr << "Warning: UDP packet too large (" << length << " bytes), max is " << MAX_UDP_PACKET_SIZE << ". Truncating." << std::endl;
+        length = MAX_UDP_PACKET_SIZE; // Tronque si le paquet est trop grand. Une meilleure gestion serait la fragmentation.
+    }
+    Packet pkt;
+    pkt.addr = clientAddr;
+    pkt.length = length;
+    std::memcpy(pkt.data.data(), data, length);
+    _outgoing.push(pkt);
+}
+
