@@ -13,3 +13,6 @@ cmake -B ./build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release -D
 
 rem Compile le projet
 cmake --build ./build --config Release --target rtype_client rtype_server
+
+move build\Src\Client\Release\rtype_client.exe .
+move build\Src\Server\Release\rtype_server.exe .
