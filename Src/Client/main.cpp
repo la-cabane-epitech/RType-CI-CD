@@ -73,6 +73,8 @@ int main(int ac, char **av)
                     currentState = ClientState::ROOM_SELECTION;
                 } else if (choice == MainMenuChoice::OPTIONS) {
                     currentState = ClientState::OPTIONS;
+                } else if (choice == MainMenuChoice::QUIT) {
+                    currentState = ClientState::EXITING;
                 }
                 break;
             }

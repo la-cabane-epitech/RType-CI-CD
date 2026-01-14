@@ -171,12 +171,19 @@ MainMenuChoice Renderer::drawMainMenu()
 
     Rectangle optionsBtn = { (float)GetScreenWidth() / 2 - 125, 370, 250, 50 };
     bool hoverOptions = CheckCollisionPointRec(mousePos, optionsBtn);
-    DrawRectangleRec(optionsBtn, hoverOptions ? BROWN : GRAY);
+    DrawRectangleRec(optionsBtn, hoverOptions ? DARKGRAY : GRAY);
     DrawText("Options", optionsBtn.x + (optionsBtn.width - MeasureText("Options", 30)) / 2, optionsBtn.y + 10, 30, BLACK);
     if (hoverOptions && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         choice = MainMenuChoice::OPTIONS;
     }
 
+    Rectangle quitBtn = { (float)GetScreenWidth() / 2 - 125, 440, 250, 50 };
+    bool hoverQuit = CheckCollisionPointRec(mousePos, quitBtn);
+    DrawRectangleRec(quitBtn, hoverQuit ? DARKGRAY : GRAY);
+    DrawText("Quit", quitBtn.x + (quitBtn.width - MeasureText("Quit", 30)) / 2, quitBtn.y + 10, 30, BLACK);
+    if (hoverQuit && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        choice = MainMenuChoice::QUIT;
+    }
     return choice;
 }
 

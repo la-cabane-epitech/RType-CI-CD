@@ -42,7 +42,8 @@ struct EntityRenderConfig {
 enum class MainMenuChoice {
     NONE,
     START,
-    OPTIONS
+    OPTIONS,
+    QUIT
 };
 
 /**
