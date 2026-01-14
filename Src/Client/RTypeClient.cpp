@@ -88,24 +88,25 @@ void RTypeClient::handleInput()
     if (IsKeyDown(_keybinds.at("DOWN")))  packet.inputs |= DOWN;
     if (IsKeyDown(_keybinds.at("LEFT")))  packet.inputs |= LEFT;
     if (IsKeyDown(_keybinds.at("RIGHT"))) packet.inputs |= RIGHT;
-    if (IsKeyPressed(_keybinds.at("SHOOT"))) packet.inputs |= SHOOT;
 
     static uint32_t chargeStart = 0;
     static bool isCharging = false;
 
-    if (IsKeyDown(KEY_SPACE)) {
+    if (IsKeyPressed(KEY_SPACE)) {
         if (!isCharging) {
             chargeStart = _clock.getElapsedTimeMs();
             isCharging = true;
         }
-    } else if (isCharging) {
-        if (_clock.getElapsedTimeMs() - chargeStart > 500)
+    } else if (IsKeyReleased(KEY_SPACE)) {
+        if (isCharging) {
+            if (_clock.getElapsedTimeMs() - chargeStart > 500)
             packet.inputs |= CHARGE_SHOOT;
-        else
+            else
             packet.inputs |= SHOOT;
-        isCharging = false;
+            isCharging = false;
+        }
     }
- 
+
      if (packet.inputs != 0) {
          applyInput(packet);
          _pendingInputs.push_back(packet);
