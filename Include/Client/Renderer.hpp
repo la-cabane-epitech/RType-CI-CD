@@ -132,6 +132,7 @@ private:
     std::vector<Star> _stars; /**< List of star entities for the background animation */
     std::optional<std::string> _actionToRemap; /**< The action currently being remapped by the user */
     Texture2D _starTexture; /**< Texture resource for the star sprite */
+    Texture2D _menuBackground;
 };
 
 #endif

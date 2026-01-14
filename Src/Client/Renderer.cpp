@@ -19,6 +19,7 @@ Renderer::Renderer(GameState& gameState) : _gameState(gameState), _actionToRemap
     _textures[3] = LoadTexture("Assets/r-typesheet5.gif");
     _textures[4] = LoadTexture("Assets/r-typesheet1.gif");
     _starTexture = LoadTexture("Assets/star_white_giant01.png");
+    _menuBackground = LoadTexture("Assets/rtype_welcome.png");
 
     for (int i = 0; i < 10; ++i) {
         _stars.push_back({
@@ -44,6 +45,7 @@ Renderer::~Renderer()
         UnloadTexture(val);
     }
     UnloadTexture(_starTexture);
+    UnloadTexture(_menuBackground);
 }
 
 void Renderer::draw()
@@ -151,8 +153,10 @@ PauseMenuChoice Renderer::drawPauseMenu()
 MainMenuChoice Renderer::drawMainMenu()
 {
     ClearBackground(BLACK);
+    DrawTexture(_menuBackground, 0, 0, WHITE);
 
-    DrawText("R-Type", GetScreenWidth() / 2 - MeasureText("R-Type", 80) / 2, 100, 80, WHITE);
+    DrawText("R-Type", GetScreenWidth() / 2 - MeasureText("R-Type", 80) / 2, 100, 80, BLACK);
+    
 
     Vector2 mousePos = GetMousePosition();
     MainMenuChoice choice = MainMenuChoice::NONE;
@@ -167,7 +171,7 @@ MainMenuChoice Renderer::drawMainMenu()
 
     Rectangle optionsBtn = { (float)GetScreenWidth() / 2 - 125, 370, 250, 50 };
     bool hoverOptions = CheckCollisionPointRec(mousePos, optionsBtn);
-    DrawRectangleRec(optionsBtn, hoverOptions ? LIGHTGRAY : GRAY);
+    DrawRectangleRec(optionsBtn, hoverOptions ? BROWN : GRAY);
     DrawText("Options", optionsBtn.x + (optionsBtn.width - MeasureText("Options", 30)) / 2, optionsBtn.y + 10, 30, BLACK);
     if (hoverOptions && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         choice = MainMenuChoice::OPTIONS;
