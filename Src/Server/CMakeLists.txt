@@ -15,6 +15,6 @@ set (
 add_executable(rtype_server ${SOURCES})
 
 target_include_directories(rtype_server PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(rtype_server PRIVATE raylib asio::asio)
+target_link_libraries(rtype_server PRIVATE asio::asio)
 
 install(TARGETS rtype_server DESTINATION ..)
