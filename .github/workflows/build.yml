@@ -71,13 +71,28 @@ jobs:
         run: cmd /c build.bat
 
       # -----------------------------
-      # Upload artifacts
+      # Create package directory for artifact
       # -----------------------------
+      - name: Create package for Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir package
+          cp build/Src/Client/rtype_client package/
+          cp build/Src/Server/rtype_server package/
+          cp -r Assets package/
+      - name: Create package for Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          mkdir package
+          copy build\Src\Client\Release\rtype_client.exe package\
+          copy build\Src\Server\Release\rtype_server.exe package\
+          xcopy Assets package\Assets /E /I /Y
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: rtype-${{ matrix.os }}
-          path: build/
+          path: package/
 
   # ===========================================
   # Release (only when pushing a tag)
