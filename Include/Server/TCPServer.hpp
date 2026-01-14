@@ -1,10 +1,6 @@
 #ifndef TCPSERVER_HPP_
 #define TCPSERVER_HPP_
 
-    #include <sys/socket.h>
-    #include <arpa/inet.h>
-    #include <unistd.h>
-
 
 #include <thread>
 #include <vector>
@@ -12,6 +8,7 @@
 #include <memory>
 #include <mutex>
 #include "Server/Game.hpp"
+#include "Client/Asio.hpp"
 
 #include "Protocole/ProtocoleTCP.hpp"
 #include "Server/Game.hpp"
@@ -68,7 +65,7 @@ public:
      * @param roomId The ID of the room the client is in.
      * @param playerId The ID of the player.
      */
-    void handleInRoomClient(int clientSock, int roomId, uint32_t playerId);
+    void handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket, int roomId, uint32_t playerId);
 
 private:
     /**
@@ -79,11 +76,13 @@ private:
     /**
      * @brief Handles a new client connection before they join a room.
      * This involves the initial handshake, and room selection/creation.
-     * @param clientSock The client's socket file descriptor.
+     * @param clientSocket The client's socket.
      */
-    void handleClient(int clientSock);
+    void handleClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket);
 
-    int _sockfd; /**< Server socket file descriptor */
+    asio::io_context _io_context; /**< ASIO IO context */
+    asio::ip::tcp::acceptor _acceptor; /**< ASIO TCP acceptor */
+
     bool _running; /**< Running state flag */
     std::map<int, std::shared_ptr<Game>>& _rooms; /**< Reference to the rooms */
     uint32_t _nextPlayerId = 1; /**< Counter for assigning unique player IDs */

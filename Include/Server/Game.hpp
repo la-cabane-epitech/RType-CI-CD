@@ -37,8 +37,8 @@ struct Player {
     sockaddr_in udpAddr;             ///< Player's UDP address for updates
     uint32_t lastProcessedTick = 0;  ///< Last input tick processed
     bool addrSet = false;            ///< Whether the UDP address has been resolved
-    int height = 32;                 ///< Hitbox height
-    int width = 32;                  ///< Hitbox width
+    int height = 17;                 ///< Hitbox height
+    int width = 33;                  ///< Hitbox width
 };
 
 /**
@@ -159,7 +159,7 @@ public:
     /**
      * @brief Checks and resolves collisions between entities and players.
      */
-    void handleCollision();
+    void handleCollision(UDPServer& udpServer);
     /**
      * @brief Updates the game level logic, such as enemy spawning patterns over time.
      * @param elapsedTime The time elapsed since the last update.

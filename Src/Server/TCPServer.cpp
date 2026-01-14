@@ -6,28 +6,16 @@
 */
 
 #include "Server/TCPServer.hpp"
-#include "Server/Utils.hpp"
 #include <iostream>
 #include <cstring>
-#include <unistd.h>
-
-using namespace NetworkUtils;
 
 TCPServer::TCPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock)
-    : _rooms(rooms), _clock(clock)
+    : _io_context(),
+      _acceptor(_io_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
+      _running(false),
+      _rooms(rooms),
+      _clock(clock)
 {
-    _sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-    sockaddr_in addr {};
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = INADDR_ANY;
-
-    if (bind(_sockfd, (sockaddr *)&addr, sizeof(addr)) < 0)
-        throw std::runtime_error("Failed to bind TCP socket");
-    if (listen(_sockfd, 10) < 0)
-    throw std::runtime_error("Failed to listen on TCP socket");
-    _running = false;
 }
 
 TCPServer::~TCPServer()
@@ -42,7 +30,9 @@ void TCPServer::stop()
     _running = false;
 
     std::cout << "[TCP] Server stopping..." << std::endl;
-    close(_sockfd);
+    _io_context.stop();
+    if (_acceptor.is_open())
+        _acceptor.close();
 
     if (_acceptThread.joinable())
         _acceptThread.join();
@@ -66,44 +56,53 @@ void TCPServer::start()
 void TCPServer::acceptLoop()
 {
     while (_running) {
-        int clientSock = accept(_sockfd, nullptr, nullptr);
-        if (clientSock < 0)
+        auto clientSocket = std::make_shared<asio::ip::tcp::socket>(_io_context);
+        asio::error_code ec;
+        _acceptor.accept(*clientSocket, ec);
+
+        if (ec) {
+            if (_running)
+                std::cerr << "[TCP] Accept error: " << ec.message() << std::endl;
             continue;
+        }
         std::cout << "[TCP] Client connection..." << std::endl;
-        _clientThread.emplace_back(&TCPServer::handleClient, this, clientSock);
+        _clientThread.emplace_back(&TCPServer::handleClient, this, clientSocket);
     }
 }
 
 
-void TCPServer::handleClient(int clientSock)
+void TCPServer::handleClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket)
 {
-    ConnectRequest connectReq {};
-    if (!recvAll(clientSock, &connectReq, sizeof(connectReq))) {
-        std::cerr << "[TCP] Failed to receive ConnectRequest" << std::endl;
-        close(clientSock);
+    asio::error_code ec;
+    ConnectRequest connectReq{};
+    asio::read(*clientSocket, asio::buffer(&connectReq, sizeof(connectReq)), ec);
+    if (ec) {
+        std::cerr << "[TCP] Failed to receive ConnectRequest: " << ec.message() << std::endl;
+        clientSocket->close();
         return;
     }
     std::cout << "[TCP] Username = " << connectReq.username << std::endl;
 
     if (connectReq.type != TCPMessageType::CONNECT) {
-        ErrorResponse err {};
+        ErrorResponse err{};
         err.type = TCPMessageType::CONNECT_ERROR;
         strncpy(err.message, "Invalid request type", sizeof(err.message) - 1);
         err.message[sizeof(err.message)-1] = '\0';
-        sendAll(clientSock, &err, sizeof(err));
-        close(clientSock);
+        asio::write(*clientSocket, asio::buffer(&err, sizeof(err)), ec);
+        clientSocket->close();
         return;
     }
 
-    ConnectResponse connectRes {};
+    ConnectResponse connectRes{};
     connectRes.type = TCPMessageType::CONNECT_OK;
     connectRes.playerId = _nextPlayerId++;
     connectRes.udpPort = 5252;
     connectRes.clock = _clock;
 
-    if (!sendAll(clientSock, &connectRes, sizeof(connectRes))) {
-        std::cerr << "[TCP] Failed to send ConnectResponse" << std::endl;
-        close(clientSock);
+    asio::write(*clientSocket, asio::buffer(&connectRes, sizeof(connectRes)), ec);
+    if (ec) {
+        std::cerr << "[TCP] Failed to send ConnectResponse: " << ec.message() << std::endl;
+        clientSocket->close();
         return;
     }
     uint32_t playerId = connectRes.playerId;
@@ -113,7 +112,9 @@ void TCPServer::handleClient(int clientSock)
     bool inLobby = true;
     while (inLobby && _running) {
         uint8_t msgType;
-        if (!recvAll(clientSock, &msgType, sizeof(msgType))) {
+        asio::read(*clientSocket, asio::buffer(&msgType, sizeof(msgType)), ec);
+        if (ec) {
+            std::cerr << "[TCP] Player " << playerId << " disconnected from lobby: " << ec.message() << std::endl;
             inLobby = false;
             continue;
         }
@@ -123,13 +124,15 @@ void TCPServer::handleClient(int clientSock)
                 std::lock_guard<std::mutex> lock(_serverMutex);
                 ListRoomsResponse resp;
                 resp.count = _rooms.size();
-                sendAll(clientSock, &resp, sizeof(resp));
+                asio::write(*clientSocket, asio::buffer(&resp, sizeof(resp)), ec);
+                if (ec) { inLobby = false; break; }
                 for (auto const& [id, game] : _rooms) {
                     RoomInfo info;
                     info.id = id;
                     info.playerCount = game->getPlayerCount();
                     info.maxPlayers = 4;
-                    sendAll(clientSock, &info, sizeof(info));
+                    asio::write(*clientSocket, asio::buffer(&info, sizeof(info)), ec);
+                    if (ec) { inLobby = false; break; }
                 }
                 break;
             }
@@ -138,15 +141,16 @@ void TCPServer::handleClient(int clientSock)
                 int newRoomId = createRoom();
                 CreateRoomResponse resp;
                 resp.roomId = newRoomId;
-                sendAll(clientSock, &resp, sizeof(resp));
+                asio::write(*clientSocket, asio::buffer(&resp, sizeof(resp)), ec);
+                if (ec) inLobby = false;
                 break;
             }
             case TCPMessageType::JOIN_ROOM: 
             {
                 JoinRoomRequest req;
-                if (!recvAll(clientSock, &req.roomId, sizeof(req.roomId))) {
-                    inLobby = false; continue;
-                }
+                asio::read(*clientSocket, asio::buffer(&req.roomId, sizeof(req.roomId)), ec);
+                if (ec) { inLobby = false; continue; }
+
                 JoinRoomResponse resp;
                 {
                     std::lock_guard<std::mutex> lock(_serverMutex);
@@ -159,10 +163,11 @@ void TCPServer::handleClient(int clientSock)
                         resp.status = 0;
                     }
                 }
-                sendAll(clientSock, &resp, sizeof(resp));
+                asio::write(*clientSocket, asio::buffer(&resp, sizeof(resp)), ec);
+                if (ec) { inLobby = false; continue; }
 
                 if (resp.status == 1) {
-                    handleInRoomClient(clientSock, req.roomId, playerId);
+                    handleInRoomClient(clientSocket, req.roomId, playerId);
                 }
                 break;
             }
@@ -173,12 +178,12 @@ void TCPServer::handleClient(int clientSock)
         }
     }
 
-    close(clientSock);
+    clientSocket->close();
     _playerUsernames.erase(playerId);
     std::cout << "[TCP] Closed connection for player " << playerId << "." << std::endl;
 }
 
-void TCPServer::handleInRoomClient(int clientSock, int roomId, uint32_t playerId)
+void TCPServer::handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket, int roomId, uint32_t playerId)
 {
     std::shared_ptr<Game> game = nullptr;
     {
@@ -186,16 +191,19 @@ void TCPServer::handleInRoomClient(int clientSock, int roomId, uint32_t playerId
         game = _rooms.at(roomId);
     }
 
+    asio::error_code ec;
     bool inRoom = true;
     while(inRoom && _running) {
         uint8_t msgType;
-        if (!recvAll(clientSock, &msgType, sizeof(msgType))) {
+        asio::read(*clientSocket, asio::buffer(&msgType, sizeof(msgType)), ec);
+        if (ec) {
+            std::cerr << "[TCP] Player " << playerId << " disconnected from room " << roomId << ": " << ec.message() << std::endl;
             inRoom = false; continue;
         }
 
         if (game->getStatus() == GameStatus::PLAYING) {
             GameStartingNotification notif;
-            sendAll(clientSock, &notif, sizeof(notif));
+            asio::write(*clientSocket, asio::buffer(&notif, sizeof(notif)), ec);
             inRoom = false;
             continue;
         }
@@ -206,12 +214,14 @@ void TCPServer::handleInRoomClient(int clientSock, int roomId, uint32_t playerId
                 resp.hostId = game->getHostId();
                 const auto& players = game->getPlayers();
                 resp.playerCount = players.size();
-                sendAll(clientSock, &resp, sizeof(resp));
+                asio::write(*clientSocket, asio::buffer(&resp, sizeof(resp)), ec);
+                if (ec) { inRoom = false; break; }
                 for(const auto& player : players) {
                     LobbyPlayerInfo info;
                     info.playerId = player.id;
                     strncpy(info.username, player.username, sizeof(info.username) - 1);
-                    sendAll(clientSock, &info, sizeof(info));
+                    asio::write(*clientSocket, asio::buffer(&info, sizeof(info)), ec);
+                    if (ec) { inRoom = false; break; }
                 }
                 break;
             }

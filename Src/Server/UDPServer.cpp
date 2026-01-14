@@ -9,22 +9,12 @@
 #include "Server/Game.hpp"
 
 UDPServer::UDPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock)
-    : _rooms(rooms), _clock(clock)
+    : _io_context(),
+      _socket(_io_context, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)),
+      _running(false),
+      _rooms(rooms),
+      _clock(clock)
 {
-    _sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-
-    if (_sockfd < 0)
-        throw std::runtime_error("Failed to create UDP socket");
-
-    sockaddr_in addr {};
-    addr.sin_family = AF_INET;
-    addr.sin_port   = htons(port);
-    addr.sin_addr.s_addr = INADDR_ANY;
-
-    if (bind(_sockfd, (sockaddr*)&addr, sizeof(addr)) < 0)
-        throw std::runtime_error("Failed to bind UDP socket");
-
-    _running = false;
 }
 
 UDPServer::~UDPServer()
@@ -53,7 +43,8 @@ void UDPServer::stop()
     _running = false;
 
     std::cout << "[UDP] Server stoping..." << std::endl;
-    close(_sockfd);
+    _socket.close();
+    _io_context.stop();
     if (_recvThread.joinable())
         _recvThread.join();
     if (_sendThread.joinable())
@@ -65,23 +56,19 @@ void UDPServer::stop()
 void UDPServer::recvLoop()
 {
     while (_running) {
-        Packet pkt {};
-        sockaddr_in clientAddr {};
-        socklen_t addrLen = sizeof(clientAddr);
+        try {
+            Packet pkt{};
+            asio::ip::udp::endpoint sender_endpoint;
 
-        int received = recvfrom(
-            _sockfd,
-            pkt.data.data(),
-            pkt.data.size(),
-            0,
-            (sockaddr*)&clientAddr,
-            &addrLen
-        );
+            pkt.length = _socket.receive_from(
+                asio::buffer(pkt.data), sender_endpoint);
 
-        if (received > 0) {
-            pkt.addr = clientAddr;
-            pkt.length = received;
+            pkt.addr = *reinterpret_cast<const sockaddr_in*>(sender_endpoint.data());
             _incoming.push(pkt);
+        } catch (const std::exception& e) {
+            if (_running) {
+                std::cerr << "[UDP] Recv error: " << e.what() << std::endl;
+            }
         }
     }
 }
@@ -89,20 +76,27 @@ void UDPServer::recvLoop()
 void UDPServer::sendLoop()
 {
     while (_running) {
-        if (_outgoing.isEmpty())
+        if (_outgoing.isEmpty()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
             continue;
+        }
 
         auto pktOpt = _outgoing.pop();
+        if (!pktOpt) continue;
         const Packet& pkt = *pktOpt;
 
-        sendto(
-            _sockfd,
-            pkt.data.data(),
-            pkt.length,
-            0,
-            (sockaddr*)&pkt.addr,
-            sizeof(pkt.addr)
-        );
+        asio::ip::address_v4::bytes_type addr_bytes;
+        std::memcpy(addr_bytes.data(), &pkt.addr.sin_addr.s_addr, 4);
+        asio::ip::address_v4 address(addr_bytes);
+        unsigned short port = ntohs(pkt.addr.sin_port);
+        asio::ip::udp::endpoint destination(address, port);
+
+        asio::error_code ec;
+        _socket.send_to(asio::buffer(pkt.data.data(), pkt.length), destination, 0, ec);
+
+        if (ec) {
+            std::cerr << "[UDP] Send error to " << destination.address().to_string() << ":" << destination.port() << " - " << ec.message() << std::endl;
+        }
     }
 }
 
