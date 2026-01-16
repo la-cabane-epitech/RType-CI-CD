@@ -5,6 +5,7 @@
 #include <string>
 #include <optional>
 #include <array>
+#include <iostream>
 
 #include "Protocole/ProtocoleUDP.hpp"
 #include "CrossPlatformSocket.hpp"
@@ -77,6 +78,8 @@ public:
         _socket.send_to(asio::buffer(&packet, sizeof(T)), _server_endpoint, 0, ec);
         return !ec;
     }
+
+    bool checkConnection();
 };
 
 #endif // UDPCLIENT_HPP_

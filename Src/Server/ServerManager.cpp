@@ -27,10 +27,6 @@ ServerManager::~ServerManager()
     _udpServer.stop();
 
     if (_shellThread.joinable()) {
-        // Ce n'est pas une manière propre de quitter, car le thread peut être bloqué sur std::cin.
-        // Pour un simple shell de débogage, c'est une limitation connue.
-        // Une solution plus robuste impliquerait des I/O non bloquantes pour le shell.
-        std::cout << "[ServerManager] Waiting for shell thread to exit. Press Enter to unblock." << std::endl;
         _shellThread.join();
     }
 }
@@ -135,10 +131,9 @@ void ServerManager::processCommand(const std::string& command)
             for (auto const& [id, game] : _rooms) {
                 if (game && game->getPlayer(playerId)) {
                     std::cout << "Player " << playerId << " found in room " << id << ". Removing from game instance." << std::endl;
-                    // Notifie les autres joueurs et retire le joueur de la logique du jeu
                     game->disconnectPlayer(playerId, _udpServer);
                     playerFoundAndRemoved = true;
-                    break; // Un joueur ne peut être que dans une seule salle
+                    break;
                 }
             }
         }
@@ -147,7 +142,6 @@ void ServerManager::processCommand(const std::string& command)
             std::cout << "Player " << playerId << " not found in any active game. Will still attempt to close socket." << std::endl;
         }
 
-        // Ferme la connexion TCP du joueur, ce qui le déconnectera côté client
         _tcpServer.kickPlayer(playerId);
         std::cout << "Kick signal sent for player " << playerId << "." << std::endl;
     } else {

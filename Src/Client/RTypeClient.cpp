@@ -36,12 +36,6 @@ RTypeClientStatus RTypeClient::updateFrame()
         return RTypeClientStatus::QUITTING;
     }
 
-    if (_status == InGameStatus::KICKED) {
-        return RTypeClientStatus::KICKED;
-    }
-
-    // Periodically check if the TCP connection is still alive.
-    // If not, we assume we've been kicked or the server has shut down.
     if (!_tcpClient.checkConnection()) {
         std::cout << "[RTypeClient] TCP connection lost. Assuming kicked." << std::endl;
         return RTypeClientStatus::KICKED;

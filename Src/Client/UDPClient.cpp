@@ -24,3 +24,22 @@ UDPClient::~UDPClient()
         _socket.close();
     }
 }
+
+bool UDPClient::checkConnection()
+{
+    if (!_socket.is_open()) {
+        return true;
+    }
+
+    asio::error_code ec;
+    asio::socket_base::bytes_readable command(true);
+    _socket.io_control(command, ec);
+
+    if (ec) {
+        std::cout << "[UDPClient] Connection check failed, assuming disconnected: " << ec.message() << std::endl;
+        _socket.close();
+        return false;
+    }
+
+    return true;
+}

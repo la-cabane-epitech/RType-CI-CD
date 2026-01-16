@@ -280,7 +280,7 @@ void Game::update(UDPServer& udpServer) {
     updateEntities(udpServer);
     handleCollision(udpServer);
     broadcastGameState(udpServer);
-    updateGameLevel(0.016f); // 60 FPS
+    updateGameLevel(0.016f);
 
     if (std::chrono::steady_clock::now() - _lastEnemySpawnTime > std::chrono::seconds(2)) {
         createEnemy(udpServer);

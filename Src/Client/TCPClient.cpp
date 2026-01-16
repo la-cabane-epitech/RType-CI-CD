@@ -93,7 +93,6 @@ std::vector<RoomInfo> TCPClient::getRooms()
         }
     } catch (const std::exception& e) {
         std::cerr << "getRooms failed: " << e.what() << std::endl;
-        // On connection failure, the returned vector will be empty.
     }
     return rooms;
 }
@@ -186,21 +185,18 @@ bool TCPClient::checkConnection()
         return false;
     }
 
-    // Temporarily switch to non-blocking to poll the socket status
     asio::error_code ec;
     _socket.non_blocking(true, ec);
     if (ec) { return false; }
 
     char d;
-    _socket.read_some(asio::buffer(&d, 0), ec); // Poll with a zero-byte read
+    _socket.read_some(asio::buffer(&d, 0), ec);
 
-    // Switch back to blocking for normal operations
     asio::error_code ec_block;
     _socket.non_blocking(false, ec_block);
     if (ec_block) { return false; }
 
     if (ec == asio::error::would_block) {
-        // This is the expected outcome for a healthy, idle connection.
         return true;
     }
 

@@ -70,7 +70,7 @@ void UDPServer::stop()
     std::cout << "[UDP] Joining threads..." << std::endl;
 
     if (_recvThread.joinable())
-        _recvThread.join(); // Ne bloquera plus grâce au paquet envoyé ci-dessus
+        _recvThread.join();
 
     if (_sendThread.joinable())
         _sendThread.join();
@@ -89,18 +89,13 @@ void UDPServer::recvLoop()
             asio::ip::udp::endpoint sender_endpoint;
             asio::error_code ec;
 
-            // Utiliser la version avec error_code pour éviter les exceptions brutales à la fermeture
             size_t len = _socket.receive_from(asio::buffer(pkt.data), sender_endpoint, 0, ec);
 
-            // 1. Vérification PRIORITAIRE : Si on a stop, on sort tout de suite
-            // On ignore le paquet qu'on vient de recevoir (c'est sûrement notre dummy packet)
             if (!_running) {
                 return;
             }
 
-            // 2. Gestion des erreurs normales
             if (ec) {
-                // Si la socket est fermée ou opération annulée, on sort
                 if (ec == asio::error::operation_aborted || ec == asio::error::bad_descriptor) {
                     break;
                 }
@@ -116,7 +111,6 @@ void UDPServer::recvLoop()
             if (_running) {
                 std::cerr << "[UDP] Exception: " << e.what() << std::endl;
             } else {
-                // Si on a catché une exception et que running est false, c'est la fermeture normale
                 return;
             }
         }
