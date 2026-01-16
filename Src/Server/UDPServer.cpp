@@ -53,6 +53,7 @@ void UDPServer::stop()
     _running = false;
 
     std::cout << "[UDP] Server stoping..." << std::endl;
+    shutdown(_sockfd, SHUT_RDWR);
     close(_sockfd);
     if (_recvThread.joinable())
         _recvThread.join();
@@ -60,6 +61,7 @@ void UDPServer::stop()
         _sendThread.join();
     if (_processThread.joinable())
         _processThread.join();
+    std::cout << "[UDP] Server stopped." << std::endl;
 }
 
 void UDPServer::recvLoop()

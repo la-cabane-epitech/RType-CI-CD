@@ -10,6 +10,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <atomic>
 #include <mutex>
 #include "Server/Game.hpp"
 
@@ -84,7 +85,7 @@ private:
     void handleClient(int clientSock);
 
     int _sockfd; /**< Server socket file descriptor */
-    bool _running; /**< Running state flag */
+    std::atomic<bool> _running; /**< Running state flag */
     std::map<int, std::shared_ptr<Game>>& _rooms; /**< Reference to the rooms */
     uint32_t _nextPlayerId = 1; /**< Counter for assigning unique player IDs */
     int _nextRoomId = 0; /**< Counter for assigning unique room IDs. */

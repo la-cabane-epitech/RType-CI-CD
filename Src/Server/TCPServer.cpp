@@ -26,7 +26,7 @@ TCPServer::TCPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Cloc
     if (bind(_sockfd, (sockaddr *)&addr, sizeof(addr)) < 0)
         throw std::runtime_error("Failed to bind TCP socket");
     if (listen(_sockfd, 10) < 0)
-    throw std::runtime_error("Failed to listen on TCP socket");
+        throw std::runtime_error("Failed to listen on TCP socket");
     _running = false;
 }
 
@@ -44,15 +44,18 @@ void TCPServer::stop()
 
     std::cout << "[TCP] Server stopping..." << std::endl;
 
+    shutdown(_sockfd, SHUT_RDWR);
     close(_sockfd);
+
 
     if (_acceptThread.joinable())
         _acceptThread.join();
 
     for (auto& thread : _clientThread) {
         if (thread.joinable())
-            thread.detach();
+            thread.join();
     }
+    std::cout << "[TCP] Server stopped." << std::endl;
 }
 
 void TCPServer::start()
@@ -69,8 +72,11 @@ void TCPServer::acceptLoop()
 {
     while (_running) {
         int clientSock = accept(_sockfd, nullptr, nullptr);
-        if (clientSock < 0)
-            continue;
+        if (clientSock < 0) {
+            // Quand stop() ferme le socket, accept() retourne une erreur.
+            // On sort de la boucle pour permettre au thread de se terminer.
+            break;
+        }
         std::cout << "[TCP] Client connection..." << std::endl;
         _clientThread.emplace_back(&TCPServer::handleClient, this, clientSock);
     }
