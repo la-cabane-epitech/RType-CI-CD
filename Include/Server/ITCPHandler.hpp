@@ -5,7 +5,9 @@
 ** ITCPHandler
 */
 
-#pragma once
+#ifndef ITCPHANDLER_HPP_
+#define ITCPHANDLER_HPP_
+
 #include <string>
 #include <vector>
 
@@ -97,3 +99,5 @@ public:
      */
     virtual bool isGameStarting(int roomId) = 0;
 };
+
+#endif /* !ITCPHANDLER_HPP_ */

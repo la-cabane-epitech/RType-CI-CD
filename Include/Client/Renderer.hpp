@@ -18,23 +18,36 @@
 #include "Protocole/ProtocoleTCP.hpp"
 #include "Client/Ray.hpp"
 
+/**
+ * @file Renderer.hpp
+ * @brief Header file for the Renderer class.
+ */
+
+/**
+ * @struct Star
+ * @brief Represents a star in the background parallax effect.
+ */
 struct Star {
-    float x;
-    float y;
-    float speed;
-    float scale;
+    float x;     /**< X coordinate */
+    float y;     /**< Y coordinate */
+    float speed; /**< Movement speed */
+    float scale; /**< Size scale */
 };
 
+/**
+ * @struct EntityRenderConfig
+ * @brief Configuration for rendering a specific entity type.
+ */
 struct EntityRenderConfig {
-    int textureId;      // ID de la texture chargée
-    bool isAnimated;    // Utilise une spritesheet ?
-    int frameCount;     // Nombre de frames d'animation
-    float frameSpeed;   // Vitesse (frames par seconde)
-    float width;        // Largeur d'une frame (ou 0 pour toute la texture)
-    float height;       // Hauteur d'une frame
-    float scale;        // Échelle de rendu
-    float startX;       // Position X de départ dans la texture
-    float startY;       // Position Y de départ dans la texture
+    int textureId;      /**< ID of the loaded texture */
+    bool isAnimated;    /**< Uses a spritesheet? */
+    int frameCount;     /**< Number of animation frames */
+    float frameSpeed;   /**< Speed (frames per second) */
+    float width;        /**< Width of a frame (or 0 for the entire texture) */
+    float height;       /**< Height of a frame */
+    float scale;        /**< Rendering scale */
+    float startX;       /**< Starting X position in the texture */
+    float startY;       /**< Starting Y position in the texture */
 };
 
 /**
@@ -123,16 +136,24 @@ public:
      */
     bool drawUsernameInput(std::string& username);
 
+    /**
+     * @brief Gets the string representation of a Raylib key code.
+     * @param key The Raylib key code.
+     * @return A C-string representing the key name.
+     */
     const char* GetKeyName(int key);
 
+    /**
+     * @brief Registry mapping entity types to their rendering configurations.
+     */
     std::map<int, EntityRenderConfig> ENTITY_REGISTRY;
 
 
 private:
-    GameState& _gameState;
-    std::map<uint16_t, Texture2D> _textures;
-    std::vector<ParallaxLayer> _parallaxLayers;
-    std::optional<std::string> _actionToRemap;
+    GameState& _gameState; /**< Reference to the shared game state. */
+    std::map<uint16_t, Texture2D> _textures; /**< Map of loaded textures. */
+    std::vector<ParallaxLayer> _parallaxLayers; /**< Layers for the parallax background. */
+    std::optional<std::string> _actionToRemap; /**< The action currently being remapped in the options menu. */
 };
 
 #endif

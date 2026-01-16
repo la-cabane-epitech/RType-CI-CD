@@ -5,7 +5,9 @@
 ** INetworkHandler
 */
 
-#pragma once
+#ifndef INETWORKHANDLER_HPP_
+#define INETWORKHANDLER_HPP_
+
 #include <netinet/in.h>
 #include <cstddef>
 
@@ -37,3 +39,5 @@ public:
      */
     virtual void onMessageReceived(const char* data, size_t length, const sockaddr_in& addr) = 0;
 };
+
+#endif /* !INETWORKHANDLER_HPP_ */

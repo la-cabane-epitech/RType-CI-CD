@@ -1,3 +1,10 @@
+/*
+** EPITECH PROJECT, 2025
+** RType-CI-CD
+** File description:
+** UDPClient.hpp
+*/
+
 #ifndef UDPCLIENT_HPP_
 #define UDPCLIENT_HPP_
 
