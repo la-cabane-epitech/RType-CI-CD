@@ -149,15 +149,14 @@ int main(int ac, char **av)
                     rtypeClient->drawFrame();
 
                     if (gameResult == RTypeClientStatus::KICKED) {
-                        rtypeClient = nullptr; // Clean up the game client instance
+                        rtypeClient = nullptr;
                         currentState = ClientState::KICKED;
                     }
                     else if (gameResult == RTypeClientStatus::QUITTING) {
-                        rtypeClient = nullptr; // Clean up the game client instance
+                        rtypeClient = nullptr;
                         currentState = ClientState::EXITING;
                     }
                 } else {
-                    // Should not happen, but as a fallback, return to room selection.
                     currentState = ClientState::ROOM_SELECTION;
                 }
                 break;
@@ -165,7 +164,6 @@ int main(int ac, char **av)
             case ClientState::KICKED: {
                 renderer.drawKickedScreen();
                 if (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                    // Reconnect to allow joining another game
                     connected = false;
                     tcpClient = std::make_unique<TCPClient>(serverIp, 4242);
                     if (!tcpClient->connectToServer()) {
