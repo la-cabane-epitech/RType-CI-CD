@@ -4,7 +4,7 @@ set -e
 
 # 1. Install dependencies via Conan
 conan profile detect || true
- 
+
 conan install . --build=missing \
     -s compiler.libcxx=libstdc++11 \
     -c tools.system.package_manager:mode=install \
