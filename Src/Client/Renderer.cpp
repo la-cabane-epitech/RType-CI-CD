@@ -434,7 +434,7 @@ const char* Renderer::GetKeyName(int key) {
         case KEY_RIGHT_SHIFT:  return "R SHIFT";
         case KEY_RIGHT_CONTROL:return "R CTRL";
         case KEY_RIGHT_ALT:    return "R ALT";
-        
+
         default:               return "UNKNOWN";
     }
 }

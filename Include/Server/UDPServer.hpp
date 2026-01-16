@@ -20,6 +20,7 @@
 #include "Client/Asio.hpp"
 #include "Server/RingBuffer.hpp"
 #include "Server/Packet.hpp"
+#include "Server/INetworkHandler.hpp"
 #include "Protocole/ProtocoleUDP.hpp"
 #include "Clock.hpp"
 
@@ -27,8 +28,6 @@
  * @file UDPServer.hpp
  * @brief Handles UDP communication for real-time game updates.
  */
-
-class Game;
 
 /**
  * @struct ClientInfo
@@ -54,7 +53,9 @@ public:
      * @param rooms Reference to the shared map of rooms.
      * @param clock Reference to the shared Clock.
      */
-    UDPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock);
+    // UDPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock);
+
+    UDPServer(int port, INetworkHandler* handler, Clock& clock);
 
     /**
      * @brief Destroy the UDPServer object.
@@ -103,7 +104,9 @@ private:
     asio::ip::udp::socket _socket; /**< UDP socket */
 
     bool _running; /**< Running state flag */
-    std::map<int, std::shared_ptr<Game>>& _rooms; /**< Reference to shared rooms */
+    // std::map<int, std::shared_ptr<Game>>& _rooms; /**< Reference to shared rooms */
+
+    INetworkHandler* _handler;
     const Clock& _clock; /**< Reference to the server clock */
 
     std::thread _recvThread; /**< Thread for receiving packets */

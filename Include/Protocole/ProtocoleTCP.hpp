@@ -14,7 +14,6 @@
 
 #include <cstdint>
 #include "Clock.hpp"
-
 /**
  * @file ProtocoleTCP.hpp
  * @brief TCP protocol definitions for the R-Type game.
@@ -72,7 +71,7 @@ struct ConnectResponse {
     uint8_t type = TCPMessageType::CONNECT_OK;     ///< Packet type identifier
     uint32_t playerId;    ///< Unique player ID
     uint16_t udpPort;     ///< Assigned UDP port for gameplay
-    Clock clock;          ///< Server clock snapshot for synchronization
+    uint32_t serverTimeMs; ///< Server time in milliseconds for synchronization
 };
 
 /**

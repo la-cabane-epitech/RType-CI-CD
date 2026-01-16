@@ -4,6 +4,7 @@
 ** File description:
 ** main
 */
+
 #include "Client/Ray.hpp"
 #include "Client/TCPClient.hpp"
 #include "Client/RTypeClient.hpp"
@@ -49,16 +50,23 @@ int main(int ac, char **av)
     }
 
     ConnectResponse connectRes;
-
     std::vector<RoomInfo> rooms;
     double lastRoomUpdate = 0;
-
-    LobbyState lobbyState;
+    LobbyState lobbyState{};
     double lastLobbyUpdate = 0;
     bool connected = false;
 
+    bool createRoomInitiated = false;
+    bool joinRoomInitiated = false;
+    std::optional<int> createRoomResponse = std::nullopt;
+    std::optional<bool> joinRoomResponse = std::nullopt;
+    int roomToJoin = -1;
+
+    std::unique_ptr<RTypeClient> gameInstance = nullptr;
+
     while (currentState != ClientState::EXITING && !WindowShouldClose()) {
         BeginDrawing();
+        
         switch (currentState) {
             case ClientState::USERNAME_INPUT: {
                 if (renderer.drawUsernameInput(config.username)) {
@@ -76,7 +84,6 @@ int main(int ac, char **av)
                 }
                 break;
             }
-
             case ClientState::OPTIONS: {
                 if (renderer.drawOptionsMenu(config.keybinds)) {
                     currentState = ClientState::MAIN_MENU;
@@ -84,7 +91,6 @@ int main(int ac, char **av)
                 }
                 break;
             }
-
             case ClientState::ROOM_SELECTION: {
                 if (!connected) {
                     if (!tcpClient.sendConnectRequest(config.username, connectRes)) {
@@ -97,51 +103,90 @@ int main(int ac, char **av)
                 }
 
                 double now = GetTime();
-                if (now - lastRoomUpdate > 1.0) {
+                if (now - lastRoomUpdate > 1.0 && !createRoomInitiated && !joinRoomInitiated) {
                     rooms = tcpClient.getRooms();
                     lastRoomUpdate = now;
                 }
 
                 int action = renderer.drawRoomMenu(rooms);
-                if (action == -2) {
-                    int newRoomId = tcpClient.createRoom();
-                    if (newRoomId >= 0 && tcpClient.joinRoom(newRoomId)) {
-                        currentState = ClientState::LOBBY;
+
+                if (action == -2 && !createRoomInitiated && !joinRoomInitiated) {
+                    createRoomInitiated = true;
+                    createRoomResponse = tcpClient.createRoom();
+                }
+
+                if (createRoomInitiated) {
+                    if (!createRoomResponse.has_value()) {
+                        createRoomResponse = tcpClient.createRoom();
                     }
-                } else if (action >= 0) {
-                    if (tcpClient.joinRoom(action)) {
-                        currentState = ClientState::LOBBY;
+                    if (createRoomResponse.has_value()) {
+                        int newRoomId = createRoomResponse.value();
+                        if (newRoomId >= 0) {
+                            joinRoomInitiated = true;
+                            roomToJoin = newRoomId;
+                            joinRoomResponse = tcpClient.joinRoom(roomToJoin);
+                        }
+                        createRoomInitiated = false;
+                        createRoomResponse = std::nullopt;
+                    }
+                }
+
+                if (action >= 0 && !createRoomInitiated && !joinRoomInitiated) {
+                    joinRoomInitiated = true;
+                    roomToJoin = action;
+                    joinRoomResponse = tcpClient.joinRoom(roomToJoin);
+                }
+
+                if (joinRoomInitiated) {
+                    if (!joinRoomResponse.has_value()) {
+                        joinRoomResponse = tcpClient.joinRoom(roomToJoin);
+                    }
+                    if (joinRoomResponse.has_value()) {
+                        if (joinRoomResponse.value()) {
+                            currentState = ClientState::LOBBY;
+                        }
+                        joinRoomInitiated = false;
+                        joinRoomResponse = std::nullopt;
+                        roomToJoin = -1;
                     }
                 }
                 break;
             }
-
             case ClientState::LOBBY: {
                 if (GetTime() - lastLobbyUpdate > 0.5) {
                     lobbyState = tcpClient.getLobbyState();
                     lastLobbyUpdate = GetTime();
                 }
 
-                if (lobbyState.gameIsStarting) {
+                if (tcpClient.getLobbyState().gameIsStarting) {
                     currentState = ClientState::IN_GAME;
                     break;
                 }
 
                 if (renderer.drawLobby(lobbyState, connectRes.playerId)) {
+                    std::cout << "[DEBUG] Start Game button clicked in Renderer!" << std::endl;
                     tcpClient.sendStartGameRequest();
                 }
                 break;
             }
-
             case ClientState::IN_GAME: {
-                RTypeClient client(serverIp, connectRes, config.keybinds);
-                client.run();
-                currentState = ClientState::EXITING;
+                if (!gameInstance) {
+                    gameInstance = std::make_unique<RTypeClient>(serverIp, connectRes, config.keybinds);
+                    std::cout << "[Game] Starting game tick loop..." << std::endl;
+                }
+
+                gameInstance->tick();
+
+                if (gameInstance->getStatus() == InGameStatus::QUITTING) {
+                    gameInstance.reset();
+                    currentState = ClientState::MAIN_MENU;
+                }
                 break;
             }
             case ClientState::EXITING:
                 break;
         }
+
         EndDrawing();
     }
 

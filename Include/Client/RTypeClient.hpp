@@ -49,11 +49,9 @@ public:
      */
     void applyInput(const PlayerInputPacket& packet);
 
-    /**
-     * @brief Starts the main game loop.
-     */
-    void run();
+    void tick();
 
+    InGameStatus getStatus() const { return _status; }
 private:
     /**
      * @brief Captures and processes local player input.

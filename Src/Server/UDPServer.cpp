@@ -4,23 +4,16 @@
 ** File description:
 ** UDPServer
 */
-#include <fcntl.h> // Pour fcntl (systèmes Unix-like)
-#ifdef _WIN32
-#include <winsock2.h> // Pour ioctlsocket (Windows)
-#endif
-
 #include "Server/UDPServer.hpp"
-#include "Server/Game.hpp"
 
-UDPServer::UDPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock)
+UDPServer::UDPServer(int port, INetworkHandler* handler, Clock& clock)
     : _io_context(),
-      _socket(_io_context, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)),
-      _running(false),
-      _rooms(rooms),
-      _clock(clock)
+        _socket(_io_context, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)),
+        _handler(handler),
+        _clock(clock),
+        _running(false)
 {
 }
-
 UDPServer::~UDPServer()
 {
     stop();
@@ -117,59 +110,16 @@ void UDPServer::processLoop()
 
 void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in& clientAddr)
 {
-    if (length < 1) return;
-
-    uint8_t type = *reinterpret_cast<const uint8_t*>(data);
-
-    switch (type) {
-        case PLAYER_INPUT:
-            if (length == sizeof(PlayerInputPacket)) {
-                const auto* p = reinterpret_cast<const PlayerInputPacket*>(data);
-                for (auto& [id, game] : _rooms) {
-                    if (game->getPlayer(p->playerId)) {
-                        game->updatePlayerUdpAddr(p->playerId, clientAddr);
-                        game->setPlayerLastProcessedTick(p->playerId, p->tick);
-
-                        if (Player* player = game->getPlayer(p->playerId)) {
-                            if (p->inputs & UP) player->y -= player->velocity;
-                            if (p->inputs & DOWN) player->y += player->velocity;
-                            if (p->inputs & LEFT) player->x -= player->velocity;
-                            if (p->inputs & RIGHT) player->x += player->velocity;
-                            if (p->inputs & SHOOT) game->createPlayerShot(p->playerId, *this);
-                            if (p->inputs & CHARGE_SHOOT) game->createPlayerChargedShot(p->playerId, *this);
-                        }
-                        break;
-                    }
-                }
-            }
-            break;
-        case PLAYER_DISCONNECT:
-            if (length == sizeof(PlayerDisconnectPacket)) {
-                const auto* p = reinterpret_cast<const PlayerDisconnectPacket*>(data);
-                for (auto& [id, game] : _rooms) {
-                    if (game->getPlayer(p->playerId)) {
-                        game->disconnectPlayer(p->playerId, *this);
-                        break;
-                    }
-                }
-            }
-            break;
-        case PING:
-            if (length == sizeof(PingPacket)) {
-                const auto* p = reinterpret_cast<const PingPacket*>(data);
-                PongPacket pongPkt{ .type = PONG, .timestamp = p->timestamp };
-                queueMessage(pongPkt, clientAddr);
-            }
-            break;
+    if (_handler) {
+        _handler->onMessageReceived(data, length, clientAddr);
     }
 }
 
-// Nouvelle surcharge pour envoyer des paquets de données brutes (taille variable)
 void UDPServer::queueMessage(const char* data, size_t length, const sockaddr_in& clientAddr)
 {
     if (length > MAX_UDP_PACKET_SIZE) {
         std::cerr << "Warning: UDP packet too large (" << length << " bytes), max is " << MAX_UDP_PACKET_SIZE << ". Truncating." << std::endl;
-        length = MAX_UDP_PACKET_SIZE; // Tronque si le paquet est trop grand. Une meilleure gestion serait la fragmentation.
+        length = MAX_UDP_PACKET_SIZE;
     }
     Packet pkt;
     pkt.addr = clientAddr;
@@ -177,4 +127,3 @@ void UDPServer::queueMessage(const char* data, size_t length, const sockaddr_in&
     std::memcpy(pkt.data.data(), data, length);
     _outgoing.push(pkt);
 }
-

@@ -1,98 +1,108 @@
+/*
+** EPITECH PROJECT, 2025
+** RType-CI-CD
+** File description:
+** TCPServer.hpp
+*/
+
 #ifndef TCPSERVER_HPP_
 #define TCPSERVER_HPP_
-
 
 #include <thread>
 #include <vector>
 #include <map>
 #include <memory>
 #include <mutex>
-#include "Server/Game.hpp"
 #include "Client/Asio.hpp"
-
+#include "ITCPHandler.hpp"
 #include "Protocole/ProtocoleTCP.hpp"
-#include "Server/Game.hpp"
 #include "Clock.hpp"
 
 /**
  * @file TCPServer.hpp
- * @brief Handles TCP connections for player login and handshake.
+ * @brief Header file for the TCPServer class.
  */
 
 /**
  * @class TCPServer
- * @brief Server class managing TCP connections.
+ * @brief Manages the TCP server for handling client connections and game lobby logic.
  *
- * This class accepts incoming TCP connections, performs the initial handshake
- * (username exchange), assigns a player ID and UDP port, and then hands off
- * the player to the game logic.
+ * The TCPServer class is responsible for accepting incoming TCP connections,
+ * handling the initial handshake, and managing client requests within the lobby
+ * (listing rooms, creating rooms, joining rooms, etc.). It delegates specific
+ * game logic actions to an ITCPHandler implementation.
  */
 class TCPServer {
 public:
     /**
      * @brief Construct a new TCPServer object.
-     * @param port The TCP port to listen on.
-     * @param rooms Reference to the map of rooms.
-     * @param clock Reference to the shared Clock.
+     * @param port The port number to listen on.
+     * @param handler Pointer to the handler for game logic events.
+     * @param clock Reference to the shared Clock object.
      */
-    TCPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock);
+    TCPServer(int port, ITCPHandler* handler, Clock& clock);
 
     /**
      * @brief Destroy the TCPServer object.
+     * Stops the server and joins all threads.
      */
     ~TCPServer();
 
     /**
-     * @brief Starts the server and the acceptance thread.
+     * @brief Starts the TCP server.
+     * Initializes the acceptor and starts the thread for accepting connections.
      */
     void start();
 
     /**
-     * @brief Stops the server and joins threads.
+     * @brief Stops the TCP server.
+     * Closes the acceptor and all client sockets, and stops all threads.
      */
     void stop();
 
     /**
-     * @brief Creates a new game room.
-     * @return The ID of the newly created room.
+     * @brief Sends a notification to all players in a room that the game is starting.
+     * @param roomId The ID of the room where the game is starting.
      */
-    int createRoom();
-
-    /**
-     * @brief Handles a client that is already in a room.
-     * This loop manages lobby-specific actions like starting the game.
-     * @param clientSock The client's socket file descriptor.
-     * @param roomId The ID of the room the client is in.
-     * @param playerId The ID of the player.
-     */
-    void handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket, int roomId, uint32_t playerId);
+    void sendGameStartingNotification(int roomId);
 
 private:
     /**
-     * @brief The main loop for accepting new client connections.
-     * Spawns a new thread to handle each client.
+     * @brief Main loop for accepting new client connections.
      */
     void acceptLoop();
+
     /**
-     * @brief Handles a new client connection before they join a room.
-     * This involves the initial handshake, and room selection/creation.
-     * @param clientSocket The client's socket.
+     * @brief Handles the communication with a connected client in the lobby.
+     * @param clientSocket Shared pointer to the client's socket.
      */
     void handleClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket);
 
-    asio::io_context _io_context; /**< ASIO IO context */
-    asio::ip::tcp::acceptor _acceptor; /**< ASIO TCP acceptor */
+    /**
+     * @brief Handles the communication with a client that has joined a room.
+     * @param clientSocket Shared pointer to the client's socket.
+     * @param roomId The ID of the room the client is in.
+     * @param playerId The ID of the client.
+     */
+    void handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket, int roomId, uint32_t playerId);
 
-    bool _running; /**< Running state flag */
-    std::map<int, std::shared_ptr<Game>>& _rooms; /**< Reference to the rooms */
-    uint32_t _nextPlayerId = 1; /**< Counter for assigning unique player IDs */
+    asio::io_context _io_context; /**< ASIO IO context for managing I/O operations. */
+    asio::ip::tcp::acceptor _acceptor; /**< TCP acceptor for listening to incoming connections. */
+
+    bool _running; /**< Flag indicating if the server is running. */
+
+    ITCPHandler* _handler; /**< Pointer to the handler for game logic events. */
+
+    uint32_t _nextPlayerId = 1; /**< Counter for assigning unique player IDs. */
     int _nextRoomId = 0; /**< Counter for assigning unique room IDs. */
-    std::map<uint32_t, std::string> _playerUsernames; /**< Map of player IDs to their usernames. */
-    std::mutex _serverMutex; /**< Mutex to protect shared server resources like player/room counters. */
+    std::map<uint32_t, std::string> _playerUsernames; /**< Map of player IDs to usernames. */
+    std::mutex _serverMutex; /**< Mutex for thread safety. */
+    std::map<uint32_t, std::shared_ptr<asio::ip::tcp::socket>> _playerSockets; /**< Map of player IDs to their sockets. */
+    std::map<uint32_t, int> _playerRoomMap; /**< Map of player IDs to the room ID they are currently in. */
 
-    std::thread _acceptThread; /**< Thread for accepting new connections */
-    std::vector<std::thread> _clientThread; /**< Threads for handling individual clients. */
-    const Clock& _clock; /**< Reference to the server clock */
+    std::thread _acceptThread; /**< Thread for the accept loop. */
+    std::vector<std::thread> _clientThread; /**< Vector of threads handling individual clients. */
+    const Clock& _clock; /**< Reference to the shared Clock object. */
 };
 
-#endif
+#endif /* !TCPSERVER_HPP_ */

@@ -154,7 +154,6 @@ void Game::createEnemy(UDPServer& udpServer) {
     float spawnX = 1920.0f;
     float spawnY = rand() % 1000 + 40;
 
-    // --- Système de Niveau ---
     uint16_t type = 2;
     float speed = -5.0f;
     int width = 32;
@@ -181,7 +180,7 @@ void Game::createEnemy(UDPServer& udpServer) {
             udpServer.queueMessage(spawnPkt, destPlayer.udpAddr);
         }
     }
-} 
+}
 
 void Game::updateEntities(UDPServer& udpServer) {
     std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
@@ -270,7 +269,7 @@ void Game::update(UDPServer& udpServer) {
     updateEntities(udpServer);
     handleCollision(udpServer);
     broadcastGameState(udpServer);
-    updateGameLevel(0.016f); // 60 FPS
+    updateGameLevel(0.016f);
 
     if (std::chrono::steady_clock::now() - _lastEnemySpawnTime > std::chrono::seconds(2)) {
         createEnemy(udpServer);
@@ -341,11 +340,12 @@ void Game::handleCollision(UDPServer &udpServer) {
 
     for (auto& player : _players) {
         for (auto& enemy : _entities) {
-            if (enemy.type != 2 && enemy.type != 3) continue;
-            if (enemy.is_collide) continue;
+            if (enemy.type != 2 && enemy.type != 3)
+                continue;
+            if (enemy.is_collide)
+                continue;
 
             if (checkCollision(player.x - player.width / 2.0f, player.y - player.height / 2.0f, player.width, player.height, enemy.x, enemy.y, enemy.width, enemy.height)) {
-                // Le joueur meurt -> Respawn au début
                 player.x = 100.0f;
                 player.y = 100.0f;
                 enemy.is_collide = true;
