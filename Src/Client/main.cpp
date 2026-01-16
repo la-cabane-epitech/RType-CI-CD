@@ -8,6 +8,7 @@
 #include "Client/TCPClient.hpp"
 #include "Client/RTypeClient.hpp"
 #include "Client/ConfigManager.hpp"
+#include <memory>
 #include <iostream>
 
 enum class ClientState {
@@ -17,6 +18,7 @@ enum class ClientState {
     ROOM_SELECTION,
     LOBBY,
     IN_GAME,
+    KICKED,
     EXITING
 };
 
@@ -41,8 +43,8 @@ int main(int ac, char **av)
     Renderer renderer(dummyState);
     ClientState currentState = config.username.empty() ? ClientState::USERNAME_INPUT : ClientState::MAIN_MENU;
 
-    TCPClient tcpClient(serverIp, 4242);
-    if (!tcpClient.connectToServer()) {
+    auto tcpClient = std::make_unique<TCPClient>(serverIp, 4242);
+    if (!tcpClient->connectToServer()) {
         std::cerr << "Impossible de se connecter au serveur TCP\n";
         CloseWindow();
         return 1;
@@ -56,6 +58,8 @@ int main(int ac, char **av)
     LobbyState lobbyState;
     double lastLobbyUpdate = 0;
     bool connected = false;
+
+    std::unique_ptr<RTypeClient> rtypeClient = nullptr;
 
     while (currentState != ClientState::EXITING && !WindowShouldClose()) {
         BeginDrawing();
@@ -87,7 +91,7 @@ int main(int ac, char **av)
 
             case ClientState::ROOM_SELECTION: {
                 if (!connected) {
-                    if (!tcpClient.sendConnectRequest(config.username, connectRes)) {
+                    if (!tcpClient->sendConnectRequest(config.username, connectRes)) {
                         std::cerr << "Handshake TCP échoué\n";
                         currentState = ClientState::EXITING;
                         break;
@@ -98,18 +102,18 @@ int main(int ac, char **av)
 
                 double now = GetTime();
                 if (now - lastRoomUpdate > 1.0) {
-                    rooms = tcpClient.getRooms();
+                    rooms = tcpClient->getRooms();
                     lastRoomUpdate = now;
                 }
 
                 int action = renderer.drawRoomMenu(rooms);
                 if (action == -2) {
-                    int newRoomId = tcpClient.createRoom();
-                    if (newRoomId >= 0 && tcpClient.joinRoom(newRoomId)) {
+                    int newRoomId = tcpClient->createRoom();
+                    if (newRoomId >= 0 && tcpClient->joinRoom(newRoomId)) {
                         currentState = ClientState::LOBBY;
                     }
                 } else if (action >= 0) {
-                    if (tcpClient.joinRoom(action)) {
+                    if (tcpClient->joinRoom(action)) {
                         currentState = ClientState::LOBBY;
                     }
                 }
@@ -118,25 +122,59 @@ int main(int ac, char **av)
 
             case ClientState::LOBBY: {
                 if (GetTime() - lastLobbyUpdate > 0.5) {
-                    lobbyState = tcpClient.getLobbyState();
+                    lobbyState = tcpClient->getLobbyState();
                     lastLobbyUpdate = GetTime();
                 }
 
+                if (lobbyState.disconnected) {
+                    currentState = ClientState::KICKED;
+                    break;
+                }
+
                 if (lobbyState.gameIsStarting) {
+                    rtypeClient = std::make_unique<RTypeClient>(serverIp, *tcpClient, connectRes, config.keybinds);
                     currentState = ClientState::IN_GAME;
                     break;
                 }
 
                 if (renderer.drawLobby(lobbyState, connectRes.playerId)) {
-                    tcpClient.sendStartGameRequest();
+                    tcpClient->sendStartGameRequest();
                 }
                 break;
             }
 
             case ClientState::IN_GAME: {
-                RTypeClient client(serverIp, connectRes, config.keybinds);
-                client.run();
-                currentState = ClientState::EXITING;
+                if (rtypeClient) {
+                    RTypeClientStatus gameResult = rtypeClient->updateFrame();
+                    rtypeClient->drawFrame();
+
+                    if (gameResult == RTypeClientStatus::KICKED) {
+                        rtypeClient = nullptr; // Clean up the game client instance
+                        currentState = ClientState::KICKED;
+                    }
+                    else if (gameResult == RTypeClientStatus::QUITTING) {
+                        rtypeClient = nullptr; // Clean up the game client instance
+                        currentState = ClientState::EXITING;
+                    }
+                } else {
+                    // Should not happen, but as a fallback, return to room selection.
+                    currentState = ClientState::ROOM_SELECTION;
+                }
+                break;
+            }
+            case ClientState::KICKED: {
+                renderer.drawKickedScreen();
+                if (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                    // Reconnect to allow joining another game
+                    connected = false;
+                    tcpClient = std::make_unique<TCPClient>(serverIp, 4242);
+                    if (!tcpClient->connectToServer()) {
+                        std::cerr << "Failed to reconnect to TCP server.\n";
+                        currentState = ClientState::EXITING;
+                    } else {
+                        currentState = ClientState::ROOM_SELECTION;
+                    }
+                }
                 break;
             }
             case ClientState::EXITING:

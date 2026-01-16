@@ -15,6 +15,7 @@
 #include <array>
 #include <unordered_map>
 #include <map>
+#include <atomic>
 #include <memory>
 
 #include "Client/Asio.hpp"
@@ -22,6 +23,7 @@
 #include "Server/Packet.hpp"
 #include "Protocole/ProtocoleUDP.hpp"
 #include "Clock.hpp"
+#include "Client/Windows.hpp"
 
 /**
  * @file UDPServer.hpp
@@ -54,7 +56,7 @@ public:
      * @param rooms Reference to the shared map of rooms.
      * @param clock Reference to the shared Clock.
      */
-    UDPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock);
+    UDPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, std::mutex& roomsMutex, Clock& clock);
 
     /**
      * @brief Destroy the UDPServer object.
@@ -102,7 +104,7 @@ private:
     asio::io_context _io_context; /**< ASIO IO context */
     asio::ip::udp::socket _socket; /**< UDP socket */
 
-    bool _running; /**< Running state flag */
+    std::atomic<bool> _running; /**< Running state flag */
     std::map<int, std::shared_ptr<Game>>& _rooms; /**< Reference to shared rooms */
     const Clock& _clock; /**< Reference to the server clock */
 
@@ -112,6 +114,8 @@ private:
 
     RingBuffer<Packet, 1024> _incoming; /**< Buffer for incoming packets */
     RingBuffer<Packet, 1024> _outgoing; /**< Buffer for outgoing packets */
+
+    std::mutex& _roomsMutex; /**< Mutex to protect the rooms map. */
 
     std::unordered_map<uint32_t, ClientInfo> _clients; /**< Map of connected clients */
 

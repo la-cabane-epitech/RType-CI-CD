@@ -72,6 +72,16 @@ Player* Game::getPlayer(uint32_t playerId) {
     return nullptr;
 }
 
+const Player* Game::getPlayer(uint32_t playerId) const {
+    std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(_playersMutex));
+    for (const auto& player : _players) {
+        if (player.id == playerId) {
+            return &player;
+        }
+    }
+    return nullptr;
+}
+
 int Game::getPlayerCount()
 {
     std::lock_guard<std::mutex> lock(_playersMutex);

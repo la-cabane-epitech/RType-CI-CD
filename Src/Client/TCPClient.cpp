@@ -26,6 +26,7 @@ bool TCPClient::connectToServer()
         asio::ip::tcp::resolver resolver(_io_context);
         auto endpoints = resolver.resolve(_serverIp, std::to_string(_port));
         asio::connect(_socket, endpoints);
+        _socket.non_blocking(false); // Ensure blocking mode for normal operations
     } catch (const std::exception& e) {
         std::cerr << "Connection failed: " << e.what() << "\n";
         return false;
@@ -92,6 +93,7 @@ std::vector<RoomInfo> TCPClient::getRooms()
         }
     } catch (const std::exception& e) {
         std::cerr << "getRooms failed: " << e.what() << std::endl;
+        // On connection failure, the returned vector will be empty.
     }
     return rooms;
 }
@@ -162,7 +164,8 @@ LobbyState TCPClient::getLobbyState()
         }
     } catch (const std::exception& e) {
         std::cerr << "getLobbyState failed: " << e.what() << std::endl;
-        state.gameIsStarting = true;
+        // This catch block is often triggered by a server disconnect (kick).
+        state.disconnected = true;
     }
     return state;
 }
@@ -175,4 +178,36 @@ void TCPClient::sendStartGameRequest()
     } catch (const std::exception& e) {
         std::cerr << "sendStartGameRequest failed: " << e.what() << std::endl;
     }
+}
+
+bool TCPClient::checkConnection()
+{
+    if (!_socket.is_open()) {
+        return false;
+    }
+
+    // Temporarily switch to non-blocking to poll the socket status
+    asio::error_code ec;
+    _socket.non_blocking(true, ec);
+    if (ec) { return false; }
+
+    char d;
+    _socket.read_some(asio::buffer(&d, 0), ec); // Poll with a zero-byte read
+
+    // Switch back to blocking for normal operations
+    asio::error_code ec_block;
+    _socket.non_blocking(false, ec_block);
+    if (ec_block) { return false; }
+
+    if (ec == asio::error::would_block) {
+        // This is the expected outcome for a healthy, idle connection.
+        return true;
+    }
+
+    if (ec) {
+        _socket.close();
+        return false;
+    }
+
+    return true;
 }

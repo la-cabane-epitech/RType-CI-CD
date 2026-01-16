@@ -9,61 +9,80 @@
 #include "Client/RTypeClient.hpp"
 #include "Protocole/ProtocoleUDP.hpp"
 
-RTypeClient::RTypeClient(const std::string& serverIp, const ConnectResponse& connectResponse, const std::map<std::string, int>& keybinds)
-    : _udpClient(serverIp, connectResponse.udpPort),
+RTypeClient::RTypeClient(const std::string& serverIp, TCPClient& tcpClient, const ConnectResponse& connectResponse, const std::map<std::string, int>& keybinds)
+    : _tcpClient(tcpClient),
+      _udpClient(serverIp, connectResponse.udpPort),
       _renderer(_gameState),
       _clock(connectResponse.clock),
       _keybinds(keybinds)
 {
     _gameState.myPlayerId = connectResponse.playerId;
+
+    PlayerInputPacket packet{};
+    packet.playerId = _gameState.myPlayerId;
+    _udpClient.sendMessage(packet);
 }
 
-void RTypeClient::run()
+RTypeClientStatus RTypeClient::updateFrame()
 {
-    PlayerInputPacket packet{};
-    _udpClient.sendMessage(packet);
-    update();
+    if (WindowShouldClose()) {
+        _status = InGameStatus::QUITTING;
+    }
 
-    while (!WindowShouldClose() && _status != InGameStatus::QUITTING) {
-        switch (_status) {
-            case InGameStatus::PLAYING:
-                if (IsKeyPressed(KEY_ESCAPE)) {
-                    _status = InGameStatus::PAUSED;
-                }
-                handleInput();
-                update();
-                break;
-            case InGameStatus::PAUSED:
-                if (IsKeyPressed(KEY_ESCAPE)) {
-                    _status = InGameStatus::PLAYING;
-                }
-                break;
-            case InGameStatus::OPTIONS:
-                if (IsKeyPressed(KEY_ESCAPE)) {
-                    _status = InGameStatus::PAUSED;
-                }
-                break;
-            case InGameStatus::QUITTING:
-                break;
-        }
+    if (_status == InGameStatus::QUITTING) {
+        PlayerDisconnectPacket disconnectPacket{};
+        disconnectPacket.playerId = _gameState.myPlayerId;
+        _udpClient.sendMessage(disconnectPacket);
+        return RTypeClientStatus::QUITTING;
+    }
 
-        BeginDrawing();
-        _renderer.draw();
+    if (_status == InGameStatus::KICKED) {
+        return RTypeClientStatus::KICKED;
+    }
 
-        if (_status == InGameStatus::PAUSED) {
-            PauseMenuChoice choice = _renderer.drawPauseMenu();
-            if (choice == PauseMenuChoice::OPTIONS) _status = InGameStatus::OPTIONS;
-            if (choice == PauseMenuChoice::QUIT) _status = InGameStatus::QUITTING;
-        } else if (_status == InGameStatus::OPTIONS) {
-            if (_renderer.drawOptionsMenu(_keybinds)) {
+    // Periodically check if the TCP connection is still alive.
+    // If not, we assume we've been kicked or the server has shut down.
+    if (!_tcpClient.checkConnection()) {
+        std::cout << "[RTypeClient] TCP connection lost. Assuming kicked." << std::endl;
+        return RTypeClientStatus::KICKED;
+    }
+
+    switch (_status) {
+        case InGameStatus::PLAYING:
+            if (IsKeyPressed(KEY_ESCAPE)) {
                 _status = InGameStatus::PAUSED;
             }
-        }
-        EndDrawing();
+            handleInput();
+            processNetworkMessages();
+            break;
+        case InGameStatus::PAUSED:
+            if (IsKeyPressed(KEY_ESCAPE)) {
+                _status = InGameStatus::PLAYING;
+            }
+            break;
+        case InGameStatus::OPTIONS:
+            if (IsKeyPressed(KEY_ESCAPE)) {
+                _status = InGameStatus::PAUSED;
+            }
+            break;
+        case InGameStatus::QUITTING:
+            break;
     }
-    PlayerDisconnectPacket disconnectPacket{};
-    disconnectPacket.playerId = _gameState.myPlayerId;
-    _udpClient.sendMessage(disconnectPacket);
+    return RTypeClientStatus::RUNNING;
+}
+
+void RTypeClient::drawFrame()
+{
+    _renderer.draw();
+    if (_status == InGameStatus::PAUSED) {
+        PauseMenuChoice choice = _renderer.drawPauseMenu();
+        if (choice == PauseMenuChoice::OPTIONS) _status = InGameStatus::OPTIONS;
+        if (choice == PauseMenuChoice::QUIT) _status = InGameStatus::QUITTING;
+    } else if (_status == InGameStatus::OPTIONS) {
+        if (_renderer.drawOptionsMenu(_keybinds)) {
+            _status = InGameStatus::PAUSED;
+        }
+    }
 }
 
 void RTypeClient::applyInput(const PlayerInputPacket& packet)
@@ -114,7 +133,7 @@ void RTypeClient::handleInput()
      _udpClient.sendMessage(packet);
 }
 
-void RTypeClient::update()
+void RTypeClient::processNetworkMessages()
 {
     uint32_t now = _clock.getElapsedTimeMs();
     if (now - _lastPingTime > PING_INTERVAL_MS) {

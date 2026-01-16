@@ -4,19 +4,17 @@
 ** File description:
 ** UDPServer
 */
-#include <fcntl.h> // Pour fcntl (systèmes Unix-like)
-#ifdef _WIN32
-#include <winsock2.h> // Pour ioctlsocket (Windows)
-#endif
+#include <fcntl.h>
 
 #include "Server/UDPServer.hpp"
 #include "Server/Game.hpp"
 
-UDPServer::UDPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock)
+UDPServer::UDPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, std::mutex& roomsMutex, Clock& clock)
     : _io_context(),
       _socket(_io_context, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)),
       _running(false),
       _rooms(rooms),
+      _roomsMutex(roomsMutex),
       _clock(clock)
 {
 }
@@ -41,20 +39,46 @@ void UDPServer::start()
 
 void UDPServer::stop()
 {
-    if (!_running)
+    if (_running.exchange(false) == false) {
         return;
+    }
 
-    _running = false;
+    std::cout << "[UDP] Server stopping..." << std::endl;
 
-    std::cout << "[UDP] Server stoping..." << std::endl;
-    _socket.close();
-    _io_context.stop();
+    unsigned short port = 0;
+    try {
+        if (_socket.is_open())
+            port = _socket.local_endpoint().port();
+    } catch (...) {}
+
+    try {
+        _socket.close();
+    } catch (...) {}
+
+    if (port != 0) {
+        try {
+            asio::io_context tempContext;
+            asio::ip::udp::socket sender(tempContext, asio::ip::udp::endpoint(asio::ip::udp::v4(), 0));
+            asio::ip::udp::endpoint target(asio::ip::udp::v4(), port);
+            
+            char dummy = 0;
+            sender.send_to(asio::buffer(&dummy, 1), target);
+        } catch (const std::exception& e) {
+        }
+    }
+
+    std::cout << "[UDP] Joining threads..." << std::endl;
+
     if (_recvThread.joinable())
-        _recvThread.join();
+        _recvThread.join(); // Ne bloquera plus grâce au paquet envoyé ci-dessus
+
     if (_sendThread.joinable())
         _sendThread.join();
+
     if (_processThread.joinable())
         _processThread.join();
+
+    std::cout << "[UDP] All threads stopped." << std::endl;
 }
 
 void UDPServer::recvLoop()
@@ -63,15 +87,37 @@ void UDPServer::recvLoop()
         try {
             Packet pkt{};
             asio::ip::udp::endpoint sender_endpoint;
+            asio::error_code ec;
 
-            pkt.length = _socket.receive_from(
-                asio::buffer(pkt.data), sender_endpoint);
+            // Utiliser la version avec error_code pour éviter les exceptions brutales à la fermeture
+            size_t len = _socket.receive_from(asio::buffer(pkt.data), sender_endpoint, 0, ec);
 
+            // 1. Vérification PRIORITAIRE : Si on a stop, on sort tout de suite
+            // On ignore le paquet qu'on vient de recevoir (c'est sûrement notre dummy packet)
+            if (!_running) {
+                return;
+            }
+
+            // 2. Gestion des erreurs normales
+            if (ec) {
+                // Si la socket est fermée ou opération annulée, on sort
+                if (ec == asio::error::operation_aborted || ec == asio::error::bad_descriptor) {
+                    break;
+                }
+                std::cerr << "[UDP] Recv error: " << ec.message() << std::endl;
+                continue;
+            }
+
+            pkt.length = len;
             pkt.addr = *reinterpret_cast<const sockaddr_in*>(sender_endpoint.data());
             _incoming.push(pkt);
+
         } catch (const std::exception& e) {
             if (_running) {
-                std::cerr << "[UDP] Recv error: " << e.what() << std::endl;
+                std::cerr << "[UDP] Exception: " << e.what() << std::endl;
+            } else {
+                // Si on a catché une exception et que running est false, c'est la fermeture normale
+                return;
             }
         }
     }
@@ -121,6 +167,8 @@ void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in&
 
     uint8_t type = *reinterpret_cast<const uint8_t*>(data);
 
+    std::lock_guard<std::mutex> lock(_roomsMutex);
+
     switch (type) {
         case PLAYER_INPUT:
             if (length == sizeof(PlayerInputPacket)) {
@@ -164,12 +212,11 @@ void UDPServer::handlePacket(const char* data, size_t length, const sockaddr_in&
     }
 }
 
-// Nouvelle surcharge pour envoyer des paquets de données brutes (taille variable)
 void UDPServer::queueMessage(const char* data, size_t length, const sockaddr_in& clientAddr)
 {
     if (length > MAX_UDP_PACKET_SIZE) {
         std::cerr << "Warning: UDP packet too large (" << length << " bytes), max is " << MAX_UDP_PACKET_SIZE << ". Truncating." << std::endl;
-        length = MAX_UDP_PACKET_SIZE; // Tronque si le paquet est trop grand. Une meilleure gestion serait la fragmentation.
+        length = MAX_UDP_PACKET_SIZE;
     }
     Packet pkt;
     pkt.addr = clientAddr;
@@ -177,4 +224,3 @@ void UDPServer::queueMessage(const char* data, size_t length, const sockaddr_in&
     std::memcpy(pkt.data.data(), data, length);
     _outgoing.push(pkt);
 }
-

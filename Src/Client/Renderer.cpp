@@ -350,6 +350,19 @@ bool Renderer::drawUsernameInput(std::string& username)
     return false;
 }
 
+void Renderer::drawKickedScreen()
+{
+    ClearBackground(BLACK);
+    const char* title = "You have been kicked from the server.";
+    const char* subtitle = "Press ENTER or click to exit.";
+
+    int titleWidth = MeasureText(title, 40);
+    int subtitleWidth = MeasureText(subtitle, 20);
+
+    DrawText(title, GetScreenWidth() / 2 - titleWidth / 2, GetScreenHeight() / 2 - 40, 40, RED);
+    DrawText(subtitle, GetScreenWidth() / 2 - subtitleWidth / 2, GetScreenHeight() / 2 + 20, 20, LIGHTGRAY);
+}
+
 const char* Renderer::GetKeyName(int key) {
     switch (key) {
         case KEY_APOSTROPHE:   return "'";

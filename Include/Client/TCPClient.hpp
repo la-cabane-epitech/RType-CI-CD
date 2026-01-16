@@ -19,6 +19,7 @@ struct LobbyState {
     bool gameIsStarting = false; /**< Flag indicating if the game is about to start. */
     uint32_t hostId = 0; /**< The ID of the player who is the host of the lobby. */
     std::vector<LobbyPlayerInfo> players; /**< A list of players in the lobby. */
+    bool disconnected = false; /**< Flag indicating if the connection was lost during the request. */
 };
 
 /**
@@ -89,6 +90,12 @@ public:
      * This can typically only be done by the host of the lobby.
      */
     void sendStartGameRequest();
+
+    /**
+     * @brief Polls the TCP socket to check if the connection is still active.
+     * @return true if the connection is alive, false if it has been closed.
+     */
+    bool checkConnection();
 
 };
 

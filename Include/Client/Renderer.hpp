@@ -123,6 +123,11 @@ public:
      */
     bool drawUsernameInput(std::string& username);
 
+    /**
+     * @brief Draws the "kicked from server" screen.
+     */
+    void drawKickedScreen();
+
     const char* GetKeyName(int key);
 
     std::map<int, EntityRenderConfig> ENTITY_REGISTRY;

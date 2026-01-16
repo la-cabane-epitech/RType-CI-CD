@@ -8,12 +8,13 @@
 #include "Server/TCPServer.hpp"
 #include <iostream>
 #include <cstring>
-
-TCPServer::TCPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock)
+ 
+TCPServer::TCPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, std::mutex& roomsMutex, Clock& clock)
     : _io_context(),
       _acceptor(_io_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
       _running(false),
       _rooms(rooms),
+      _roomsMutex(roomsMutex),
       _clock(clock)
 {
 }
@@ -25,22 +26,55 @@ TCPServer::~TCPServer()
 
 void TCPServer::stop()
 {
-    if (!_running)
+    // 1. Protection atomique
+    bool expected = true;
+    if (!_running.compare_exchange_strong(expected, false))
         return;
-    _running = false;
 
     std::cout << "[TCP] Server stopping..." << std::endl;
-    _io_context.stop();
-    if (_acceptor.is_open())
-        _acceptor.close();
 
+    unsigned short port = 0;
+    try {
+        if (_acceptor.is_open())
+            port = _acceptor.local_endpoint().port();
+    } catch (...) {}
+
+    asio::error_code ec;
+    _acceptor.close(ec);
+
+    if (port != 0) {
+        try {
+            asio::io_context tempContext;
+            asio::ip::tcp::socket dummySocket(tempContext);
+            asio::ip::tcp::endpoint target(asio::ip::tcp::v4(), port);
+            
+            dummySocket.connect(target, ec); 
+            dummySocket.close();
+        } catch (...) {
+        }
+    }
+
+    std::cout << "[TCP] Server stopped. 1 (Joining accept thread)" << std::endl;
     if (_acceptThread.joinable())
         _acceptThread.join();
 
-    for (auto& thread : _clientThread) {
+    std::cout << "[TCP] Server stopped. 2 (Closing client sockets)" << std::endl;
+    
+    {
+        std::lock_guard<std::mutex> lock(_serverMutex);
+        for (auto& pair : _playerSockets) {
+            if (pair.second && pair.second->is_open()) {
+                pair.second->close(); 
+            }
+        }
+    }
+    
+    for (auto& thread : _clientThreads) {
         if (thread.joinable())
             thread.join();
     }
+    _clientThreads.clear();
+    std::cout << "[TCP] Server fully stopped." << std::endl;
 }
 
 void TCPServer::start()
@@ -60,13 +94,17 @@ void TCPServer::acceptLoop()
         asio::error_code ec;
         _acceptor.accept(*clientSocket, ec);
 
+        if (!_running) {
+            return; 
+        }
+
         if (ec) {
             if (_running)
                 std::cerr << "[TCP] Accept error: " << ec.message() << std::endl;
-            continue;
+            break;
         }
         std::cout << "[TCP] Client connection..." << std::endl;
-        _clientThread.emplace_back(&TCPServer::handleClient, this, clientSocket);
+        _clientThreads.emplace_back(&TCPServer::handleClient, this, clientSocket);
     }
 }
 
@@ -106,22 +144,30 @@ void TCPServer::handleClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket
         return;
     }
     uint32_t playerId = connectRes.playerId;
-    _playerUsernames[playerId] = connectReq.username;
+    {
+        std::lock_guard<std::mutex> lock(_serverMutex);
+        _playerUsernames[playerId] = connectReq.username;
+        _playerSockets[playerId] = clientSocket;
+    }
     std::cout << "[TCP] Player " << playerId << " (" << connectReq.username << ") connected. Entering lobby." << std::endl;
 
     bool inLobby = true;
     while (inLobby && _running) {
         uint8_t msgType;
         asio::read(*clientSocket, asio::buffer(&msgType, sizeof(msgType)), ec);
-        if (ec) {
-            std::cerr << "[TCP] Player " << playerId << " disconnected from lobby: " << ec.message() << std::endl;
+        if (ec) { // An error (like disconnect or socket closed by kick) will be caught here
+            if (ec == asio::error::eof || ec == asio::error::connection_reset) {
+                std::cout << "[TCP] Player " << playerId << " disconnected." << std::endl;
+            } else {
+                std::cerr << "[TCP] Player " << playerId << " disconnected from lobby: " << ec.message() << std::endl;
+            }
             inLobby = false;
             continue;
         }
 
         switch (static_cast<TCPMessageType>(msgType)) {
             case TCPMessageType::LIST_ROOMS: {
-                std::lock_guard<std::mutex> lock(_serverMutex);
+                std::lock_guard<std::mutex> lock(_roomsMutex);
                 ListRoomsResponse resp;
                 resp.count = _rooms.size();
                 asio::write(*clientSocket, asio::buffer(&resp, sizeof(resp)), ec);
@@ -137,7 +183,6 @@ void TCPServer::handleClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket
                 break;
             }
             case TCPMessageType::CREATE_ROOM: {
-                std::lock_guard<std::mutex> lock(_serverMutex);
                 int newRoomId = createRoom();
                 CreateRoomResponse resp;
                 resp.roomId = newRoomId;
@@ -153,7 +198,7 @@ void TCPServer::handleClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket
 
                 JoinRoomResponse resp;
                 {
-                    std::lock_guard<std::mutex> lock(_serverMutex);
+                    std::lock_guard<std::mutex> lock(_roomsMutex);
                     auto it = _rooms.find(req.roomId);
                     if (it != _rooms.end() && it->second->getStatus() == GameStatus::LOBBY) {
                         it->second->addPlayer(playerId, _playerUsernames[playerId].c_str());
@@ -178,26 +223,40 @@ void TCPServer::handleClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket
         }
     }
 
+    {
+        std::lock_guard<std::mutex> lock(_serverMutex);
+        _playerUsernames.erase(playerId);
+        _playerSockets.erase(playerId);
+    }
     clientSocket->close();
-    _playerUsernames.erase(playerId);
     std::cout << "[TCP] Closed connection for player " << playerId << "." << std::endl;
 }
 
 void TCPServer::handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket, int roomId, uint32_t playerId)
 {
     std::shared_ptr<Game> game = nullptr;
-    {
-        std::lock_guard<std::mutex> lock(_serverMutex);
-        game = _rooms.at(roomId);
-    }
-
     asio::error_code ec;
     bool inRoom = true;
+
+    {
+        std::lock_guard<std::mutex> lock(_roomsMutex);
+        auto it = _rooms.find(roomId);
+        if (it == _rooms.end()) {
+            inRoom = false; // Room was deleted before we could process it
+        } else {
+            game = it->second;
+        }
+    }
+
     while(inRoom && _running) {
         uint8_t msgType;
         asio::read(*clientSocket, asio::buffer(&msgType, sizeof(msgType)), ec);
-        if (ec) {
-            std::cerr << "[TCP] Player " << playerId << " disconnected from room " << roomId << ": " << ec.message() << std::endl;
+        if (ec) { // An error (like disconnect or socket closed by kick) will be caught here
+            if (ec == asio::error::eof || ec == asio::error::connection_reset) {
+                std::cout << "[TCP] Player " << playerId << " disconnected." << std::endl;
+            } else {
+                std::cerr << "[TCP] Player " << playerId << " disconnected from room " << roomId << ": " << ec.message() << std::endl;
+            }
             inRoom = false; continue;
         }
 
@@ -210,12 +269,15 @@ void TCPServer::handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> client
 
         switch(static_cast<TCPMessageType>(msgType)) {
             case TCPMessageType::GET_LOBBY_STATE: {
+                std::lock_guard<std::mutex> lock(_roomsMutex);
                 LobbyStateResponse resp;
                 resp.hostId = game->getHostId();
                 const auto& players = game->getPlayers();
                 resp.playerCount = players.size();
                 asio::write(*clientSocket, asio::buffer(&resp, sizeof(resp)), ec);
                 if (ec) { inRoom = false; break; }
+
+                // The player list could change, but we send the count first. This is mostly fine for a lobby.
                 for(const auto& player : players) {
                     LobbyPlayerInfo info;
                     info.playerId = player.id;
@@ -227,6 +289,7 @@ void TCPServer::handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> client
             }
             case TCPMessageType::START_GAME_REQUEST: {
                 if (playerId == game->getHostId()) {
+                    std::lock_guard<std::mutex> lock(_roomsMutex);
                     game->setStatus(GameStatus::PLAYING);
                     std::cout << "[Game] Room " << roomId << " is starting." << std::endl;
                 }
@@ -238,13 +301,30 @@ void TCPServer::handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> client
         }
     }
     if (game->getStatus() != GameStatus::PLAYING) {
+        std::lock_guard<std::mutex> lock(_roomsMutex);
         game->removePlayerFromLobby(playerId);
     }
 }
 
 int TCPServer::createRoom()
 {
+    std::lock_guard<std::mutex> lock(_roomsMutex);
     int roomId = _nextRoomId++;
     _rooms[roomId] = std::make_shared<Game>();
     return roomId;
+}
+
+void TCPServer::kickPlayer(uint32_t playerId)
+{
+    std::shared_ptr<asio::ip::tcp::socket> socketToClose = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(_serverMutex);
+        if (_playerSockets.count(playerId)) {
+            socketToClose = _playerSockets.at(playerId);
+        }
+    }
+    if (socketToClose) {
+        std::cout << "[TCP] Kicking player " << playerId << " by closing socket." << std::endl;
+        socketToClose->close(); // This will cause the read in the client thread to fail.
+    }
 }
