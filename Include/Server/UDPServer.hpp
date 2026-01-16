@@ -119,9 +119,28 @@ private:
 
     std::unordered_map<uint32_t, ClientInfo> _clients; /**< Map of connected clients */
 
+    /**
+     * @brief The main loop for receiving incoming UDP packets.
+     * Listens on the socket and pushes received packets into the incoming ring buffer.
+     */
     void recvLoop();
+    /**
+     * @brief The main loop for sending outgoing UDP packets.
+     * Pops packets from the outgoing ring buffer and sends them to their destination.
+     */
     void sendLoop();
+    /**
+     * @brief The main loop for processing received packets.
+     * Pops packets from the incoming ring buffer and passes them to handlePacket.
+     */
     void processLoop();
+    /**
+     * @brief Handles a single raw UDP packet.
+     * Deserializes the packet and triggers the appropriate game logic based on its type.
+     * @param data Pointer to the raw packet data.
+     * @param length The length of the packet data.
+     * @param clientAddr The source address of the packet.
+     */
     void handlePacket(const char* data, size_t length, const sockaddr_in& clientAddr);
 };
 

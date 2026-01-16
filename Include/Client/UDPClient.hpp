@@ -79,6 +79,10 @@ public:
         return !ec;
     }
 
+    /**
+     * @brief Checks if the UDP socket is still open and valid.
+     * @return true if the connection is considered active, false otherwise.
+     */
     bool checkConnection();
 };
 

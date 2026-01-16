@@ -201,6 +201,14 @@ public:
      */
     const std::vector<Player>& getPlayers() const;
 
+    /**
+     * @brief Kicks a player from the game instance.
+     * Notifies the kicked player and all other players in the room.
+     * @param playerId The ID of the player to kick.
+     * @param udpServer Reference to the UDP server for sending notifications.
+     */
+    void kickPlayer(uint32_t playerId, UDPServer& udpServer);
+
 private:
     std::vector<Player> _players; /**< List of players in the game. */
     std::mutex _playersMutex; /**< Mutex to protect access to the _players vector. */

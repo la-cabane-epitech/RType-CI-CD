@@ -56,7 +56,8 @@ enum UDPMessageType : uint8_t {
     PING              = 6,  ///< Client to Server ping
     PONG              = 7,  ///< Server to Client pong
     PLAYER_DISCONNECT = 8,  ///< Sent by client: player is disconnecting
-    GLOBAL_STATE_SYNC = 9   ///< Sent by server: full game state synchronization
+    GLOBAL_STATE_SYNC = 9,   ///< Sent by server: full game state synchrnization
+    YOU_HAVE_BEEN_KICKED = 10
 };
 
 /**
@@ -203,6 +204,15 @@ struct GlobalStateSyncPacket {
     uint8_t type = GLOBAL_STATE_SYNC; ///< Packet type (GLOBAL_STATE_SYNC)
     uint32_t entityCount;              ///< Number of entities included in this packet
 };
+
+/**
+ * @struct YouHaveBeenKickedPacket
+ * @brief Sent by the server to a player who has been kicked from a room.
+ */
+struct YouHaveBeenKickedPacket {
+    uint8_t type = YOU_HAVE_BEEN_KICKED; ///< Packet type (YOU_HAVE_BEEN_KICKED)
+};
+
 
 // Restore packing
 #pragma pack(pop)

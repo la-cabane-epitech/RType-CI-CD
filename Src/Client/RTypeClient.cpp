@@ -41,6 +41,9 @@ RTypeClientStatus RTypeClient::updateFrame()
         return RTypeClientStatus::KICKED;
     }
 
+    if (_status == InGameStatus::KICKED)
+        return RTypeClientStatus::KICKED;
+
     switch (_status) {
         case InGameStatus::PLAYING:
             if (IsKeyPressed(KEY_ESCAPE)) {
@@ -204,6 +207,11 @@ void RTypeClient::processNetworkMessages()
                     break;
                 }
             }
+        }
+
+        if (type == UDPMessageType::YOU_HAVE_BEEN_KICKED) {
+            std::cout << "[Game] You have been kicked." << std::endl;
+            _status = InGameStatus::KICKED;
         }
     }
 }

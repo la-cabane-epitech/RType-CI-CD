@@ -130,8 +130,7 @@ void ServerManager::processCommand(const std::string& command)
             std::lock_guard<std::mutex> lock(_roomsMutex);
             for (auto const& [id, game] : _rooms) {
                 if (game && game->getPlayer(playerId)) {
-                    std::cout << "Player " << playerId << " found in room " << id << ". Removing from game instance." << std::endl;
-                    game->disconnectPlayer(playerId, _udpServer);
+                    game->kickPlayer(playerId, _udpServer);
                     playerFoundAndRemoved = true;
                     break;
                 }

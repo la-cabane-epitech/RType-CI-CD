@@ -54,7 +54,7 @@ private:
     Clock _clock; /**< A shared clock for timestamping and synchronization. */
     std::map<int, std::shared_ptr<Game>> _rooms; /**< A map of room IDs to Game instances. */
     std::mutex _roomsMutex; /**< Mutex to protect the rooms map. */
-    std::thread _shellThread;
+    std::thread _shellThread; /**< Thread for handling the interactive server shell. */
     TCPServer _tcpServer; /**< The TCP server instance for handling connections and lobbies. */
     UDPServer _udpServer; /**< The UDP server instance for handling real-time game data. */
     std::atomic<bool> _running; /**< Atomic flag to control the main server loop. */

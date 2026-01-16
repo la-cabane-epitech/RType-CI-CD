@@ -155,7 +155,7 @@ void TCPServer::handleClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket
     while (inLobby && _running) {
         uint8_t msgType;
         asio::read(*clientSocket, asio::buffer(&msgType, sizeof(msgType)), ec);
-        if (ec) { // An error (like disconnect or socket closed by kick) will be caught here
+        if (ec) {
             if (ec == asio::error::eof || ec == asio::error::connection_reset) {
                 std::cout << "[TCP] Player " << playerId << " disconnected." << std::endl;
             } else {
