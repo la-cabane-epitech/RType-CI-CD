@@ -157,7 +157,6 @@ void Renderer::drawChat(const std::vector<std::string>& messages, const std::str
     int startY = screenHeight - 150;
     int startX = 20;
 
-    // Draw History (last 5 messages)
     int count = 0;
     for (auto it = messages.rbegin(); it != messages.rend(); ++it) {
         if (count >= 5) break;
@@ -165,13 +164,11 @@ void Renderer::drawChat(const std::vector<std::string>& messages, const std::str
         count++;
     }
 
-    // Draw Input Box
     if (isActive) {
         DrawRectangle(startX, startY + 30, 400, 30, Fade(DARKGRAY, 0.8f));
         DrawRectangleLines(startX, startY + 30, 400, 30, LIGHTGRAY);
         DrawText(currentInput.c_str(), startX + 5, startY + 35, 20, WHITE);
         
-        // Blinking cursor
         if ((int)(GetTime() * 2) % 2 == 0) {
             DrawText("_", startX + 5 + MeasureText(currentInput.c_str(), 20), startY + 35, 20, WHITE);
         }

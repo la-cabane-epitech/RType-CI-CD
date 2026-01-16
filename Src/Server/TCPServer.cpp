@@ -13,6 +13,10 @@
 
 using namespace NetworkUtils;
 
+// Map globale pour stocker les sockets des clients (PlayerID -> Socket)
+static std::map<uint32_t, int> g_clientSockets;
+static std::mutex g_socketMapMutex;
+
 TCPServer::TCPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock)
     : _rooms(rooms), _clock(clock)
 {
@@ -110,6 +114,11 @@ void TCPServer::handleClient(int clientSock)
     _playerUsernames[playerId] = connectReq.username;
     std::cout << "[TCP] Player " << playerId << " (" << connectReq.username << ") connected. Entering lobby." << std::endl;
 
+    {
+        std::lock_guard<std::mutex> lock(g_socketMapMutex);
+        g_clientSockets[playerId] = clientSock;
+    }
+
     bool inLobby = true;
     while (inLobby && _running) {
         uint8_t msgType;
@@ -174,6 +183,10 @@ void TCPServer::handleClient(int clientSock)
     }
 
     close(clientSock);
+    {
+        std::lock_guard<std::mutex> lock(g_socketMapMutex);
+        g_clientSockets.erase(playerId);
+    }
     _playerUsernames.erase(playerId);
     std::cout << "[TCP] Closed connection for player " << playerId << "." << std::endl;
 }
@@ -193,15 +206,13 @@ void TCPServer::handleInRoomClient(int clientSock, int roomId, uint32_t playerId
             inRoom = false; continue;
         }
 
-        if (game->getStatus() == GameStatus::PLAYING) {
-            GameStartingNotification notif;
-            sendAll(clientSock, &notif, sizeof(notif));
-            inRoom = false;
-            continue;
-        }
-
         switch(static_cast<TCPMessageType>(msgType)) {
             case TCPMessageType::GET_LOBBY_STATE: {
+                if (game->getStatus() == GameStatus::PLAYING) {
+                    GameStartingNotification notif;
+                    sendAll(clientSock, &notif, sizeof(notif));
+                    break;
+                }
                 LobbyStateResponse resp;
                 resp.hostId = game->getHostId();
                 const auto& players = game->getPlayers();
@@ -219,6 +230,39 @@ void TCPServer::handleInRoomClient(int clientSock, int roomId, uint32_t playerId
                 if (playerId == game->getHostId()) {
                     game->setStatus(GameStatus::PLAYING);
                     std::cout << "[Game] Room " << roomId << " is starting." << std::endl;
+                }
+                break;
+            }
+            case TCPMessageType::CHAT_MESSAGE: {
+                uint16_t msgLen = 0;
+                if (!recvAll(clientSock, &msgLen, sizeof(msgLen))) {
+                    inRoom = false; continue;
+                }
+                std::vector<char> buffer(msgLen);
+                if (!recvAll(clientSock, buffer.data(), msgLen)) {
+                    inRoom = false; continue;
+                }
+                std::string content(buffer.begin(), buffer.end());
+                
+                // Formatage du message : "Username: Message"
+                std::string fullMessage = _playerUsernames[playerId] + ": " + content;
+                
+                // Préparation du paquet à envoyer
+                std::vector<uint8_t> packet;
+                packet.push_back(TCPMessageType::CHAT_MESSAGE);
+                uint16_t fullLen = static_cast<uint16_t>(fullMessage.size());
+                packet.resize(3);
+                std::memcpy(&packet[1], &fullLen, sizeof(fullLen));
+                packet.insert(packet.end(), fullMessage.begin(), fullMessage.end());
+
+                // Diffusion aux autres joueurs de la room
+                const auto& players = game->getPlayers();
+                std::lock_guard<std::mutex> lock(g_socketMapMutex);
+                for (const auto& p : players) {
+                    if (p.id != playerId && g_clientSockets.count(p.id)) {
+                        // On envoie aux autres (l'expéditeur l'affiche déjà localement)
+                        sendAll(g_clientSockets[p.id], packet.data(), packet.size());
+                    }
                 }
                 break;
             }
