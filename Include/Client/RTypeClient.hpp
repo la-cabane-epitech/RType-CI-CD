@@ -41,7 +41,7 @@ public:
      * @param connectResponse The response received from the TCP handshake containing initial config.
      * @param keybinds The map of actions to key codes.
      */
-    RTypeClient(const std::string& serverIp, const ConnectResponse& connectResponse, const std::map<std::string, int>& keybinds);
+    RTypeClient(const std::string& serverIp, const ConnectResponse& connectResponse, const std::map<std::string, int>& keybinds, TCPClient& tcpClient);
 
     /**
      * @brief Applies a player input packet to the local state (prediction).
@@ -66,6 +66,7 @@ private:
     void update();
 
     UDPClient _udpClient; /**< UDP client for real-time communication */
+    TCPClient& _tcpClient; /**< Reference to TCP client for chat */
     GameState _gameState; /**< Current state of the game */
     Renderer _renderer;   /**< Renderer instance */
     uint32_t _tick = 0;   /**< Current game tick */
@@ -77,6 +78,10 @@ private:
 
     uint32_t _lastPingTime = 0; /**< Timestamp of the last ping sent */
     static constexpr uint32_t PING_INTERVAL_MS = 1000; /**< Interval between pings in milliseconds */
+
+    bool _isChatActive = false;
+    std::string _chatInput;
+    std::vector<std::string> _chatHistory;
 };
 
 #endif // RTYPECLIENT_HPP_

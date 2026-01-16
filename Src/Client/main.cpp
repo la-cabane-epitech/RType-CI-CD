@@ -134,7 +134,7 @@ int main(int ac, char **av)
             }
 
             case ClientState::IN_GAME: {
-                RTypeClient client(serverIp, connectRes, config.keybinds);
+                RTypeClient client(serverIp, connectRes, config.keybinds, tcpClient);
                 client.run();
                 currentState = ClientState::EXITING;
                 break;

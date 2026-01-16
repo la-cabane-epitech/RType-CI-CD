@@ -9,8 +9,9 @@
 #include "Client/RTypeClient.hpp"
 #include "Protocole/ProtocoleUDP.hpp"
 
-RTypeClient::RTypeClient(const std::string& serverIp, const ConnectResponse& connectResponse, const std::map<std::string, int>& keybinds)
+RTypeClient::RTypeClient(const std::string& serverIp, const ConnectResponse& connectResponse, const std::map<std::string, int>& keybinds, TCPClient& tcpClient)
     : _udpClient(serverIp, connectResponse.udpPort),
+      _tcpClient(tcpClient),
       _renderer(_gameState),
       _clock(connectResponse.clock),
       _keybinds(keybinds)
@@ -48,7 +49,8 @@ void RTypeClient::run()
         }
 
         BeginDrawing();
-        _renderer.draw();
+        _renderer.draw(_keybinds);
+        _renderer.drawChat(_chatHistory, _chatInput, _isChatActive);
 
         if (_status == InGameStatus::PAUSED) {
             PauseMenuChoice choice = _renderer.drawPauseMenu();
@@ -77,6 +79,31 @@ void RTypeClient::applyInput(const PlayerInputPacket& packet)
 
 void RTypeClient::handleInput()
 {
+    if (IsKeyPressed(KEY_TAB)) {
+        _isChatActive = !_isChatActive;
+        return;
+    }
+
+    if (_isChatActive) {
+        if (IsKeyPressed(KEY_ENTER)) {
+            if (!_chatInput.empty()) {
+                _tcpClient.sendChatMessage(_chatInput);
+                _chatHistory.push_back("Me: " + _chatInput);
+                _chatInput.clear();
+            }
+            _isChatActive = false;
+            return;
+        }
+
+        int key = GetCharPressed();
+        while (key > 0) {
+            if (key >= 32 && key <= 125) _chatInput += (char)key;
+            key = GetCharPressed();
+        }
+        if (IsKeyPressed(KEY_BACKSPACE) && !_chatInput.empty()) _chatInput.pop_back();
+        return;
+    }
+
     PlayerInputPacket packet{};
 
     packet.type = UDPMessageType::PLAYER_INPUT;
@@ -116,6 +143,10 @@ void RTypeClient::handleInput()
 
 void RTypeClient::update()
 {
+    // Poll TCP Chat
+    auto newMessages = _tcpClient.receiveChatMessages();
+    _chatHistory.insert(_chatHistory.end(), newMessages.begin(), newMessages.end());
+
     uint32_t now = _clock.getElapsedTimeMs();
     if (now - _lastPingTime > PING_INTERVAL_MS) {
         PingPacket pingPkt;

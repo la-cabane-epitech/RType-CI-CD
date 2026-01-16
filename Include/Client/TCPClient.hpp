@@ -90,6 +90,18 @@ public:
      */
     void sendStartGameRequest();
 
+    /**
+     * @brief Sends a chat message to the server.
+     * @param message The content of the message.
+     */
+    void sendChatMessage(const std::string& message);
+
+    /**
+     * @brief Checks for incoming chat messages without blocking.
+     * @return A vector of received messages.
+     */
+    std::vector<std::string> receiveChatMessages();
+
 };
 
 #endif // TCPCLIENT_HPP_

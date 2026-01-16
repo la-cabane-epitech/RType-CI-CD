@@ -80,7 +80,15 @@ public:
      * @brief Draws the game world content (players, entities, background).
      * @note This function should be called within a BeginDrawing()/EndDrawing() block.
      */
-    void draw();
+    void draw(const std::map<std::string, int>& keybinds);
+
+    /**
+     * @brief Draws the in-game chat overlay.
+     * @param messages The history of chat messages.
+     * @param currentInput The current text being typed.
+     * @param isActive Whether the chat input is active.
+     */
+    void drawChat(const std::vector<std::string>& messages, const std::string& currentInput, bool isActive);
 
     /**
      * @brief Draws the pause menu.
@@ -133,6 +141,7 @@ private:
     std::map<uint16_t, Texture2D> _textures;
     std::vector<ParallaxLayer> _parallaxLayers;
     std::optional<std::string> _actionToRemap;
+    std::map<uint32_t, float> _playerBank;
 };
 
 #endif

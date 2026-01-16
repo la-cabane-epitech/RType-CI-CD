@@ -176,3 +176,58 @@ void TCPClient::sendStartGameRequest()
         std::cerr << "sendStartGameRequest failed: " << e.what() << std::endl;
     }
 }
+
+void TCPClient::sendChatMessage(const std::string& message)
+{
+    try {
+        // Protocol: Type (1 byte) + Length (2 bytes) + Content
+        uint8_t type = 10; // 10 = CHAT_MESSAGE
+        uint16_t length = static_cast<uint16_t>(message.size());
+
+        std::vector<uint8_t> packet;
+        packet.push_back(type);
+        packet.resize(3);
+        std::memcpy(&packet[1], &length, sizeof(length));
+        packet.insert(packet.end(), message.begin(), message.end());
+
+        asio::write(_socket, asio::buffer(packet));
+    } catch (const std::exception& e) {
+        std::cerr << "sendChatMessage failed: " << e.what() << std::endl;
+    }
+}
+
+std::vector<std::string> TCPClient::receiveChatMessages()
+{
+    std::vector<std::string> messages;
+    try {
+        // Non-blocking check: do we have enough data for a header (3 bytes)?
+        while (_socket.available() >= 3) {
+            // Peek header to check type and length
+            std::array<uint8_t, 3> header;
+            _socket.receive(asio::buffer(header), asio::socket_base::message_peek);
+
+            uint8_t type = header[0];
+            uint16_t length = 0;
+            std::memcpy(&length, &header[1], sizeof(length));
+
+            if (type == 10) { // Chat Message
+                if (_socket.available() >= 3 + length) {
+                    // Read the full packet
+                    std::vector<char> buffer(3 + length);
+                    asio::read(_socket, asio::buffer(buffer));
+                    messages.emplace_back(buffer.data() + 3, length);
+                } else {
+                    break; // Wait for the rest of the packet
+                }
+            } else {
+                // Unknown packet in game loop, consume 1 byte to avoid infinite loop or handle error
+                // For now, we assume only chat uses TCP in-game.
+                uint8_t trash;
+                asio::read(_socket, asio::buffer(&trash, 1));
+            }
+        }
+    } catch (...) {
+        // Ignore errors in polling
+    }
+    return messages;
+}
