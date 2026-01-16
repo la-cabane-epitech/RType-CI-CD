@@ -79,6 +79,7 @@ jobs:
           mkdir package
           cp build/Src/Client/rtype_client package/
           cp build/Src/Server/rtype_server package/
+          cp build/librtype_network.so package/
           cp -r Assets package/
       - name: Create package for Windows
         if: matrix.os == 'windows-latest'
@@ -86,6 +87,7 @@ jobs:
           mkdir package
           copy build\Src\Client\Release\rtype_client.exe package\
           copy build\Src\Server\Release\rtype_server.exe package\
+          copy build\Release\rtype_network.dll package\
           xcopy Assets package\Assets /E /I /Y
 
       - name: Upload artifact
