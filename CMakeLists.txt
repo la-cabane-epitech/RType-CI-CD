@@ -16,6 +16,7 @@ find_package(raylib REQUIRED CONFIG)
 find_package(asio REQUIRED)
 
 add_library(rtype_network SHARED
+set_target_properties(rtype_network PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
     Src/Client/TCPClient.cpp
     Src/Client/UDPClient.cpp
     Src/Server/TCPServer.cpp
