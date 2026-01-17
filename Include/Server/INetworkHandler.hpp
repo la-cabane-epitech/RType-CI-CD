@@ -8,7 +8,7 @@
 #ifndef INETWORKHANDLER_HPP_
 #define INETWORKHANDLER_HPP_
 
-#include <netinet/in.h>
+#include <asio.hpp>
 #include <cstddef>
 
 /**
