@@ -190,7 +190,7 @@ std::optional<int> TCPClient::createRoom()
                     asio::read(_socket, asio::buffer(trash), ec);
                 }
                 _socket.non_blocking(true);
-                
+
                 return std::nullopt;
             } else {
                 std::cerr << "Invalid response type from server for createRoom: " << static_cast<int>(_createRoomPendingRespType) << "\n";
@@ -377,9 +377,9 @@ LobbyState TCPClient::getLobbyState()
                 ErrorResponse err{};
                 asio::read(_socket, asio::buffer(reinterpret_cast<char*>(&err) + 1, sizeof(err) - 1), ec);
             } else {
-                 std::cerr << "Unknown packet type in getLobbyState: " << (int)respType << std::endl;
+                std::cerr << "Unknown packet type in getLobbyState: " << (int)respType << std::endl;
             }
-            
+
             _socket.non_blocking(true);
         }
 

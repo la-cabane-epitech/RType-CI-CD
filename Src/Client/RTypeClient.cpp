@@ -48,7 +48,13 @@ void RTypeClient::tick()
     if (_status == InGameStatus::PAUSED) {
         PauseMenuChoice choice = _renderer.drawPauseMenu();
         if (choice == PauseMenuChoice::OPTIONS) _status = InGameStatus::OPTIONS;
-        if (choice == PauseMenuChoice::QUIT) _status = InGameStatus::QUITTING;
+        if (choice == PauseMenuChoice::QUIT) {
+            _status = InGameStatus::QUITTING;
+            PlayerDisconnectPacket disconnectPkt;
+            disconnectPkt.type = UDPMessageType::PLAYER_DISCONNECT;
+            disconnectPkt.playerId = _gameState.myPlayerId;
+            _udpClient.sendMessage(disconnectPkt);
+        }
     } else if (_status == InGameStatus::OPTIONS) {
         if (_renderer.drawOptionsMenu(_keybinds)) {
             _status = InGameStatus::PAUSED;
@@ -97,11 +103,11 @@ void RTypeClient::handleInput()
         }
     }
 
-     if (packet.inputs != 0) {
-         applyInput(packet);
-         _pendingInputs.push_back(packet);
-     }
-     _udpClient.sendMessage(packet);
+    if (packet.inputs != 0) {
+        applyInput(packet);
+        _pendingInputs.push_back(packet);
+    }
+    _udpClient.sendMessage(packet);
 }
 
 void RTypeClient::update()
