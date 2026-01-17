@@ -179,9 +179,7 @@ int main(int ac, char **av)
 
                 if (gameInstance->getStatus() == InGameStatus::QUITTING) {
                     gameInstance.reset();
-                    tcpClient.disconnect();
-                    connected = false;
-                    currentState = ClientState::MAIN_MENU;
+                    currentState = ClientState::EXITING;
                 }
                 break;
             }
