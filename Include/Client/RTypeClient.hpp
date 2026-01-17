@@ -9,6 +9,7 @@
 #define RTYPECLIENT_HPP_
 
 #include "./UDPClient.hpp"
+#include "./TCPClient.hpp"
 #include "GameState.hpp"
 #include "Renderer.hpp"
 #include "Protocole/ProtocoleTCP.hpp"
@@ -25,7 +26,18 @@ enum class InGameStatus {
     PLAYING,
     PAUSED,
     OPTIONS,
-    QUITTING
+    QUITTING,
+    KICKED
+};
+
+/**
+ * @enum RTypeClientStatus
+ * @brief Represents the final status of the RTypeClient after its run loop exits.
+ */
+enum class RTypeClientStatus {
+    RUNNING,  // Should not be returned, internal use
+    QUITTING, // User quit normally (ESC, closing window)
+    KICKED    // Connection to server was lost
 };
 
 /**
@@ -38,10 +50,11 @@ public:
      * @brief Construct a new RTypeClient object.
      *
      * @param serverIp The IP address of the server.
+     * @param tcpClient Reference to the active TCP client for connection monitoring.
      * @param connectResponse The response received from the TCP handshake containing initial config.
      * @param keybinds The map of actions to key codes.
      */
-    RTypeClient(const std::string& serverIp, const ConnectResponse& connectResponse, const std::map<std::string, int>& keybinds);
+    RTypeClient(const std::string& serverIp, TCPClient& tcpClient, const ConnectResponse& connectResponse, const std::map<std::string, int>& keybinds);
 
     /**
      * @brief Applies a player input packet to the local state (prediction).
@@ -59,10 +72,16 @@ private:
     void handleInput();
 
     /**
-     * @brief Updates the game logic and processes network messages.
+     * @brief Updates the game state based on network messages.
      */
     void update();
 
+    /**
+     * @brief Processes incoming network messages from the server.
+     */
+    void processNetworkMessages();
+
+    TCPClient& _tcpClient; /**< TCP client for monitoring connection status */
     UDPClient _udpClient; /**< UDP client for real-time communication */
     GameState _gameState; /**< Current state of the game */
     Renderer _renderer;   /**< Renderer instance */
@@ -75,6 +94,10 @@ private:
 
     uint32_t _lastPingTime = 0; /**< Timestamp of the last ping sent */
     static constexpr uint32_t PING_INTERVAL_MS = 1000; /**< Interval between pings in milliseconds */
+
+    bool _isChatActive = false;
+    std::string _chatInput;
+    std::vector<std::string> _chatHistory;
 };
 
 #endif // RTYPECLIENT_HPP_

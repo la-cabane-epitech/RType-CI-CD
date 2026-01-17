@@ -72,6 +72,16 @@ Player* Game::getPlayer(uint32_t playerId) {
     return nullptr;
 }
 
+const Player* Game::getPlayer(uint32_t playerId) const {
+    std::lock_guard<std::mutex> lock(const_cast<std::mutex&>(_playersMutex));
+    for (const auto& player : _players) {
+        if (player.id == playerId) {
+            return &player;
+        }
+    }
+    return nullptr;
+}
+
 int Game::getPlayerCount()
 {
     std::lock_guard<std::mutex> lock(_playersMutex);
@@ -349,6 +359,43 @@ void Game::handleCollision(UDPServer &udpServer) {
                 player.x = 100.0f;
                 player.y = 100.0f;
                 enemy.is_collide = true;
+            }
+        }
+    }
+}
+
+void Game::kickPlayer(uint32_t playerId, UDPServer& udpServer)
+{
+    std::optional<sockaddr_in> kickedPlayerAddr;
+    bool playerFoundAndRemoved = false;
+
+    {
+        std::lock_guard<std::mutex> lock(_playersMutex);
+        auto it = std::find_if(_players.begin(), _players.end(),
+                             [playerId](const Player& p) { return p.id == playerId; });
+
+        if (it != _players.end()) {
+            if (it->addrSet) {
+                kickedPlayerAddr = it->udpAddr;
+            }
+            _players.erase(it);
+            playerFoundAndRemoved = true;
+            std::cout << "[Game] Player " << playerId << " was kicked." << std::endl;
+        }
+    }
+
+    if (playerFoundAndRemoved) {
+        if (kickedPlayerAddr) {
+            YouHaveBeenKickedPacket kickPkt;
+            udpServer.queueMessage(kickPkt, *kickedPlayerAddr);
+        }
+
+        PlayerDisconnectPacket disconnectPkt{};
+        disconnectPkt.playerId = playerId;
+        std::lock_guard<std::mutex> lock(_playersMutex);
+        for (const auto& destPlayer : _players) {
+            if (destPlayer.addrSet) {
+                udpServer.queueMessage(disconnectPkt, destPlayer.udpAddr);
             }
         }
     }

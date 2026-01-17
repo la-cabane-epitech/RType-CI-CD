@@ -397,3 +397,81 @@ LobbyState TCPClient::getLobbyState()
     }
     return cachedState;
 }
+
+bool TCPClient::checkConnection()
+{
+    if (!_socket.is_open()) {
+        return false;
+    }
+
+    asio::error_code ec;
+    _socket.non_blocking(true, ec);
+    if (ec) { return false; }
+
+    char d;
+    _socket.read_some(asio::buffer(&d, 0), ec);
+
+    asio::error_code ec_block;
+    _socket.non_blocking(false, ec_block);
+    if (ec_block) { return false; }
+
+    if (ec == asio::error::would_block) {
+        return true;
+    }
+
+    if (ec) {
+        _socket.close();
+        return false;
+    }
+
+    return true;
+}
+
+void TCPClient::sendChatMessage(const std::string& message)
+{
+    try {
+        uint8_t type = TCPMessageType::CHAT_MESSAGE;
+        uint16_t length = static_cast<uint16_t>(message.size());
+
+        std::vector<uint8_t> packet;
+        packet.push_back(type);
+        packet.resize(3);
+        std::memcpy(&packet[1], &length, sizeof(length));
+        packet.insert(packet.end(), message.begin(), message.end());
+
+        asio::write(_socket, asio::buffer(packet));
+    } catch (const std::exception& e) {
+        std::cerr << "sendChatMessage failed: " << e.what() << std::endl;
+    }
+}
+
+std::vector<std::string> TCPClient::receiveChatMessages()
+{
+    std::vector<std::string> messages;
+    try {
+        while (_socket.available() >= 3) {
+            std::array<uint8_t, 3> header;
+            _socket.receive(asio::buffer(header), asio::socket_base::message_peek);
+
+            uint8_t type = header[0];
+            uint16_t length = 0;
+            std::memcpy(&length, &header[1], sizeof(length));
+
+            if (type == TCPMessageType::CHAT_MESSAGE) {
+                if (_socket.available() >= 3 + length) {
+                    std::vector<char> buffer(3 + length);
+                    asio::read(_socket, asio::buffer(buffer));
+                    messages.emplace_back(buffer.data() + 3, length);
+                } else {
+                    break;
+                }
+            } else {
+
+                uint8_t trash;
+                asio::read(_socket, asio::buffer(&trash, 1));
+            }
+        }
+    } catch (...) {
+    }
+    return messages;
+}

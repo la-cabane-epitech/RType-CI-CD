@@ -13,6 +13,7 @@
 #include <string>
 #include <optional>
 #include <vector>
+#include <algorithm>
 
 Renderer::Renderer(GameState& gameState) : _gameState(gameState), _actionToRemap(std::nullopt) {
     _textures[0] = LoadTexture("Assets/r-typesheet42.gif");
@@ -20,7 +21,7 @@ Renderer::Renderer(GameState& gameState) : _gameState(gameState), _actionToRemap
     _textures[2] = LoadTexture("Assets/r-typesheet3.gif");
     _textures[3] = LoadTexture("Assets/r-typesheet5.gif");
     _textures[4] = LoadTexture("Assets/r-typesheet1.gif");
-    
+
     // Background Textures
     _textures[10] = LoadTexture("Assets/blue-back.png");
     _textures[11] = LoadTexture("Assets/blue-stars.png");
@@ -31,15 +32,15 @@ Renderer::Renderer(GameState& gameState) : _gameState(gameState), _actionToRemap
     _parallaxLayers.emplace_back(0.4f, _textures[11], 6.0f, 0.0f);
 
     if (ENTITY_REGISTRY.empty()) {
-        ENTITY_REGISTRY[1] = { 1, false, 1, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };       
+        ENTITY_REGISTRY[1] = { 1, false, 1, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
         ENTITY_REGISTRY[2] = { 2, true, 12, 8.0f, 17.0f, 18.0f, 2.0f, 0.0f, 0.0f };
         ENTITY_REGISTRY[3] = { 3, true, 8, 12.0f, 33.0f, 36.0f, 2.5f, 0.0f, 0.0f };
-        ENTITY_REGISTRY[4] = { 4, true, 4, 0.0f, 29.0f, 30.0f, 3.0f, 136.0f, 19.0f }; 
+        ENTITY_REGISTRY[4] = { 4, true, 4, 0.0f, 29.0f, 30.0f, 3.0f, 136.0f, 19.0f };
     }
 }
 
 Renderer::~Renderer()
-{ 
+{
     if (IsWindowReady()) {
         for (auto const& [key, val] : _textures)
         {
@@ -48,7 +49,7 @@ Renderer::~Renderer()
     }
 }
 
-void Renderer::draw()
+void Renderer::draw(const std::map<std::string, int>& keybinds)
 {
     float dt = GetFrameTime();
     float scrollSpeed = 150.0f;
@@ -57,7 +58,6 @@ void Renderer::draw()
         layer.update(dt, scrollSpeed);
     }
 
-    BeginDrawing();
     ClearBackground(BLACK);
 
     for (auto& layer : _parallaxLayers) {
@@ -70,13 +70,44 @@ void Renderer::draw()
 
     for (const auto& pair : _gameState.players) {
         Color color = (pair.first == _gameState.myPlayerId) ? BLUE : RED;
-        
-        if (_textures.count(0) && _textures.at(0).id != 0) {
-            const Texture2D& texture = _textures.at(0);
+
+        float targetBank = 2.0f; // 2.0 = Neutre (Frame 2)
+        if (pair.first == _gameState.myPlayerId) {
+            int upKey = (keybinds.count("UP")) ? keybinds.at("UP") : KEY_UP;
+            int downKey = (keybinds.count("DOWN")) ? keybinds.at("DOWN") : KEY_DOWN;
+            if (IsKeyDown(upKey)) targetBank = 4.0f;
+            else if (IsKeyDown(downKey)) targetBank = 0.0f;
+        }
+
+        if (_playerBank.find(pair.first) == _playerBank.end()) _playerBank[pair.first] = 2.0f;
+        float& currentBank = _playerBank[pair.first];
+        float bankSpeed = 15.0f * dt;
+
+        if (currentBank < targetBank) currentBank = std::min(currentBank + bankSpeed, targetBank);
+        else if (currentBank > targetBank) currentBank = std::max(currentBank - bankSpeed, targetBank);
+
+        int frameIndex = static_cast<int>(currentBank);
+        int spriteIndex = pair.first % 4;
+        int textureId = 0;
+        float baseY = 0.0f;
+
+        switch (spriteIndex) {
+            case 0: textureId = 0; baseY = 0.0f; break;
+            case 1: textureId = 0; baseY = 18.0f; break;
+            case 2: textureId = 0; baseY = 36.0f; break;
+            case 3: textureId = 0; baseY = 53.0f; break;
+            default: textureId = 0; baseY = 0.0f; break;
+        }
+
+        if (!_textures.count(textureId)) textureId = 0;
+
+        if (_textures.count(textureId) && _textures.at(textureId).id != 0) {
+            const Texture2D& texture = _textures.at(textureId);
+            Rectangle sourceRec = { frameIndex * 33.0f, baseY, 33.0f, 17.0f };
             float scale = 2.0f;
-            Rectangle sourceRec = { 0.0f, 0.0f, 33.0f, 17.0f };
-            Vector2 position = { pair.second.x - sourceRec.width / 2, pair.second.y - sourceRec.height / 2 };
-            DrawTextureRec(texture, sourceRec, position, WHITE);
+            Rectangle destRec = { pair.second.x, pair.second.y, sourceRec.width * scale, sourceRec.height * scale };
+            Vector2 origin = { destRec.width / 2, destRec.height / 2 };
+            DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, WHITE);
         }
 
         if (pair.first == _gameState.myPlayerId && IsKeyDown(KEY_SPACE)) {
@@ -88,12 +119,6 @@ void Renderer::draw()
                 DrawTextureRec(texture, chargeRec, chargePos, WHITE);
             }
         }
-
-        DrawText(std::to_string(pair.first).c_str(),
-                static_cast<int>(pair.second.x - 10),
-                static_cast<int>(pair.second.y - 10),
-                20,
-                WHITE);
     }
 
     for (const auto& pair : _gameState.entities) {
@@ -101,7 +126,7 @@ void Renderer::draw()
 
         if (ENTITY_REGISTRY.count(entity.type)) {
             const auto& config = ENTITY_REGISTRY[entity.type];
-            
+
             if (_textures.count(config.textureId)) {
                 const Texture2D& texture = _textures.at(config.textureId);
                 Rectangle sourceRec;
@@ -121,6 +146,32 @@ void Renderer::draw()
         } else {
             DrawCircleLines(static_cast<int>(entity.x), static_cast<int>(entity.y), 20, MAGENTA);
         }
+    }
+}
+
+void Renderer::drawChat(const std::vector<std::string>& messages, const std::string& currentInput, bool isActive)
+{
+    int screenHeight = GetScreenHeight();
+    int startY = screenHeight - 150;
+    int startX = 20;
+
+    int count = 0;
+    for (auto it = messages.rbegin(); it != messages.rend(); ++it) {
+        if (count >= 5) break;
+        DrawText(it->c_str(), startX, startY - (count * 25), 20, WHITE);
+        count++;
+    }
+
+    if (isActive) {
+        DrawRectangle(startX, startY + 30, 400, 30, Fade(DARKGRAY, 0.8f));
+        DrawRectangleLines(startX, startY + 30, 400, 30, LIGHTGRAY);
+        DrawText(currentInput.c_str(), startX + 5, startY + 35, 20, WHITE);
+
+        if ((int)(GetTime() * 2) % 2 == 0) {
+            DrawText("_", startX + 5 + MeasureText(currentInput.c_str(), 20), startY + 35, 20, WHITE);
+        }
+    } else {
+        DrawText("Press TAB to chat", startX, startY + 35, 15, Fade(LIGHTGRAY, 0.5f));
     }
 }
 
@@ -258,12 +309,12 @@ int Renderer::drawRoomMenu(const std::vector<RoomInfo>& rooms)
     for (const auto& room : rooms) {
         Rectangle roomBtn = { 50, (float)startY, 600, 50 };
         bool hoverRoom = CheckCollisionPointRec(mousePos, roomBtn);
-        
+
         DrawRectangleRec(roomBtn, hoverRoom ? DARKGRAY : BLACK);
         DrawRectangleLinesEx(roomBtn, 2, WHITE);
 
-        std::string text = "Room " + std::to_string(room.id) + "   Players: " + 
-                           std::to_string(room.playerCount) + "/" + std::to_string(room.maxPlayers);
+        std::string text = "Room " + std::to_string(room.id) + "   Players: " +
+                            std::to_string(room.playerCount) + "/" + std::to_string(room.maxPlayers);
         DrawText(text.c_str(), 70, startY + 10, 30, WHITE);
 
         if (hoverRoom && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
@@ -348,6 +399,19 @@ bool Renderer::drawUsernameInput(std::string& username)
     }
 
     return false;
+}
+
+void Renderer::drawKickedScreen()
+{
+    ClearBackground(BLACK);
+    const char* title = "You have been kicked from the server.";
+    const char* subtitle = "Press ENTER or click to exit.";
+
+    int titleWidth = MeasureText(title, 40);
+    int subtitleWidth = MeasureText(subtitle, 20);
+
+    DrawText(title, GetScreenWidth() / 2 - titleWidth / 2, GetScreenHeight() / 2 - 40, 40, RED);
+    DrawText(subtitle, GetScreenWidth() / 2 - subtitleWidth / 2, GetScreenHeight() / 2 + 20, 20, LIGHTGRAY);
 }
 
 const char* Renderer::GetKeyName(int key) {

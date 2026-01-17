@@ -93,7 +93,15 @@ public:
      * @brief Draws the game world content (players, entities, background).
      * @note This function should be called within a BeginDrawing()/EndDrawing() block.
      */
-    void draw();
+    void draw(const std::map<std::string, int>& keybinds);
+
+    /**
+     * @brief Draws the in-game chat overlay.
+     * @param messages The history of chat messages.
+     * @param currentInput The current text being typed.
+     * @param isActive Whether the chat input is active.
+     */
+    void drawChat(const std::vector<std::string>& messages, const std::string& currentInput, bool isActive);
 
     /**
      * @brief Draws the pause menu.
@@ -137,6 +145,11 @@ public:
     bool drawUsernameInput(std::string& username);
 
     /**
+     * @brief Draws the screen when the player has been kicked.
+     */
+    void drawKickedScreen();
+
+    /**
      * @brief Gets the string representation of a Raylib key code.
      * @param key The Raylib key code.
      * @return A C-string representing the key name.
@@ -150,10 +163,11 @@ public:
 
 
 private:
-    GameState& _gameState; /**< Reference to the shared game state. */
-    std::map<uint16_t, Texture2D> _textures; /**< Map of loaded textures. */
-    std::vector<ParallaxLayer> _parallaxLayers; /**< Layers for the parallax background. */
-    std::optional<std::string> _actionToRemap; /**< The action currently being remapped in the options menu. */
+    GameState& _gameState;
+    std::map<uint16_t, Texture2D> _textures;
+    std::vector<ParallaxLayer> _parallaxLayers;
+    std::optional<std::string> _actionToRemap;
+    std::map<uint32_t, float> _playerBank;
 };
 
 #endif

@@ -124,6 +124,17 @@ private:
     std::atomic<bool> _running; /**< Flag indicating if the server manager is running. */
     int _nextRoomId = 0; /**< Counter for assigning unique room IDs. */
     std::mutex _serverMutex; /**< Mutex for thread-safe access to shared resources. */
+    std::thread _shellThread; /**< Thread for handling the interactive server shell. */
+    /**
+     * @brief The loop that reads and processes shell commands from stdin.
+     */
+    void shellLoop();
+
+    /**
+     * @brief Parses and executes a single command string.
+     * @param command The command to process.
+     */
+    void processCommand(const std::string& command);
 };
 
 #endif

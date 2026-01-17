@@ -12,6 +12,7 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <atomic>
 #include <mutex>
 #include "Client/Asio.hpp"
 #include "ITCPHandler.hpp"
@@ -66,6 +67,12 @@ public:
      */
     void sendGameStartingNotification(int roomId);
 
+    /**
+     * @brief Kicks a player from the server by closing their TCP socket.
+     * @param playerId The ID of the player to kick.
+     */
+    void kickPlayer(uint32_t playerId);
+
 private:
     /**
      * @brief Main loop for accepting new client connections.
@@ -89,7 +96,7 @@ private:
     asio::io_context _io_context; /**< ASIO IO context for managing I/O operations. */
     asio::ip::tcp::acceptor _acceptor; /**< TCP acceptor for listening to incoming connections. */
 
-    bool _running; /**< Flag indicating if the server is running. */
+    std::atomic<bool> _running; /**< Flag indicating if the server is running. */
 
     ITCPHandler* _handler; /**< Pointer to the handler for game logic events. */
 
@@ -101,7 +108,7 @@ private:
     std::map<uint32_t, int> _playerRoomMap; /**< Map of player IDs to the room ID they are currently in. */
 
     std::thread _acceptThread; /**< Thread for the accept loop. */
-    std::vector<std::thread> _clientThread; /**< Vector of threads handling individual clients. */
+    std::vector<std::thread> _clientThreads; /**< Vector of threads handling individual clients. */
     const Clock& _clock; /**< Reference to the shared Clock object. */
 };
 

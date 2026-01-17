@@ -35,6 +35,7 @@ struct LobbyState {
     bool gameIsStarting = false; /**< Flag indicating if the game is about to start. */
     uint32_t hostId = 0; /**< The ID of the player who is the host of the lobby. */
     std::vector<LobbyPlayerInfo> players; /**< A list of players in the lobby. */
+    bool disconnected = false; /**< Flag indicating if the connection was lost during the request. */
 };
 
 /**
@@ -165,6 +166,23 @@ public:
      * This command is typically sent by the host of the lobby to initiate the game session.
      */
     void sendStartGameRequest();
+
+    /**
+     * @brief Polls the TCP socket to check if the connection is still active.
+     * @return true if the connection is alive, false if it has been closed.
+     */
+    bool checkConnection();
+    /**
+     * @brief Sends a chat message to the server.
+     * @param message The content of the message.
+     */
+    void sendChatMessage(const std::string& message);
+
+    /**
+     * @brief Checks for incoming chat messages without blocking.
+     * @return A vector of received messages.
+     */
+    std::vector<std::string> receiveChatMessages();
 
 };
 

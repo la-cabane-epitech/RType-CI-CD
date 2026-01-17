@@ -99,6 +99,13 @@ public:
     Player* getPlayer(uint32_t playerId);
 
     /**
+     * @brief Retrieves a player by ID (const version).
+     * @param playerId The player's ID.
+     * @return Const pointer to the Player struct, or nullptr if not found.
+     */
+    const Player* getPlayer(uint32_t playerId) const;
+
+    /**
      * @brief Broadcasts the current game state to all connected players via UDP.
      * @param udpServer Reference to the UDP server instance.
      */
@@ -193,6 +200,14 @@ public:
      * @return A const reference to the vector of players.
      */
     const std::vector<Player>& getPlayers() const;
+
+    /**
+     * @brief Kicks a player from the game instance.
+     * Notifies the kicked player and all other players in the room.
+     * @param playerId The ID of the player to kick.
+     * @param udpServer Reference to the UDP server for sending notifications.
+     */
+    void kickPlayer(uint32_t playerId, UDPServer& udpServer);
 
 private:
     std::vector<Player> _players; /**< List of players in the game. */

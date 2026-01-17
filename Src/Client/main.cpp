@@ -9,6 +9,7 @@
 #include "Client/TCPClient.hpp"
 #include "Client/RTypeClient.hpp"
 #include "Client/ConfigManager.hpp"
+#include <memory>
 #include <iostream>
 
 enum class ClientState {
@@ -18,6 +19,7 @@ enum class ClientState {
     ROOM_SELECTION,
     LOBBY,
     IN_GAME,
+    KICKED,
     EXITING
 };
 
@@ -164,14 +166,13 @@ int main(int ac, char **av)
                 }
 
                 if (renderer.drawLobby(lobbyState, connectRes.playerId)) {
-                    std::cout << "[DEBUG] Start Game button clicked in Renderer!" << std::endl;
                     tcpClient.sendStartGameRequest();
                 }
                 break;
             }
             case ClientState::IN_GAME: {
                 if (!gameInstance) {
-                    gameInstance = std::make_unique<RTypeClient>(serverIp, connectRes, config.keybinds);
+                    gameInstance = std::make_unique<RTypeClient>(serverIp, tcpClient, connectRes, config.keybinds);
                     std::cout << "[Game] Starting game tick loop..." << std::endl;
                 }
 
@@ -179,6 +180,16 @@ int main(int ac, char **av)
 
                 if (gameInstance->getStatus() == InGameStatus::QUITTING) {
                     gameInstance.reset();
+                    currentState = ClientState::EXITING;
+                } else if (gameInstance->getStatus() == InGameStatus::KICKED) {
+                    gameInstance.reset();
+                    currentState = ClientState::KICKED;
+                }
+                break;
+            }
+            case ClientState::KICKED: {
+                renderer.drawKickedScreen();
+                if (IsKeyPressed(KEY_ENTER) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                     currentState = ClientState::EXITING;
                 }
                 break;

@@ -34,20 +34,46 @@ void UDPServer::start()
 
 void UDPServer::stop()
 {
-    if (!_running)
+    if (_running.exchange(false) == false) {
         return;
+    }
 
-    _running = false;
+    std::cout << "[UDP] Server stopping..." << std::endl;
 
-    std::cout << "[UDP] Server stoping..." << std::endl;
-    _socket.close();
-    _io_context.stop();
+    unsigned short port = 0;
+    try {
+        if (_socket.is_open())
+            port = _socket.local_endpoint().port();
+    } catch (...) {}
+
+    try {
+        _socket.close();
+    } catch (...) {}
+
+    if (port != 0) {
+        try {
+            asio::io_context tempContext;
+            asio::ip::udp::socket sender(tempContext, asio::ip::udp::endpoint(asio::ip::udp::v4(), 0));
+            asio::ip::udp::endpoint target(asio::ip::udp::v4(), port);
+
+            char dummy = 0;
+            sender.send_to(asio::buffer(&dummy, 1), target);
+        } catch (const std::exception& e) {
+        }
+    }
+
+    std::cout << "[UDP] Joining threads..." << std::endl;
+
     if (_recvThread.joinable())
         _recvThread.join();
+
     if (_sendThread.joinable())
         _sendThread.join();
+
     if (_processThread.joinable())
         _processThread.join();
+
+    std::cout << "[UDP] All threads stopped." << std::endl;
 }
 
 void UDPServer::recvLoop()
@@ -56,15 +82,31 @@ void UDPServer::recvLoop()
         try {
             Packet pkt{};
             asio::ip::udp::endpoint sender_endpoint;
+            asio::error_code ec;
 
-            pkt.length = _socket.receive_from(
-                asio::buffer(pkt.data), sender_endpoint);
+            size_t len = _socket.receive_from(asio::buffer(pkt.data), sender_endpoint, 0, ec);
 
+            if (!_running) {
+                return;
+            }
+
+            if (ec) {
+                if (ec == asio::error::operation_aborted || ec == asio::error::bad_descriptor) {
+                    break;
+                }
+                std::cerr << "[UDP] Recv error: " << ec.message() << std::endl;
+                continue;
+            }
+
+            pkt.length = len;
             pkt.addr = *reinterpret_cast<const sockaddr_in*>(sender_endpoint.data());
             _incoming.push(pkt);
+
         } catch (const std::exception& e) {
             if (_running) {
-                std::cerr << "[UDP] Recv error: " << e.what() << std::endl;
+                std::cerr << "[UDP] Exception: " << e.what() << std::endl;
+            } else {
+                return;
             }
         }
     }

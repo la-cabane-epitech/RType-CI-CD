@@ -37,22 +37,54 @@ void TCPServer::start()
 
 void TCPServer::stop()
 {
-    if (!_running)
+    bool expected = true;
+    if (!_running.compare_exchange_strong(expected, false))
         return;
-    _running = false;
 
     std::cout << "[TCP] Server stopping..." << std::endl;
-    _io_context.stop();
-    if (_acceptor.is_open())
-        _acceptor.close();
 
+    unsigned short port = 0;
+    try {
+        if (_acceptor.is_open())
+            port = _acceptor.local_endpoint().port();
+    } catch (...) {}
+
+    asio::error_code ec;
+    _acceptor.close(ec);
+
+    if (port != 0) {
+        try {
+            asio::io_context tempContext;
+            asio::ip::tcp::socket dummySocket(tempContext);
+            asio::ip::tcp::endpoint target(asio::ip::tcp::v4(), port);
+
+            dummySocket.connect(target, ec);
+            dummySocket.close();
+        } catch (...) {
+        }
+    }
+
+    std::cout << "[TCP] Server stopped. 1 (Joining accept thread)" << std::endl;
     if (_acceptThread.joinable())
         _acceptThread.join();
 
-    for (auto& thread : _clientThread) {
+    std::cout << "[TCP] Server stopped. 2 (Closing client sockets)" << std::endl;
+
+    {
+        std::lock_guard<std::mutex> lock(_serverMutex);
+        for (auto& pair : _playerSockets) {
+            if (pair.second && pair.second->is_open()) {
+                pair.second->close();
+            }
+        }
+    }
+
+    for (auto& thread : _clientThreads) {
         if (thread.joinable())
             thread.join();
     }
+    _clientThreads.clear();
+    std::cout << "[TCP] Server fully stopped." << std::endl;
 }
 
 void TCPServer::acceptLoop()
@@ -62,13 +94,17 @@ void TCPServer::acceptLoop()
         asio::error_code ec;
         _acceptor.accept(*clientSocket, ec);
 
+        if (!_running) {
+            return;
+        }
+
         if (ec) {
             if (_running)
                 std::cerr << "[TCP] Accept error: " << ec.message() << std::endl;
-            continue;
+            break;
         }
         std::cout << "[TCP] Client connection..." << std::endl;
-        _clientThread.emplace_back(&TCPServer::handleClient, this, clientSocket);
+        _clientThreads.emplace_back(&TCPServer::handleClient, this, clientSocket);
     }
 }
 
@@ -85,6 +121,12 @@ void TCPServer::handleClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket
 
     uint32_t playerId = _nextPlayerId++;
     std::string username = connectReq.username;
+
+    {
+        std::lock_guard<std::mutex> lock(_serverMutex);
+        _playerSockets[playerId] = clientSocket;
+        _playerUsernames[playerId] = username;
+    }
 
     ConnectResponse connectRes;
     connectRes.type = TCPMessageType::CONNECT_OK;
@@ -137,7 +179,15 @@ void TCPServer::handleClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket
                 asio::write(*clientSocket, asio::buffer(&resp, sizeof(resp)), ec);
 
                 if (success) {
+                    {
+                        std::lock_guard<std::mutex> lock(_serverMutex);
+                        _playerRoomMap[playerId] = req.roomId;
+                    }
                     handleInRoomClient(clientSocket, req.roomId, playerId);
+                    {
+                        std::lock_guard<std::mutex> lock(_serverMutex);
+                        _playerRoomMap.erase(playerId);
+                    }
                     inLobby = false;
                 }
                 break;
@@ -146,6 +196,11 @@ void TCPServer::handleClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket
                 break;
         }
     }
+    {
+        std::lock_guard<std::mutex> lock(_serverMutex);
+        _playerSockets.erase(playerId);
+        _playerUsernames.erase(playerId);
+    }
     clientSocket->close();
 }
 
@@ -153,6 +208,7 @@ void TCPServer::handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> client
 {
     asio::error_code ec;
     bool inRoom = true;
+
     while(inRoom && _running) {
         uint8_t msgType;
         asio::read(*clientSocket, asio::buffer(&msgType, sizeof(msgType)), ec);
@@ -187,6 +243,49 @@ void TCPServer::handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> client
                     asio::write(*clientSocket, asio::buffer(&info, sizeof(info)), ec);
                 }
             }
+        } else if (static_cast<TCPMessageType>(msgType) == TCPMessageType::CHAT_MESSAGE) {
+            uint16_t length = 0;
+            asio::read(*clientSocket, asio::buffer(&length, sizeof(length)), ec);
+            if (!ec && length > 0) {
+                std::vector<char> msgBuffer(length);
+                asio::read(*clientSocket, asio::buffer(msgBuffer), ec);
+                if (!ec) {
+                    std::string msg(msgBuffer.begin(), msgBuffer.end());
+                    std::string senderName = "Unknown";
+                    {
+                        std::lock_guard<std::mutex> lock(_serverMutex);
+                        if (_playerUsernames.count(playerId)) senderName = _playerUsernames[playerId];
+                    }
+                    std::string fullMsg = senderName + ": " + msg;
+
+                    std::vector<uint8_t> packet;
+                    packet.push_back(static_cast<uint8_t>(TCPMessageType::CHAT_MESSAGE));
+                    uint16_t newLen = static_cast<uint16_t>(fullMsg.size());
+                    packet.resize(3);
+                    std::memcpy(&packet[1], &newLen, sizeof(newLen));
+                    packet.insert(packet.end(), fullMsg.begin(), fullMsg.end());
+
+                    std::lock_guard<std::mutex> lock(_serverMutex);
+                    for (auto const& [pId, sock] : _playerSockets) {
+                        if (pId != playerId && _playerRoomMap.count(pId) && _playerRoomMap[pId] == roomId) {
+                            asio::write(*sock, asio::buffer(packet), ec);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void TCPServer::kickPlayer(uint32_t playerId)
+{
+    std::lock_guard<std::mutex> lock(_serverMutex);
+    auto it = _playerSockets.find(playerId);
+    if (it != _playerSockets.end()) {
+        if (it->second && it->second->is_open()) {
+            try {
+                it->second->close();
+            } catch (...) {}
         }
     }
 }

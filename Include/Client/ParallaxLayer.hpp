@@ -5,8 +5,8 @@
 ** ParallaxLayer.hpp
 */
 
-#ifndef BACKGROUND_HPP_
-#define BACKGROUND_HPP_
+#ifndef PARALLAXLAYER_HPP_
+#define PARALLAXLAYER_HPP_
     #include "raylib.h"
     #include <vector>
 
@@ -60,4 +60,4 @@ private:
     float _initialX; /**< Initial horizontal offset. */
 };
 
-#endif // BACKGROUND_HPP_
+#endif // PARALLAXLAYER_HPP_
