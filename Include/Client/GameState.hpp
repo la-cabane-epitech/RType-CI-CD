@@ -18,6 +18,7 @@
 struct Position {
     float x; /**< X coordinate */
     float y; /**< Y coordinate */
+    bool isAlive = true; /**< Player's alive state */
 };
 
 /**
@@ -41,6 +42,7 @@ struct GameState {
     std::unordered_map<uint32_t, Position> players; /**< Map of player IDs to their positions */
     std::unordered_map<uint32_t, EntityState> entities; /**< Map of entity IDs to their states */
     uint32_t rtt = 0; /**< Round Trip Time in milliseconds */
+    bool bossKilled = false; /**< Flag indicating if the boss has been killed */
 };
 
 #endif

@@ -78,8 +78,9 @@ public:
     /**
      * @brief Draws the game world content (players, entities, background).
      * @note This function should be called within a BeginDrawing()/EndDrawing() block.
+     * @return PauseMenuChoice The user's choice (NONE, OPTIONS, QUIT) if buttons are clicked.
      */
-    void draw();
+    PauseMenuChoice draw();
 
     /**
      * @brief Draws the pause menu.

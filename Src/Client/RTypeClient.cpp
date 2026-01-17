@@ -48,7 +48,11 @@ void RTypeClient::run()
         }
 
         BeginDrawing();
-        _renderer.draw();
+        PauseMenuChoice gameChoice = _renderer.draw();
+        if (gameChoice == PauseMenuChoice::OPTIONS)
+            _status = InGameStatus::OPTIONS;
+        if (gameChoice == PauseMenuChoice::QUIT)
+            _status = InGameStatus::QUITTING;
 
         if (_status == InGameStatus::PAUSED) {
             PauseMenuChoice choice = _renderer.drawPauseMenu();
@@ -84,16 +88,21 @@ void RTypeClient::handleInput()
     packet.tick = _tick++;
     packet.inputs = 0;
 
-    if (IsKeyDown(_keybinds.at("UP")))    packet.inputs |= UP;
-    if (IsKeyDown(_keybinds.at("DOWN")))  packet.inputs |= DOWN;
-    if (IsKeyDown(_keybinds.at("LEFT")))  packet.inputs |= LEFT;
-    if (IsKeyDown(_keybinds.at("RIGHT"))) packet.inputs |= RIGHT;
-    if (IsKeyPressed(_keybinds.at("SHOOT"))) packet.inputs |= SHOOT;
+    bool canControl = _gameState.players.count(_gameState.myPlayerId) &&
+                    _gameState.players[_gameState.myPlayerId].isAlive;
+
+    if (canControl) {
+        if (IsKeyDown(_keybinds.at("UP")))    packet.inputs |= UP;
+        if (IsKeyDown(_keybinds.at("DOWN")))  packet.inputs |= DOWN;
+        if (IsKeyDown(_keybinds.at("LEFT")))  packet.inputs |= LEFT;
+        if (IsKeyDown(_keybinds.at("RIGHT"))) packet.inputs |= RIGHT;
+        if (IsKeyPressed(_keybinds.at("SHOOT"))) packet.inputs |= SHOOT;
+    }
 
     static uint32_t chargeStart = 0;
     static bool isCharging = false;
 
-    if (IsKeyDown(KEY_SPACE)) {
+    if (canControl && IsKeyDown(KEY_SPACE)) {
         if (!isCharging) {
             chargeStart = _clock.getElapsedTimeMs();
             isCharging = true;
@@ -105,12 +114,12 @@ void RTypeClient::handleInput()
             packet.inputs |= SHOOT;
         isCharging = false;
     }
- 
-     if (packet.inputs != 0) {
-         applyInput(packet);
-         _pendingInputs.push_back(packet);
-     }
-     _udpClient.sendMessage(packet);
+
+    if (packet.inputs != 0 && canControl) {
+        applyInput(packet);
+        _pendingInputs.push_back(packet);
+    }
+    _udpClient.sendMessage(packet);
 }
 
 void RTypeClient::update()
@@ -130,9 +139,11 @@ void RTypeClient::update()
         if (type == UDPMessageType::PLAYER_STATE && data.size() >= sizeof(PlayerStatePacket)) {
             const auto* serverState = reinterpret_cast<const PlayerStatePacket*>(data.data());
 
-            if (serverState->playerId == _gameState.myPlayerId) {
-                _gameState.players[serverState->playerId] = {serverState->x, serverState->y};
+            _gameState.players[serverState->playerId].x = serverState->x;
+            _gameState.players[serverState->playerId].y = serverState->y;
+            _gameState.players[serverState->playerId].isAlive = serverState->isAlive;
 
+            if (serverState->playerId == _gameState.myPlayerId) {
                 while (!_pendingInputs.empty() && _pendingInputs.front().tick <= serverState->lastProcessedTick) {
                     _pendingInputs.pop_front();
                 }

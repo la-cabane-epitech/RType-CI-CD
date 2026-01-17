@@ -91,6 +91,7 @@ struct PlayerStatePacket {
     uint32_t timestamp;          ///< Server timestamp
     float x;                     ///< X position
     float y;                     ///< Y position
+    bool isAlive;                ///< Player's alive state
 };
 
 /**

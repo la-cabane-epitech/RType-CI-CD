@@ -39,6 +39,7 @@ struct Player {
     bool addrSet = false;            ///< Whether the UDP address has been resolved
     int height = 32;                 ///< Hitbox height
     int width = 32;                  ///< Hitbox width
+    bool isAlive = true;             ///< Player's alive state
 };
 
 /**
@@ -193,6 +194,10 @@ public:
      * @return A const reference to the vector of players.
      */
     const std::vector<Player>& getPlayers() const;
+    /**
+     * @brief Resets the game state (entities, players, timers) to start a new round.
+     */
+    void resetGame();
 
 private:
     std::vector<Player> _players; /**< List of players in the game. */

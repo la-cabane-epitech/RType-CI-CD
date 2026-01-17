@@ -28,6 +28,7 @@ void Game::broadcastGameState(UDPServer& udpServer) {
         statePkt.lastProcessedTick = player.lastProcessedTick;
         statePkt.x = player.x;
         statePkt.y = player.y;
+        statePkt.isAlive = player.isAlive;
 
         for (const auto& destPlayer : _players) {
             if (!destPlayer.addrSet) continue;
@@ -180,16 +181,43 @@ void Game::createEnemy(UDPServer& udpServer) {
             udpServer.queueMessage(spawnPkt, destPlayer.udpAddr);
         }
     }
-} 
+}
 
 void Game::updateEntities(UDPServer& udpServer) {
     std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
     std::vector<uint32_t> destroyedEntities;
+    std::vector<Entity> newEntities;
 
     for (auto it = _entities.begin(); it != _entities.end(); ) {
         auto& entity = *it;
         entity.x += entity.velocityX;
         entity.y += entity.velocityY;
+
+        // Les ennemis (2 et 3) ont une chance de tirer un projectile (5)
+        if ((entity.type == 2 || entity.type == 3) && (rand() % 100 < 2)) {
+            uint32_t projId = _nextEntityId++;
+            Entity proj;
+            proj.id = projId;
+            proj.type = 5; // Type 5 = Projectile Ennemi
+            proj.x = entity.x;
+            proj.y = entity.y + entity.height / 2.0f;
+            proj.velocityX = -10.0f;
+            proj.velocityY = 0.0f;
+            proj.width = 10;
+            proj.height = 10;
+            newEntities.push_back(proj);
+
+            EntitySpawnPacket spawnPkt;
+            spawnPkt.entityId = projId;
+            spawnPkt.entityType = 5;
+            spawnPkt.x = proj.x;
+            spawnPkt.y = proj.y;
+
+            std::lock_guard<std::mutex> lock_players(_playersMutex);
+            for (const auto& destPlayer : _players) {
+                if (destPlayer.addrSet) udpServer.queueMessage(spawnPkt, destPlayer.udpAddr);
+            }
+        }
 
         if (entity.x > 1920 || entity.x < -20 || entity.is_collide) {
             destroyedEntities.push_back(entity.id);
@@ -215,6 +243,9 @@ void Game::updateEntities(UDPServer& udpServer) {
             ++it;
         }
     }
+    for (const auto& e : newEntities) {
+        _entities.push_back(e);
+    }
 }
 
 void Game::updateGameLevel(float elapsedTime) {
@@ -234,7 +265,6 @@ void Game::update(UDPServer& udpServer) {
     if (_status != GameStatus::PLAYING)
         return;
 
-    broadcastGameState(udpServer);
     updateEntities(udpServer);
     handleCollision();
     updateGameLevel(0.016f);
@@ -243,14 +273,63 @@ void Game::update(UDPServer& udpServer) {
         createEnemy(udpServer);
         _lastEnemySpawnTime = std::chrono::steady_clock::now();
     }
+    broadcastGameState(udpServer);
+    bool survivors = false;
+    {
+        std::lock_guard<std::mutex> lock(_playersMutex);
+        for (const auto& p : _players) {
+            if (p.isAlive) {
+                survivors = true;
+                break;
+            }
+        }
+    }
+
+    if (!survivors && getPlayerCount() > 0) {
+        std::cout << "[Game] All players are dead. Game Over." << std::endl;
+
+        PlayerStatePacket gameOverPkt{};
+        gameOverPkt.type = PLAYER_STATE;
+        gameOverPkt.x = -999; // Code spécial pour l'écran Game Over
+
+        std::lock_guard<std::mutex> lock(_playersMutex);
+        for (int i = 0; i < 5; ++i) {
+            for (const auto& p : _players) {
+                if (p.addrSet) udpServer.queueMessage(gameOverPkt, p.udpAddr);
+            }
+        }
+        _status = GameStatus::LOBBY;
+        resetGame();
+    }
+}
+
+void Game::resetGame() {
+    {
+        std::lock_guard<std::mutex> lock(_entitiesMutex);
+        _entities.clear();
+        _nextEntityId = 1000;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(_playersMutex);
+        for (auto& player : _players) {
+            player.isAlive = true;
+            player.x = 100.0f;
+            player.y = 300.0f + (player.id * 50);
+            player.lastProcessedTick = 0;
+        }
+    }
+    _gameTime = 0.0f;
+    _lastEnemySpawnTime = std::chrono::steady_clock::now();
+    std::cout << "[Game] Game has been reset. Ready for new round." << std::endl;
 }
 
 void Game::disconnectPlayer(uint32_t playerId, UDPServer& udpServer) {
     std::lock_guard<std::mutex> lock(_playersMutex);
     auto it = std::remove_if(_players.begin(), _players.end(),
-                             [playerId](const Player& player) {
+                            [playerId](const Player& player) {
                                 return player.id == playerId;
-                             });
+                            });
     if (it != _players.end()) {
         _players.erase(it, _players.end());
         std::cout << "[Game] Player " << playerId << " disconnected." << std::endl;
@@ -269,9 +348,9 @@ void Game::disconnectPlayer(uint32_t playerId, UDPServer& udpServer) {
 void Game::removePlayerFromLobby(uint32_t playerId) {
     std::lock_guard<std::mutex> lock(_playersMutex);
     auto it = std::remove_if(_players.begin(), _players.end(),
-                             [playerId](const Player& player) {
+                            [playerId](const Player& player) {
                                 return player.id == playerId;
-                             });
+                            });
     if (it != _players.end()) {
         _players.erase(it, _players.end());
         std::cout << "[Game] Player " << playerId << " left lobby." << std::endl;
@@ -290,27 +369,29 @@ void Game::handleCollision() {
     std::lock_guard<std::mutex> lock_players(_playersMutex);
 
     for (auto& projectile : _entities) {
-        if (projectile.type != 1 && projectile.type != 4) continue;
+        if (projectile.type != 1 && projectile.type != 4)
+            continue;
         for (auto& enemy : _entities) {
-            if (enemy.type != 2 && enemy.type != 3) continue;
-            if (projectile.is_collide || enemy.is_collide) continue;
+            if (enemy.type != 2 && enemy.type != 3)
+                continue;
+            if (projectile.is_collide || enemy.is_collide)
+                continue;
             if (checkCollision(projectile.x, projectile.y, projectile.width, projectile.height, enemy.x, enemy.y, enemy.width, enemy.height)) {
                 projectile.is_collide = true;
                 enemy.is_collide = true;
             }
         }
     }
-
     for (auto& player : _players) {
+        if (!player.isAlive)
+            continue;
         for (auto& enemy : _entities) {
-            if (enemy.type != 2 && enemy.type != 3) continue;
-            if (enemy.is_collide) continue;
-
-            // Hitbox du joueur (33x17 comme dans le Renderer)
+            if (enemy.type != 2 && enemy.type != 3 && enemy.type != 5)
+                continue;
+            if (enemy.is_collide)
+                continue;
             if (checkCollision(player.x, player.y, 33, 17, enemy.x, enemy.y, enemy.width, enemy.height)) {
-                // Le joueur meurt -> Respawn au début
-                player.x = 100.0f;
-                player.y = 100.0f;
+                player.isAlive = false;
                 enemy.is_collide = true;
             }
         }

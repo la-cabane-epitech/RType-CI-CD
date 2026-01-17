@@ -31,10 +31,11 @@ Renderer::Renderer(GameState& gameState) : _gameState(gameState), _actionToRemap
     }
 
     if (ENTITY_REGISTRY.empty()) {
-        ENTITY_REGISTRY[1] = { 1, false, 1, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };       
+        ENTITY_REGISTRY[1] = { 1, false, 1, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
         ENTITY_REGISTRY[2] = { 2, true, 12, 8.0f, 17.0f, 18.0f, 2.0f, 0.0f, 0.0f };
         ENTITY_REGISTRY[3] = { 3, true, 8, 12.0f, 33.0f, 36.0f, 2.5f, 0.0f, 0.0f };
-        ENTITY_REGISTRY[4] = { 4, true, 4, 0.0f, 29.0f, 30.0f, 3.0f, 136.0f, 19.0f }; 
+        ENTITY_REGISTRY[4] = { 4, true, 4, 0.0f, 29.0f, 30.0f, 3.0f, 136.0f, 19.0f };
+        ENTITY_REGISTRY[5] = { 1, false, 1, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f }; // Projectile Ennemi (Type 5)
     }
 }
 
@@ -48,8 +49,9 @@ Renderer::~Renderer()
     UnloadTexture(_menuBackground);
 }
 
-void Renderer::draw()
+PauseMenuChoice Renderer::draw()
 {
+    PauseMenuChoice choice = PauseMenuChoice::NONE;
     ClearBackground(BLACK);
 
     for (auto& star : _stars) {
@@ -67,8 +69,12 @@ void Renderer::draw()
     DrawText(pingText.c_str(), 10, 40, 20, DARKGRAY);
 
     for (const auto& pair : _gameState.players) {
+        const auto& player = pair.second;
         Color color = (pair.first == _gameState.myPlayerId) ? BLUE : RED;
-        
+
+        if (!player.isAlive) {
+            continue;
+        }
         if (_textures.count(0) && _textures.at(0).id != 0) {
             const Texture2D& texture = _textures.at(0);
             Rectangle sourceRec = { 0.0f, 0.0f, 33.0f, 17.0f };
@@ -86,10 +92,10 @@ void Renderer::draw()
             }
         }
 
-        DrawText(std::to_string(pair.first).c_str(), 
+        DrawText(std::to_string(pair.first).c_str(),
                 static_cast<int>(pair.second.x - 10),
                 static_cast<int>(pair.second.y - 10),
-                20, 
+                20,
                 WHITE);
     }
 
@@ -98,7 +104,7 @@ void Renderer::draw()
 
         if (ENTITY_REGISTRY.count(entity.type)) {
             const auto& config = ENTITY_REGISTRY[entity.type];
-            
+
             if (_textures.count(config.textureId)) {
                 const Texture2D& texture = _textures.at(config.textureId);
                 Rectangle sourceRec;
@@ -114,11 +120,76 @@ void Renderer::draw()
                 Rectangle destRec = { entity.x, entity.y, sourceRec.width * config.scale, sourceRec.height * config.scale };
                 Vector2 origin = { destRec.width / 2, destRec.height / 2 };
                 DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, WHITE);
+            } else {
+                DrawCircleLines(static_cast<int>(entity.x), static_cast<int>(entity.y), 10, RED);
             }
         } else {
             DrawCircleLines(static_cast<int>(entity.x), static_cast<int>(entity.y), 20, MAGENTA);
         }
     }
+    auto it = _gameState.players.find(_gameState.myPlayerId);
+    if (it != _gameState.players.end() && !it->second.isAlive) {
+        DrawRectangle(0, 0, GetScreenWidth(), 40, Fade(RED, 0.5f));
+        DrawText("MODE SPECTATEUR - ATTENTE DE LA FIN DE PARTIE",
+                GetScreenWidth() / 2 - MeasureText("MODE SPECTATEUR - ATTENTE DE LA FIN DE PARTIE", 20) / 2,
+                10, 20, WHITE);
+    }
+    bool isGameOver = false;
+    for (const auto& pair : _gameState.players) {
+        if (pair.second.x <= -999.0f) {
+            isGameOver = true;
+            break;
+        }
+    }
+    if (isGameOver) {
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(MAROON, 0.8f));
+
+        const char* text = "GAME OVER";
+        int fontSize = 80;
+        DrawText(text, GetScreenWidth()/2 - MeasureText(text, fontSize)/2, GetScreenHeight()/2 - 40, fontSize, WHITE);
+        Vector2 mousePos = GetMousePosition();
+
+        Rectangle optionsBtn = { (float)GetScreenWidth() / 2 - 125, (float)GetScreenHeight() / 2 + 100, 250, 50 };
+        bool hoverOptions = CheckCollisionPointRec(mousePos, optionsBtn);
+        DrawRectangleRec(optionsBtn, hoverOptions ? LIGHTGRAY : GRAY);
+        DrawText("Options", optionsBtn.x + (optionsBtn.width - MeasureText("Options", 30)) / 2, optionsBtn.y + 10, 30, BLACK);
+        if (hoverOptions && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            choice = PauseMenuChoice::OPTIONS;
+        }
+
+        Rectangle quitBtn = { (float)GetScreenWidth() / 2 - 125, (float)GetScreenHeight() / 2 + 170, 250, 50 };
+        bool hoverQuit = CheckCollisionPointRec(mousePos, quitBtn);
+        DrawRectangleRec(quitBtn, hoverQuit ? LIGHTGRAY : GRAY);
+        DrawText("Quit", quitBtn.x + (quitBtn.width - MeasureText("Quit", 30)) / 2, quitBtn.y + 10, 30, BLACK);
+        if (hoverQuit && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            choice = PauseMenuChoice::QUIT;
+        }
+    }
+    else if (_gameState.bossKilled) {
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(DARKBLUE, 0.8f));
+
+        const char* text = "VICTOIRE";
+        int fontSize = 80;
+        DrawText(text, GetScreenWidth()/2 - MeasureText(text, fontSize)/2, GetScreenHeight()/2 - 40, fontSize, GOLD);
+        Vector2 mousePos = GetMousePosition();
+
+        Rectangle optionsBtn = { (float)GetScreenWidth() / 2 - 125, (float)GetScreenHeight() / 2 + 100, 250, 50 };
+        bool hoverOptions = CheckCollisionPointRec(mousePos, optionsBtn);
+        DrawRectangleRec(optionsBtn, hoverOptions ? SKYBLUE : BLUE);
+        DrawText("Options", optionsBtn.x + (optionsBtn.width - MeasureText("Options", 30)) / 2, optionsBtn.y + 10, 30, WHITE);
+        if (hoverOptions && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            choice = PauseMenuChoice::OPTIONS;
+        }
+
+        Rectangle quitBtn = { (float)GetScreenWidth() / 2 - 125, (float)GetScreenHeight() / 2 + 170, 250, 50 };
+        bool hoverQuit = CheckCollisionPointRec(mousePos, quitBtn);
+        DrawRectangleRec(quitBtn, hoverQuit ? SKYBLUE : BLUE);
+        DrawText("Quit", quitBtn.x + (quitBtn.width - MeasureText("Quit", 30)) / 2, quitBtn.y + 10, 30, WHITE);
+        if (hoverQuit && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            choice = PauseMenuChoice::QUIT;
+        }
+    }
+    return choice;
 }
 
 PauseMenuChoice Renderer::drawPauseMenu()
@@ -156,7 +227,6 @@ MainMenuChoice Renderer::drawMainMenu()
     DrawTexture(_menuBackground, 0, 0, WHITE);
 
     DrawText("R-Type", GetScreenWidth() / 2 - MeasureText("R-Type", 80) / 2, 100, 80, BLACK);
-    
 
     Vector2 mousePos = GetMousePosition();
     MainMenuChoice choice = MainMenuChoice::NONE;
@@ -264,11 +334,11 @@ int Renderer::drawRoomMenu(const std::vector<RoomInfo>& rooms)
     for (const auto& room : rooms) {
         Rectangle roomBtn = { 50, (float)startY, 600, 50 };
         bool hoverRoom = CheckCollisionPointRec(mousePos, roomBtn);
-        
+
         DrawRectangleRec(roomBtn, hoverRoom ? DARKGRAY : BLACK);
         DrawRectangleLinesEx(roomBtn, 2, WHITE);
 
-        std::string text = "Room " + std::to_string(room.id) + "   Players: " + 
+        std::string text = "Room " + std::to_string(room.id) + "   Players: " +
                            std::to_string(room.playerCount) + "/" + std::to_string(room.maxPlayers);
         DrawText(text.c_str(), 70, startY + 10, 30, WHITE);
 
