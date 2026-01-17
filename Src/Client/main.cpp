@@ -43,11 +43,6 @@ int main(int ac, char **av)
     ClientState currentState = config.username.empty() ? ClientState::USERNAME_INPUT : ClientState::MAIN_MENU;
 
     TCPClient tcpClient(serverIp, 4242);
-    if (!tcpClient.connectToServer()) {
-        std::cerr << "Impossible de se connecter au serveur TCP\n";
-        CloseWindow();
-        return 1;
-    }
 
     ConnectResponse connectRes;
     std::vector<RoomInfo> rooms;
@@ -66,7 +61,7 @@ int main(int ac, char **av)
 
     while (currentState != ClientState::EXITING && !WindowShouldClose()) {
         BeginDrawing();
-        
+
         switch (currentState) {
             case ClientState::USERNAME_INPUT: {
                 if (renderer.drawUsernameInput(config.username)) {
@@ -93,6 +88,11 @@ int main(int ac, char **av)
             }
             case ClientState::ROOM_SELECTION: {
                 if (!connected) {
+                    if (!tcpClient.connectToServer()) {
+                        std::cerr << "Impossible de se connecter au serveur TCP. Retrying...\n";
+                        currentState = ClientState::MAIN_MENU;
+                        break;
+                    }
                     if (!tcpClient.sendConnectRequest(config.username, connectRes)) {
                         std::cerr << "Handshake TCP échoué\n";
                         currentState = ClientState::EXITING;
@@ -179,6 +179,8 @@ int main(int ac, char **av)
 
                 if (gameInstance->getStatus() == InGameStatus::QUITTING) {
                     gameInstance.reset();
+                    tcpClient.disconnect();
+                    connected = false;
                     currentState = ClientState::MAIN_MENU;
                 }
                 break;

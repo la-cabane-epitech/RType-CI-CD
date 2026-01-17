@@ -37,6 +37,14 @@ bool TCPClient::connectToServer()
     return true;
 }
 
+void TCPClient::disconnect()
+{
+    if (_socket.is_open()) {
+        _socket.close();
+    }
+    _socket_non_blocking_set = false;
+}
+
 bool TCPClient::sendConnectRequest(const std::string& username, ConnectResponse& outResponse)
 {
     try {

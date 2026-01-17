@@ -96,6 +96,11 @@ public:
     bool connectToServer();
 
     /**
+     * @brief Closes the connection to the server.
+     */
+    void disconnect();
+
+    /**
      * @brief Sends a connection request (handshake) to the server.
      *
      * Sends the player's username to the server and waits for a response containing
