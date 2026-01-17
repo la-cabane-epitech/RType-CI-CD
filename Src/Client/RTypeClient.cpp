@@ -73,7 +73,6 @@ RTypeClientStatus RTypeClient::updateFrame()
 
 void RTypeClient::drawFrame()
 {
-    // _renderer.draw();
     if (_status == InGameStatus::PAUSED) {
         PauseMenuChoice choice = _renderer.drawPauseMenu();
         if (choice == PauseMenuChoice::OPTIONS) _status = InGameStatus::OPTIONS;
@@ -160,7 +159,6 @@ void RTypeClient::handleInput()
 
 void RTypeClient::processNetworkMessages()
 {
-    // Poll TCP Chat
     auto newMessages = _tcpClient.receiveChatMessages();
     _chatHistory.insert(_chatHistory.end(), newMessages.begin(), newMessages.end());
 

@@ -71,13 +71,12 @@ void Renderer::draw(const std::map<std::string, int>& keybinds)
     for (const auto& pair : _gameState.players) {
         Color color = (pair.first == _gameState.myPlayerId) ? BLUE : RED;
         
-        // Animation de direction (Banking)
         float targetBank = 2.0f; // 2.0 = Neutre (Frame 2)
         if (pair.first == _gameState.myPlayerId) {
             int upKey = (keybinds.count("UP")) ? keybinds.at("UP") : KEY_UP;
             int downKey = (keybinds.count("DOWN")) ? keybinds.at("DOWN") : KEY_DOWN;
-            if (IsKeyDown(upKey)) targetBank = 4.0f;      // Vers le haut (Frame 4)
-            else if (IsKeyDown(downKey)) targetBank = 0.0f; // Vers le bas (Frame 0)
+            if (IsKeyDown(upKey)) targetBank = 4.0f;
+            else if (IsKeyDown(downKey)) targetBank = 0.0f;
         }
 
         if (_playerBank.find(pair.first) == _playerBank.end()) _playerBank[pair.first] = 2.0f;
@@ -100,7 +99,6 @@ void Renderer::draw(const std::map<std::string, int>& keybinds)
             default: textureId = 0; baseY = 0.0f; break;
         }
 
-        // Fallback si la texture n'est pas chargée
         if (!_textures.count(textureId)) textureId = 0;
 
         if (_textures.count(textureId) && _textures.at(textureId).id != 0) {

@@ -27,7 +27,6 @@ TCPServer::~TCPServer()
 
 void TCPServer::stop()
 {
-    // 1. Protection atomique
     bool expected = true;
     if (!_running.compare_exchange_strong(expected, false))
         return;
@@ -243,7 +242,7 @@ void TCPServer::handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> client
         std::lock_guard<std::mutex> lock(_roomsMutex);
         auto it = _rooms.find(roomId);
         if (it == _rooms.end()) {
-            inRoom = false; // Room was deleted before we could process it
+            inRoom = false;
         } else {
             game = it->second;
         }
@@ -252,7 +251,7 @@ void TCPServer::handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> client
     while(inRoom && _running) {
         uint8_t msgType;
         asio::read(*clientSocket, asio::buffer(&msgType, sizeof(msgType)), ec);
-        if (ec) { // An error (like disconnect or socket closed by kick) will be caught here
+        if (ec) {
             if (ec == asio::error::eof || ec == asio::error::connection_reset) {
                 std::cout << "[TCP] Player " << playerId << " disconnected." << std::endl;
             } else {
@@ -264,8 +263,6 @@ void TCPServer::handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> client
         switch(static_cast<TCPMessageType>(msgType)) {
             case TCPMessageType::GET_LOBBY_STATE: {
                 if (game->getStatus() == GameStatus::PLAYING) {
-                    // Le jeu a commencé, le client ne devrait plus demander l'état du lobby.
-                    // On lui envoie une notification de démarrage pour s'assurer qu'il bascule.
                     GameStartingNotification notif;
                     asio::write(*clientSocket, asio::buffer(&notif, sizeof(notif)), ec);
                     if (ec) inRoom = false;
@@ -275,13 +272,11 @@ void TCPServer::handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> client
                 std::lock_guard<std::mutex> lock(_roomsMutex);
                 LobbyStateResponse resp;
                 resp.hostId = game->getHostId();
-                // Note: game->getPlayers() n'est pas protégé par _roomsMutex, mais par son propre mutex interne.
                 const auto& players = game->getPlayers();
                 resp.playerCount = players.size();
                 asio::write(*clientSocket, asio::buffer(&resp, sizeof(resp)), ec);
                 if (ec) { inRoom = false; break; }
 
-                // The player list could change, but we send the count first. This is mostly fine for a lobby.
                 for(const auto& player : players) {
                     LobbyPlayerInfo info;
                     info.playerId = player.id;
@@ -300,12 +295,11 @@ void TCPServer::handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> client
                 break;
             }
             case TCPMessageType::CHAT_MESSAGE: {
-                // Format: Longueur (2 bytes) + Contenu
                 uint16_t msgLen = 0;
                 asio::read(*clientSocket, asio::buffer(&msgLen, sizeof(msgLen)), ec);
                 if (ec) { inRoom = false; continue; }
 
-                if (msgLen > 512) { // Vérification de sécurité
+                if (msgLen > 512) { 
                     std::cerr << "[TCP] Chat message too long from player " << playerId << ". Disconnecting." << std::endl;
                     inRoom = false; continue;
                 }
@@ -316,14 +310,12 @@ void TCPServer::handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> client
 
                 std::string content(buffer.begin(), buffer.end());
                 
-                // Formatage du message à diffuser : "Username: Message"
                 std::string fullMessage;
                 {
                     std::lock_guard<std::mutex> lock(_serverMutex);
                     fullMessage = _playerUsernames[playerId] + ": " + content;
                 }
                 
-                // Préparation du paquet à diffuser : Type (1) + Longueur (2) + Contenu
                 auto packet_to_send = std::make_shared<std::vector<uint8_t>>();
                 packet_to_send->push_back(TCPMessageType::CHAT_MESSAGE);
                 uint16_t fullLen = static_cast<uint16_t>(fullMessage.size());
@@ -331,11 +323,11 @@ void TCPServer::handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> client
                 std::memcpy(packet_to_send->data() + 1, &fullLen, sizeof(fullLen));
                 packet_to_send->insert(packet_to_send->end(), fullMessage.begin(), fullMessage.end());
 
-                // Diffusion aux autres joueurs de la "room"
                 const auto& players = game->getPlayers();
                 std::lock_guard<std::mutex> lock(_serverMutex);
                 for (const auto& p : players) {
-                    if (p.id == playerId) continue; // Ne pas renvoyer le message à l'expéditeur
+                    if (p.id == playerId)
+                        continue;
 
                     if (_playerSockets.count(p.id)) {
                         auto destSocket = _playerSockets.at(p.id);
@@ -377,6 +369,6 @@ void TCPServer::kickPlayer(uint32_t playerId)
     }
     if (socketToClose) {
         std::cout << "[TCP] Kicking player " << playerId << " by closing socket." << std::endl;
-        socketToClose->close(); // This will cause the read in the client thread to fail.
+        socketToClose->close();
     }
 }

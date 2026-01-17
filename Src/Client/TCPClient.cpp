@@ -26,7 +26,7 @@ bool TCPClient::connectToServer()
         asio::ip::tcp::resolver resolver(_io_context);
         auto endpoints = resolver.resolve(_serverIp, std::to_string(_port));
         asio::connect(_socket, endpoints);
-        _socket.non_blocking(false); // Ensure blocking mode for normal operations
+        _socket.non_blocking(false);
     } catch (const std::exception& e) {
         std::cerr << "Connection failed: " << e.what() << "\n";
         return false;
@@ -163,7 +163,6 @@ LobbyState TCPClient::getLobbyState()
         }
     } catch (const std::exception& e) {
         std::cerr << "getLobbyState failed: " << e.what() << std::endl;
-        // This catch block is often triggered by a server disconnect (kick).
         state.disconnected = true;
     }
     return state;
@@ -211,7 +210,6 @@ bool TCPClient::checkConnection()
 void TCPClient::sendChatMessage(const std::string& message)
 {
     try {
-        // Protocol: Type (1 byte) + Length (2 bytes) + Content
         uint8_t type = TCPMessageType::CHAT_MESSAGE;
         uint16_t length = static_cast<uint16_t>(message.size());
 

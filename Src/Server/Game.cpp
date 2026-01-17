@@ -164,7 +164,6 @@ void Game::createEnemy(UDPServer& udpServer) {
     float spawnX = 1920.0f;
     float spawnY = rand() % 1000 + 40;
 
-    // --- Système de Niveau ---
     uint16_t type = 2;
     float speed = -5.0f;
     int width = 32;
@@ -355,7 +354,6 @@ void Game::handleCollision(UDPServer &udpServer) {
             if (enemy.is_collide) continue;
 
             if (checkCollision(player.x - player.width / 2.0f, player.y - player.height / 2.0f, player.width, player.height, enemy.x, enemy.y, enemy.width, enemy.height)) {
-                // Le joueur meurt -> Respawn au début
                 player.x = 100.0f;
                 player.y = 100.0f;
                 enemy.is_collide = true;
@@ -385,13 +383,11 @@ void Game::kickPlayer(uint32_t playerId, UDPServer& udpServer)
     }
 
     if (playerFoundAndRemoved) {
-        // Notify the kicked player
         if (kickedPlayerAddr) {
             YouHaveBeenKickedPacket kickPkt;
             udpServer.queueMessage(kickPkt, *kickedPlayerAddr);
         }
 
-        // Notify remaining players
         PlayerDisconnectPacket disconnectPkt{};
         disconnectPkt.playerId = playerId;
         std::lock_guard<std::mutex> lock(_playersMutex);
