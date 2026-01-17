@@ -40,6 +40,9 @@ RTypeClientStatus RTypeClient::updateFrame()
         std::cout << "[RTypeClient] TCP connection lost. Assuming kicked." << std::endl;
         return RTypeClientStatus::KICKED;
     }
+        BeginDrawing();
+        _renderer.draw(_keybinds);
+        _renderer.drawChat(_chatHistory, _chatInput, _isChatActive);
 
     if (_status == InGameStatus::KICKED)
         return RTypeClientStatus::KICKED;
@@ -70,7 +73,7 @@ RTypeClientStatus RTypeClient::updateFrame()
 
 void RTypeClient::drawFrame()
 {
-    _renderer.draw();
+    // _renderer.draw();
     if (_status == InGameStatus::PAUSED) {
         PauseMenuChoice choice = _renderer.drawPauseMenu();
         if (choice == PauseMenuChoice::OPTIONS) _status = InGameStatus::OPTIONS;
@@ -93,6 +96,31 @@ void RTypeClient::applyInput(const PlayerInputPacket& packet)
 
 void RTypeClient::handleInput()
 {
+    if (IsKeyPressed(KEY_TAB)) {
+        _isChatActive = !_isChatActive;
+        return;
+    }
+
+    if (_isChatActive) {
+        if (IsKeyPressed(KEY_ENTER)) {
+            if (!_chatInput.empty()) {
+                _tcpClient.sendChatMessage(_chatInput);
+                _chatHistory.push_back("Me: " + _chatInput);
+                _chatInput.clear();
+            }
+            _isChatActive = false;
+            return;
+        }
+
+        int key = GetCharPressed();
+        while (key > 0) {
+            if (key >= 32 && key <= 125) _chatInput += (char)key;
+            key = GetCharPressed();
+        }
+        if (IsKeyPressed(KEY_BACKSPACE) && !_chatInput.empty()) _chatInput.pop_back();
+        return;
+    }
+
     PlayerInputPacket packet{};
 
     packet.type = UDPMessageType::PLAYER_INPUT;
@@ -132,6 +160,10 @@ void RTypeClient::handleInput()
 
 void RTypeClient::processNetworkMessages()
 {
+    // Poll TCP Chat
+    auto newMessages = _tcpClient.receiveChatMessages();
+    _chatHistory.insert(_chatHistory.end(), newMessages.begin(), newMessages.end());
+
     uint32_t now = _clock.getElapsedTimeMs();
     if (now - _lastPingTime > PING_INTERVAL_MS) {
         PingPacket pingPkt;

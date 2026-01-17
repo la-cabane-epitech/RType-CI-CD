@@ -13,6 +13,7 @@
 #include <string>
 #include <optional>
 #include <vector>
+#include <algorithm>
 
 Renderer::Renderer(GameState& gameState) : _gameState(gameState), _actionToRemap(std::nullopt) {
     _textures[0] = LoadTexture("Assets/r-typesheet42.gif");
@@ -48,7 +49,7 @@ Renderer::~Renderer()
     }
 }
 
-void Renderer::draw()
+void Renderer::draw(const std::map<std::string, int>& keybinds)
 {
     float dt = GetFrameTime();
     float scrollSpeed = 150.0f;
@@ -57,7 +58,6 @@ void Renderer::draw()
         layer.update(dt, scrollSpeed);
     }
 
-    BeginDrawing();
     ClearBackground(BLACK);
 
     for (auto& layer : _parallaxLayers) {
@@ -71,12 +71,45 @@ void Renderer::draw()
     for (const auto& pair : _gameState.players) {
         Color color = (pair.first == _gameState.myPlayerId) ? BLUE : RED;
         
-        if (_textures.count(0) && _textures.at(0).id != 0) {
-            const Texture2D& texture = _textures.at(0);
+        // Animation de direction (Banking)
+        float targetBank = 2.0f; // 2.0 = Neutre (Frame 2)
+        if (pair.first == _gameState.myPlayerId) {
+            int upKey = (keybinds.count("UP")) ? keybinds.at("UP") : KEY_UP;
+            int downKey = (keybinds.count("DOWN")) ? keybinds.at("DOWN") : KEY_DOWN;
+            if (IsKeyDown(upKey)) targetBank = 4.0f;      // Vers le haut (Frame 4)
+            else if (IsKeyDown(downKey)) targetBank = 0.0f; // Vers le bas (Frame 0)
+        }
+
+        if (_playerBank.find(pair.first) == _playerBank.end()) _playerBank[pair.first] = 2.0f;
+        float& currentBank = _playerBank[pair.first];
+        float bankSpeed = 15.0f * dt;
+
+        if (currentBank < targetBank) currentBank = std::min(currentBank + bankSpeed, targetBank);
+        else if (currentBank > targetBank) currentBank = std::max(currentBank - bankSpeed, targetBank);
+
+        int frameIndex = static_cast<int>(currentBank);
+        int spriteIndex = pair.first % 4;
+        int textureId = 0;
+        float baseY = 0.0f;
+
+        switch (spriteIndex) {
+            case 0: textureId = 0; baseY = 0.0f; break;
+            case 1: textureId = 0; baseY = 18.0f; break;
+            case 2: textureId = 0; baseY = 36.0f; break;
+            case 3: textureId = 0; baseY = 53.0f; break;
+            default: textureId = 0; baseY = 0.0f; break;
+        }
+
+        // Fallback si la texture n'est pas chargée
+        if (!_textures.count(textureId)) textureId = 0;
+
+        if (_textures.count(textureId) && _textures.at(textureId).id != 0) {
+            const Texture2D& texture = _textures.at(textureId);
+            Rectangle sourceRec = { frameIndex * 33.0f, baseY, 33.0f, 17.0f };  
             float scale = 2.0f;
-            Rectangle sourceRec = { 0.0f, 0.0f, 33.0f, 17.0f };
-            Vector2 position = { pair.second.x - sourceRec.width / 2, pair.second.y - sourceRec.height / 2 };
-            DrawTextureRec(texture, sourceRec, position, WHITE);
+            Rectangle destRec = { pair.second.x, pair.second.y, sourceRec.width * scale, sourceRec.height * scale };
+            Vector2 origin = { destRec.width / 2, destRec.height / 2 };
+            DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, WHITE);
         }
 
         if (pair.first == _gameState.myPlayerId && IsKeyDown(KEY_SPACE)) {
@@ -88,12 +121,6 @@ void Renderer::draw()
                 DrawTextureRec(texture, chargeRec, chargePos, WHITE);
             }
         }
-
-        DrawText(std::to_string(pair.first).c_str(),
-                static_cast<int>(pair.second.x - 10),
-                static_cast<int>(pair.second.y - 10),
-                20,
-                WHITE);
     }
 
     for (const auto& pair : _gameState.entities) {
@@ -121,6 +148,32 @@ void Renderer::draw()
         } else {
             DrawCircleLines(static_cast<int>(entity.x), static_cast<int>(entity.y), 20, MAGENTA);
         }
+    }
+}
+
+void Renderer::drawChat(const std::vector<std::string>& messages, const std::string& currentInput, bool isActive)
+{
+    int screenHeight = GetScreenHeight();
+    int startY = screenHeight - 150;
+    int startX = 20;
+
+    int count = 0;
+    for (auto it = messages.rbegin(); it != messages.rend(); ++it) {
+        if (count >= 5) break;
+        DrawText(it->c_str(), startX, startY - (count * 25), 20, WHITE);
+        count++;
+    }
+
+    if (isActive) {
+        DrawRectangle(startX, startY + 30, 400, 30, Fade(DARKGRAY, 0.8f));
+        DrawRectangleLines(startX, startY + 30, 400, 30, LIGHTGRAY);
+        DrawText(currentInput.c_str(), startX + 5, startY + 35, 20, WHITE);
+        
+        if ((int)(GetTime() * 2) % 2 == 0) {
+            DrawText("_", startX + 5 + MeasureText(currentInput.c_str(), 20), startY + 35, 20, WHITE);
+        }
+    } else {
+        DrawText("Press TAB to chat", startX, startY + 35, 15, Fade(LIGHTGRAY, 0.5f));
     }
 }
 

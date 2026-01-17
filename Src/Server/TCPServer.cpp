@@ -8,7 +8,8 @@
 #include "Server/TCPServer.hpp"
 #include <iostream>
 #include <cstring>
- 
+#include <unistd.h>
+
 TCPServer::TCPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, std::mutex& roomsMutex, Clock& clock)
     : _io_context(),
       _acceptor(_io_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
@@ -260,18 +261,21 @@ void TCPServer::handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> client
             inRoom = false; continue;
         }
 
-        if (game->getStatus() == GameStatus::PLAYING) {
-            GameStartingNotification notif;
-            asio::write(*clientSocket, asio::buffer(&notif, sizeof(notif)), ec);
-            inRoom = false;
-            continue;
-        }
-
         switch(static_cast<TCPMessageType>(msgType)) {
             case TCPMessageType::GET_LOBBY_STATE: {
+                if (game->getStatus() == GameStatus::PLAYING) {
+                    // Le jeu a commencé, le client ne devrait plus demander l'état du lobby.
+                    // On lui envoie une notification de démarrage pour s'assurer qu'il bascule.
+                    GameStartingNotification notif;
+                    asio::write(*clientSocket, asio::buffer(&notif, sizeof(notif)), ec);
+                    if (ec) inRoom = false;
+                    break;
+                }
+
                 std::lock_guard<std::mutex> lock(_roomsMutex);
                 LobbyStateResponse resp;
                 resp.hostId = game->getHostId();
+                // Note: game->getPlayers() n'est pas protégé par _roomsMutex, mais par son propre mutex interne.
                 const auto& players = game->getPlayers();
                 resp.playerCount = players.size();
                 asio::write(*clientSocket, asio::buffer(&resp, sizeof(resp)), ec);
@@ -288,10 +292,58 @@ void TCPServer::handleInRoomClient(std::shared_ptr<asio::ip::tcp::socket> client
                 break;
             }
             case TCPMessageType::START_GAME_REQUEST: {
-                if (playerId == game->getHostId()) {
+                if (playerId == game->getHostId() && game->getStatus() == GameStatus::LOBBY) {
                     std::lock_guard<std::mutex> lock(_roomsMutex);
                     game->setStatus(GameStatus::PLAYING);
                     std::cout << "[Game] Room " << roomId << " is starting." << std::endl;
+                }
+                break;
+            }
+            case TCPMessageType::CHAT_MESSAGE: {
+                // Format: Longueur (2 bytes) + Contenu
+                uint16_t msgLen = 0;
+                asio::read(*clientSocket, asio::buffer(&msgLen, sizeof(msgLen)), ec);
+                if (ec) { inRoom = false; continue; }
+
+                if (msgLen > 512) { // Vérification de sécurité
+                    std::cerr << "[TCP] Chat message too long from player " << playerId << ". Disconnecting." << std::endl;
+                    inRoom = false; continue;
+                }
+
+                std::vector<char> buffer(msgLen);
+                asio::read(*clientSocket, asio::buffer(buffer.data(), msgLen), ec);
+                if (ec) { inRoom = false; continue; }
+
+                std::string content(buffer.begin(), buffer.end());
+                
+                // Formatage du message à diffuser : "Username: Message"
+                std::string fullMessage;
+                {
+                    std::lock_guard<std::mutex> lock(_serverMutex);
+                    fullMessage = _playerUsernames[playerId] + ": " + content;
+                }
+                
+                // Préparation du paquet à diffuser : Type (1) + Longueur (2) + Contenu
+                auto packet_to_send = std::make_shared<std::vector<uint8_t>>();
+                packet_to_send->push_back(TCPMessageType::CHAT_MESSAGE);
+                uint16_t fullLen = static_cast<uint16_t>(fullMessage.size());
+                packet_to_send->resize(1 + sizeof(uint16_t));
+                std::memcpy(packet_to_send->data() + 1, &fullLen, sizeof(fullLen));
+                packet_to_send->insert(packet_to_send->end(), fullMessage.begin(), fullMessage.end());
+
+                // Diffusion aux autres joueurs de la "room"
+                const auto& players = game->getPlayers();
+                std::lock_guard<std::mutex> lock(_serverMutex);
+                for (const auto& p : players) {
+                    if (p.id == playerId) continue; // Ne pas renvoyer le message à l'expéditeur
+
+                    if (_playerSockets.count(p.id)) {
+                        auto destSocket = _playerSockets.at(p.id);
+                        if (destSocket && destSocket->is_open()) {
+                            asio::async_write(*destSocket, asio::buffer(*packet_to_send),
+                                [](const asio::error_code&, std::size_t){});
+                        }
+                    }
                 }
                 break;
             }

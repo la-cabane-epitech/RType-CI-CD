@@ -97,6 +97,10 @@ private:
 
     uint32_t _lastPingTime = 0; /**< Timestamp of the last ping sent */
     static constexpr uint32_t PING_INTERVAL_MS = 1000; /**< Interval between pings in milliseconds */
+
+    bool _isChatActive = false;
+    std::string _chatInput;
+    std::vector<std::string> _chatHistory;
 };
 
 #endif // RTYPECLIENT_HPP_
