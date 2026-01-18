@@ -252,7 +252,9 @@ void RTypeClient::update()
                 const auto& entity = _gameState.entities[destroyPkt->entityId];
                 if (entity.type == 2) _score += 50;
                 else if (entity.type == 3) _score += 100;
-                _renderer.addExplosion(entity.x, entity.y);
+                if (entity.x > -20.0f) {
+                    _renderer.addExplosion(entity.x, entity.y);
+                }
             }
             _gameState.entities.erase(destroyPkt->entityId);
         }
