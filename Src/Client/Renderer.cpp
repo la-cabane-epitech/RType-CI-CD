@@ -165,7 +165,7 @@ void Renderer::draw(const std::map<std::string, int>& keybinds)
                 float startX = 67.0f;
                 float startY = 294.0f;
                 float frameWidth = 38.0f; 
-                float frameHeight = 32.0f; sprite
+                float frameHeight = 32.0f;
 
                 Rectangle sourceRec = { startX + frame * frameWidth, startY, frameWidth, frameHeight };
                 Rectangle destRec = { it->x, it->y, frameWidth * 2.5f, frameHeight * 2.5f };
