@@ -77,6 +77,9 @@ void Renderer::draw(const std::map<std::string, int>& keybinds)
             int downKey = (keybinds.count("DOWN")) ? keybinds.at("DOWN") : KEY_DOWN;
             if (IsKeyDown(upKey)) targetBank = 4.0f;
             else if (IsKeyDown(downKey)) targetBank = 0.0f;
+        } else {
+            if (pair.second.vy < -0.1f) targetBank = 4.0f;
+            else if (pair.second.vy > 0.1f) targetBank = 0.0f;
         }
 
         if (_playerBank.find(pair.first) == _playerBank.end()) _playerBank[pair.first] = 2.0f;

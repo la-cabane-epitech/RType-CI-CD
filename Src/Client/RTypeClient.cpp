@@ -15,9 +15,7 @@ RTypeClient::RTypeClient(const std::string& serverIp, TCPClient& tcpClient, cons
         _renderer(_gameState),
         _tick(connectResponse.serverTimeMs),
         _clock(),
-        _keybinds(keybinds),
-        _score(0),
-        _lastScoreIncreaseTime(0)
+        _keybinds(keybinds)
 {
     _gameState.myPlayerId = connectResponse.playerId;
 
@@ -33,12 +31,6 @@ void RTypeClient::tick()
             if (IsKeyPressed(KEY_ESCAPE)) {
                 _status = InGameStatus::PAUSED;
             }
-
-            if (_clock.getElapsedTimeMs() - _lastScoreIncreaseTime >= 1000) {
-                _score += 5;
-                _lastScoreIncreaseTime = _clock.getElapsedTimeMs();
-            }
-
             handleInput();
             update();
             break;
@@ -58,10 +50,6 @@ void RTypeClient::tick()
 
     _renderer.draw(_keybinds);
     _renderer.drawChat(_chatHistory, _chatInput, _isChatActive);
-    
-    const char* scoreText = TextFormat("SCORE: %06d", _score);
-    int textWidth = MeasureText(scoreText, 30);
-    DrawText(scoreText, GetScreenWidth() - textWidth - 20, 20, 30, RAYWHITE);
 
     if (_status == InGameStatus::PAUSED) {
         PauseMenuChoice choice = _renderer.drawPauseMenu();
@@ -174,7 +162,7 @@ void RTypeClient::update()
             const auto* serverState = reinterpret_cast<const PlayerStatePacket*>(data.data());
 
             if (serverState->playerId == _gameState.myPlayerId) {
-                _gameState.players[serverState->playerId] = {serverState->x, serverState->y};
+                _gameState.players[serverState->playerId] = {serverState->x, serverState->y, 0.0f};
 
                 while (!_pendingInputs.empty() && _pendingInputs.front().tick <= serverState->lastProcessedTick) {
                     _pendingInputs.pop_front();
@@ -184,7 +172,12 @@ void RTypeClient::update()
                     applyInput(input);
                 }
             } else {
-                _gameState.players[serverState->playerId] = {serverState->x, serverState->y};
+                float vy = 0.0f;
+                auto it = _gameState.players.find(serverState->playerId);
+                if (it != _gameState.players.end()) {
+                    vy = serverState->y - it->second.y;
+                }
+                _gameState.players[serverState->playerId] = {serverState->x, serverState->y, vy};
             }
         }
 
@@ -203,21 +196,11 @@ void RTypeClient::update()
 
         if (type == UDPMessageType::ENTITY_DESTROY && data.size() >= sizeof(EntityDestroyPacket)) {
             const auto* destroyPkt = reinterpret_cast<const EntityDestroyPacket*>(data.data());
-            
-            if (_gameState.entities.count(destroyPkt->entityId)) {
-                uint16_t type = _gameState.entities[destroyPkt->entityId].type;
-                if (type == 2) _score += 50; 
-                else if (type == 3) _score += 100;
-                _renderer.addExplosion(_gameState.entities[destroyPkt->entityId].x, _gameState.entities[destroyPkt->entityId].y);
-            }
             _gameState.entities.erase(destroyPkt->entityId);
         }
 
         if (type == UDPMessageType::PLAYER_DISCONNECT && data.size() >= sizeof(PlayerDisconnectPacket)) {
             const auto* disconnectPkt = reinterpret_cast<const PlayerDisconnectPacket*>(data.data());
-            if (_gameState.players.count(disconnectPkt->playerId)) {
-                _renderer.addExplosion(_gameState.players[disconnectPkt->playerId].x, _gameState.players[disconnectPkt->playerId].y);
-            }
             _gameState.players.erase(disconnectPkt->playerId);
             std::cout << "[Game] Player " << disconnectPkt->playerId << " disconnected." << std::endl;
         }
