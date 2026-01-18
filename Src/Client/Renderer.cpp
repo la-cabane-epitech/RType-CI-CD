@@ -448,6 +448,26 @@ void Renderer::drawKickedScreen()
     DrawText(subtitle, GetScreenWidth() / 2 - subtitleWidth / 2, GetScreenHeight() / 2 + 20, 20, LIGHTGRAY);
 }
 
+void Renderer::drawGameOverScreen(int score)
+{
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.8f));
+
+    const char* title = "GAME OVER";
+    std::string scoreStr = "Final Score: " + std::to_string(score);
+    const char* subtitle = "Press ENTER to exit";
+
+    int titleWidth = MeasureText(title, 60);
+    int scoreWidth = MeasureText(scoreStr.c_str(), 40);
+    int subtitleWidth = MeasureText(subtitle, 20);
+
+    int centerX = GetScreenWidth() / 2;
+    int centerY = GetScreenHeight() / 2;
+
+    DrawText(title, centerX - titleWidth / 2, centerY - 100, 60, RED);
+    DrawText(scoreStr.c_str(), centerX - scoreWidth / 2, centerY, 40, WHITE);
+    DrawText(subtitle, centerX - subtitleWidth / 2, centerY + 80, 20, LIGHTGRAY);
+}
+
 const char* Renderer::GetKeyName(int key) {
     switch (key) {
         case KEY_APOSTROPHE:   return "'";

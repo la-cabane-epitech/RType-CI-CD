@@ -39,6 +39,41 @@ void RTypeClient::tick()
                 _lastScoreIncreaseTime = _clock.getElapsedTimeMs();
             }
 
+            // Détection de collision Client-Side pour forcer le Game Over
+            if (_gameState.players.count(_gameState.myPlayerId)) {
+                auto& player = _gameState.players[_gameState.myPlayerId];
+                Rectangle playerRec = { player.x, player.y, 60.0f, 30.0f }; // Hitbox approximative du vaisseau
+
+                for (const auto& pair : _gameState.entities) {
+                    const auto& entity = pair.second;
+                    if (entity.type == 1 || entity.type == 4 || entity.type == 5) continue; // On ignore nos propres tirs (Type 1, 4, 5)
+
+                    // Récupération de la taille de l'entité depuis le Renderer
+                    float w = 40.0f, h = 40.0f;
+                    if (_renderer.ENTITY_REGISTRY.count(entity.type)) {
+                        const auto& config = _renderer.ENTITY_REGISTRY.at(entity.type);
+                        w = (config.width > 0 ? config.width : 33.0f) * config.scale;
+                        h = (config.height > 0 ? config.height : 33.0f) * config.scale;
+                    }
+                    Rectangle entityRec = { entity.x, entity.y, w, h };
+
+                    if (CheckCollisionRecs(playerRec, entityRec)) {
+                        std::cout << "[DEBUG] Killed by Entity Type: " << static_cast<int>(entity.type) << std::endl;
+                        _status = InGameStatus::GAME_OVER;
+                        _renderer.addExplosion(player.x, player.y);
+                        
+                        // On prévient le serveur qu'on "meurt" (déconnexion)
+                        PlayerDisconnectPacket disconnectPkt;
+                        disconnectPkt.type = UDPMessageType::PLAYER_DISCONNECT;
+                        disconnectPkt.playerId = _gameState.myPlayerId;
+                        _udpClient.sendMessage(disconnectPkt);
+
+                        _gameState.players.erase(_gameState.myPlayerId); // On supprime le vaisseau localement
+                        break;
+                    }
+                }
+            }
+
             handleInput();
             update();
             break;
@@ -52,6 +87,12 @@ void RTypeClient::tick()
                 _status = InGameStatus::PAUSED;
             }
             break;
+        case InGameStatus::GAME_OVER:
+            if (IsKeyPressed(KEY_ENTER)) {
+                _status = InGameStatus::QUITTING;
+            }
+            update(); // Continue de recevoir les infos pour voir la fin de partie en spectateur
+            break;
         default:
             break;
     }
@@ -63,6 +104,9 @@ void RTypeClient::tick()
     int textWidth = MeasureText(scoreText, 30);
     DrawText(scoreText, GetScreenWidth() - textWidth - 20, 20, 30, RAYWHITE);
 
+    if (_status == InGameStatus::GAME_OVER) {
+        _renderer.drawGameOverScreen(_score);
+    }
     if (_status == InGameStatus::PAUSED) {
         PauseMenuChoice choice = _renderer.drawPauseMenu();
         if (choice == PauseMenuChoice::OPTIONS) _status = InGameStatus::OPTIONS;
@@ -174,6 +218,9 @@ void RTypeClient::update()
             const auto* serverState = reinterpret_cast<const PlayerStatePacket*>(data.data());
 
             if (serverState->playerId == _gameState.myPlayerId) {
+                // Si on est mort (Game Over), on ignore les tentatives de respawn du serveur
+                if (_status == InGameStatus::GAME_OVER) continue;
+
                 _gameState.players[serverState->playerId] = {serverState->x, serverState->y};
 
                 while (!_pendingInputs.empty() && _pendingInputs.front().tick <= serverState->lastProcessedTick) {
@@ -220,6 +267,10 @@ void RTypeClient::update()
             }
             _gameState.players.erase(disconnectPkt->playerId);
             std::cout << "[Game] Player " << disconnectPkt->playerId << " disconnected." << std::endl;
+
+            if (disconnectPkt->playerId == _gameState.myPlayerId) {
+                _status = InGameStatus::GAME_OVER;
+            }
         }
 
         if (type == UDPMessageType::PONG && data.size() >= sizeof(PongPacket)) {

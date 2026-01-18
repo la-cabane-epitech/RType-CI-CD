@@ -160,6 +160,12 @@ public:
     void drawKickedScreen();
 
     /**
+     * @brief Draws the Game Over screen with the final score.
+     * @param score The final score achieved.
+     */
+    void drawGameOverScreen(int score);
+
+    /**
      * @brief Gets the string representation of a Raylib key code.
      * @param key The Raylib key code.
      * @return A C-string representing the key name.
