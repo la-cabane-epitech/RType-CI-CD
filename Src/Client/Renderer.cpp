@@ -71,7 +71,7 @@ void Renderer::draw(const std::map<std::string, int>& keybinds)
     for (const auto& pair : _gameState.players) {
         Color color = (pair.first == _gameState.myPlayerId) ? BLUE : RED;
 
-        float targetBank = 2.0f; // 2.0 = Neutre (Frame 2)
+        float targetBank = 2.0f;
         if (pair.first == _gameState.myPlayerId) {
             int upKey = (keybinds.count("UP")) ? keybinds.at("UP") : KEY_UP;
             int downKey = (keybinds.count("DOWN")) ? keybinds.at("DOWN") : KEY_DOWN;
@@ -449,6 +449,26 @@ void Renderer::drawKickedScreen()
 
     DrawText(title, GetScreenWidth() / 2 - titleWidth / 2, GetScreenHeight() / 2 - 40, 40, RED);
     DrawText(subtitle, GetScreenWidth() / 2 - subtitleWidth / 2, GetScreenHeight() / 2 + 20, 20, LIGHTGRAY);
+}
+
+void Renderer::drawGameOverScreen(int score)
+{
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.8f));
+
+    const char* title = "GAME OVER";
+    std::string scoreStr = "Final Score: " + std::to_string(score);
+    const char* subtitle = "Press ENTER to exit";
+
+    int titleWidth = MeasureText(title, 60);
+    int scoreWidth = MeasureText(scoreStr.c_str(), 40);
+    int subtitleWidth = MeasureText(subtitle, 20);
+
+    int centerX = GetScreenWidth() / 2;
+    int centerY = GetScreenHeight() / 2;
+
+    DrawText(title, centerX - titleWidth / 2, centerY - 100, 60, RED);
+    DrawText(scoreStr.c_str(), centerX - scoreWidth / 2, centerY, 40, WHITE);
+    DrawText(subtitle, centerX - subtitleWidth / 2, centerY + 80, 20, LIGHTGRAY);
 }
 
 const char* Renderer::GetKeyName(int key) {

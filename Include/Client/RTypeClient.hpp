@@ -27,7 +27,8 @@ enum class InGameStatus {
     PAUSED,
     OPTIONS,
     QUITTING,
-    KICKED
+    KICKED,
+    GAME_OVER
 };
 
 /**
