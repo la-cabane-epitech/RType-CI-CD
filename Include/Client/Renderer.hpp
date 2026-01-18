@@ -51,6 +51,16 @@ struct EntityRenderConfig {
 };
 
 /**
+ * @struct Explosion
+ * @brief Represents an active explosion animation.
+ */
+struct Explosion {
+    float x;
+    float y;
+    double startTime;
+};
+
+/**
  * @enum MainMenuChoice
  * @brief Represents the user's choice in the main menu.
  */
@@ -161,6 +171,12 @@ public:
      */
     std::map<int, EntityRenderConfig> ENTITY_REGISTRY;
 
+    /**
+     * @brief Spawns an explosion effect at the given coordinates.
+     * @param x X coordinate.
+     * @param y Y coordinate.
+     */
+    void addExplosion(float x, float y);
 
 private:
     GameState& _gameState;
@@ -168,6 +184,7 @@ private:
     std::vector<ParallaxLayer> _parallaxLayers;
     std::optional<std::string> _actionToRemap;
     std::map<uint32_t, float> _playerBank;
+    std::vector<Explosion> _explosions;
 };
 
 #endif

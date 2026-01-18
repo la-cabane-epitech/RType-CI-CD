@@ -115,8 +115,14 @@ void Renderer::draw(const std::map<std::string, int>& keybinds)
                 const Texture2D& texture = _textures.at(4);
                 int currentFrame = static_cast<int>(GetTime() * 10.0f) % 8;
                 Rectangle chargeRec = { 0.0f + currentFrame * 33.0f, 49.0f, 33.0f, 36.0f };
-                Vector2 chargePos = { pair.second.x + 10.0f, pair.second.y - chargeRec.height / 2 };
-                DrawTextureRec(texture, chargeRec, chargePos, WHITE);
+                float chargeScale = 2.0f;
+                Rectangle destRec = { 
+                    pair.second.x + 10.0f, 
+                    pair.second.y - (chargeRec.height * chargeScale) / 2.0f,
+                    chargeRec.width * chargeScale, 
+                    chargeRec.height * chargeScale 
+                };
+                DrawTexturePro(texture, chargeRec, destRec, {0, 0}, 0.0f, WHITE);
             }
         }
     }
@@ -145,6 +151,29 @@ void Renderer::draw(const std::map<std::string, int>& keybinds)
             }
         } else {
             DrawCircleLines(static_cast<int>(entity.x), static_cast<int>(entity.y), 20, MAGENTA);
+        }
+    }
+
+    if (_textures.count(4)) {
+        const Texture2D& texture = _textures.at(4);
+        for (auto it = _explosions.begin(); it != _explosions.end();) {
+            double lifeTime = GetTime() - it->startTime;
+            if (lifeTime > 0.5) {
+                it = _explosions.erase(it);
+            } else {
+                int frame = static_cast<int>(lifeTime * 12.0f) % 6;                 
+                float startX = 67.0f;
+                float startY = 294.0f;
+                float frameWidth = 38.0f; 
+                float frameHeight = 32.0f; sprite
+
+                Rectangle sourceRec = { startX + frame * frameWidth, startY, frameWidth, frameHeight };
+                Rectangle destRec = { it->x, it->y, frameWidth * 2.5f, frameHeight * 2.5f };
+                Vector2 origin = { destRec.width / 2.0f, destRec.height / 2.0f };
+                
+                DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, WHITE);
+                ++it;
+            }
         }
     }
 }
@@ -324,6 +353,11 @@ int Renderer::drawRoomMenu(const std::vector<RoomInfo>& rooms)
     }
 
     return action;
+}
+
+void Renderer::addExplosion(float x, float y)
+{
+    _explosions.push_back({x, y, GetTime()});
 }
 
 bool Renderer::drawLobby(const LobbyState& lobbyState, uint32_t myPlayerId)
