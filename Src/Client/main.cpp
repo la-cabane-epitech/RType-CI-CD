@@ -59,6 +59,7 @@ int main(int ac, char **av)
     std::optional<bool> joinRoomResponse = std::nullopt;
     int roomToJoin = -1;
 
+    int lastScore = 0;
     std::unique_ptr<RTypeClient> gameInstance = nullptr;
 
     while (currentState != ClientState::EXITING && !WindowShouldClose()) {
@@ -179,9 +180,11 @@ int main(int ac, char **av)
                 gameInstance->tick();
 
                 if (gameInstance->getStatus() == InGameStatus::QUITTING) {
+                    lastScore = gameInstance->getScore();
                     gameInstance.reset();
                     currentState = ClientState::EXITING;
                 } else if (gameInstance->getStatus() == InGameStatus::KICKED) {
+                    lastScore = gameInstance->getScore();
                     gameInstance.reset();
                     currentState = ClientState::KICKED;
                 }
