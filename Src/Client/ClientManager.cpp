@@ -49,9 +49,12 @@ void ClientManager::validateServerIp()
     try {
         asio::io_context io_context;
         asio::ip::tcp::resolver resolver(io_context);
-        resolver.resolve(_serverIp, "4242");
-    } catch (const std::exception&) {
-        throw std::runtime_error("Invalid server IP address or unreachable host: " + _serverIp);
+        auto endpoints = resolver.resolve(_serverIp, "4242");
+
+        asio::ip::tcp::socket socket(io_context);
+        asio::connect(socket, endpoints);
+    } catch (const std::exception& e) {
+        throw std::runtime_error("Invalid server IP address or unreachable host: " + _serverIp + " (" + e.what() + ")");
     }
 }
 
