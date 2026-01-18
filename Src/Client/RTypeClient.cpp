@@ -208,12 +208,16 @@ void RTypeClient::update()
                 uint16_t type = _gameState.entities[destroyPkt->entityId].type;
                 if (type == 2) _score += 50; 
                 else if (type == 3) _score += 100;
+                _renderer.addExplosion(_gameState.entities[destroyPkt->entityId].x, _gameState.entities[destroyPkt->entityId].y);
             }
             _gameState.entities.erase(destroyPkt->entityId);
         }
 
         if (type == UDPMessageType::PLAYER_DISCONNECT && data.size() >= sizeof(PlayerDisconnectPacket)) {
             const auto* disconnectPkt = reinterpret_cast<const PlayerDisconnectPacket*>(data.data());
+            if (_gameState.players.count(disconnectPkt->playerId)) {
+                _renderer.addExplosion(_gameState.players[disconnectPkt->playerId].x, _gameState.players[disconnectPkt->playerId].y);
+            }
             _gameState.players.erase(disconnectPkt->playerId);
             std::cout << "[Game] Player " << disconnectPkt->playerId << " disconnected." << std::endl;
         }
