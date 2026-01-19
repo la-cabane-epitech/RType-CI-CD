@@ -14,6 +14,7 @@
 #include <vector>
 #include "Protocole/ProtocoleTCP.hpp"
 #include "Client/Asio.hpp"
+#include <optional>
 
 /**
  * @file TCPClient.hpp

@@ -2,7 +2,7 @@
 
 ## Abstract
 
-This document specifies the communication protocols used in the R-Type project. It defines the packet structures, data types, and interaction flows for both TCP (Control) and UDP (Gameplay) channels.
+This document specifies the communication protocols used in the R-Type project. It defines the packet structures, data types, and interaction flows for both TCP (for control, lobby, and session management) and UDP (for real-time gameplay) channels.
 
 ## 1. Overview
 
@@ -25,14 +25,67 @@ The R-Type multiplayer architecture uses a dual-protocol approach:
 
 The TCP connection is established by the client to the server's listening port.
 
-### 3.1 Handshake & Initialization
-Upon successful connection:
-1.  **Client** connects to **Server**.
-2.  **Server** generates a unique `PlayerId` (uint32_t).
-3.  **Server** sends the `PlayerId` to the **Client**.
-4.  **Client** stores this ID and uses it for all subsequent UDP `PlayerInputPacket`s.
+### 3.1 Message Types
+Defined in `TCPMessageType`.
 
-*(Note: Additional TCP commands for lobby management may be defined in future revisions)*
+| ID | Mnemonic | Direction | Description |
+|---|---|---|---|
+| 1 | `CONNECT` | Client -> Server | Request to connect with a username. |
+| 2 | `CONNECT_OK` | Server -> Client | Connection successful, provides IDs and port. |
+| 3 | `CONNECT_ERROR` | Server -> Client | Connection failed. |
+| 4 | `LIST_ROOMS` | Client -> Server | Request the list of available game rooms. |
+| 5 | `LIST_ROOMS_RESPONSE` | Server -> Client | Response containing the list of rooms. |
+| 6 | `CREATE_ROOM` | Client -> Server | Request to create a new game room. |
+| 7 | `CREATE_ROOM_RESPONSE`| Server -> Client | Response with the new room's ID. |
+| 8 | `JOIN_ROOM` | Client -> Server | Request to join an existing room. |
+| 9 | `JOIN_ROOM_RESPONSE` | Server -> Client | Response indicating if join was successful. |
+| 10 | `GET_LOBBY_STATE` | Client -> Server | Request the current state of the player's lobby. |
+| 11 | `LOBBY_STATE_RESPONSE`| Server -> Client | Response with lobby details (host, players). |
+| 12 | `START_GAME_REQUEST` | Client -> Server | Sent by the host to start the game. |
+| 13 | `GAME_STARTING_NOTIFICATION` | Server -> Client | Broadcast to all players in a lobby that the game is starting. |
+| 14 | `CHAT_MESSAGE` | Client <-> Server | (Not fully implemented) For in-lobby chat. |
+
+### 3.2 Packet Definitions
+
+#### 3.2.1 Connect Request (Type 1)
+```cpp
+struct ConnectRequest {
+    uint8_t type;       // 1
+    char username[32];
+};
+```
+
+#### 3.2.2 Connect Response (Type 2)
+```cpp
+struct ConnectResponse {
+    uint8_t type;         // 2
+    uint32_t playerId;    // Unique player ID
+    uint16_t udpPort;     // Assigned UDP port for gameplay
+    uint32_t serverTimeMs;
+};
+```
+
+#### 3.2.3 Lobby & Room Management
+Lobby and room management packets follow a request/response pattern.
+
+```cpp
+// To request room list
+struct ListRoomsRequest { uint8_t type; }; // 4
+
+// To create a room
+struct CreateRoomRequest { uint8_t type; }; // 6
+
+// To join a room
+struct JoinRoomRequest { uint8_t type; int32_t roomId; }; // 8
+
+// To get lobby state
+struct GetLobbyStateRequest { uint8_t type; }; // 10
+
+// To start the game (host only)
+struct StartGameRequest { uint8_t type; }; // 12
+```
+
+Responses are more complex, often including variable-length data. For example, `ListRoomsResponse` is followed by `count` `RoomInfo` structs, and `LobbyStateResponse` is followed by `playerCount` `LobbyPlayerInfo` structs.
 
 ## 4. UDP Protocol
 
@@ -54,9 +107,11 @@ Defined in `UDPMessageType`.
 | 6 | `PING` | Client -> Server | Latency check |
 | 7 | `PONG` | Server -> Client | Latency response |
 | 8 | `PLAYER_DISCONNECT` | Client -> Server | Graceful disconnect |
+| 9 | `GLOBAL_STATE_SYNC` | Server -> Client | Full game state synchronization. |
+| 10 | `YOU_HAVE_BEEN_KICKED` | Server -> Client | Notification that the player was kicked. |
 
 ### 4.3 Input Bitmask
-Defined in `Input` enum. Combined using bitwise OR.
+Defined in the `Input` enum. Multiple actions can be combined using a bitwise OR.
 
 | Bit | Value | Action |
 |---|---|---|
@@ -65,6 +120,7 @@ Defined in `Input` enum. Combined using bitwise OR.
 | 2 | 0x04 | LEFT |
 | 3 | 0x08 | RIGHT |
 | 4 | 0x10 | SHOOT |
+| 5 | 0x20 | CHARGE_SHOOT |
 
 ### 4.4 Packet Definitions
 
@@ -76,7 +132,7 @@ struct PlayerInputPacket {
     uint8_t type;       // 1
     uint32_t playerId;  // ID received via TCP
     uint32_t tick;      // Client tick counter
-    uint8_t inputs;     // Input Bitmask
+    uint8_t inputs;     // Input Bitmask (UP, DOWN, SHOOT, etc.)
 };
 ```
 
