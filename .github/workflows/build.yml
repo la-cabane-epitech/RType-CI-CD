@@ -79,7 +79,7 @@ jobs:
           mkdir package
           cp build/Src/Client/rtype_client package/
           cp build/Src/Server/rtype_server package/
-          cp build/librtype_network.so package/
+          cp build/Src/Network/librtype_network.so package/
           cp -r Assets package/
       - name: Create package for Windows
         if: matrix.os == 'windows-latest'
