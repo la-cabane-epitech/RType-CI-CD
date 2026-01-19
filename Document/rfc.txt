@@ -123,8 +123,8 @@ Bit | Value | Action
 1   | 0x02  | DOWN
 2   | 0x04  | LEFT
 3   | 0x08  | RIGHT
-4   | 0x10  | SHOOT
-5   | 0x20  | CHARGE_SHOOT
+4   | 0x10  | PRESSED
+5   | 0x20  | HOLD
 
 4.4 Packet Definitions
 ----------------------
@@ -136,7 +136,7 @@ struct PlayerInputPacket {
     uint8_t type;       // 1
     uint32_t playerId;  // ID received via TCP
     uint32_t tick;      // Client tick counter
-    uint8_t inputs;     // Input Bitmask (UP, DOWN, SHOOT, etc.)
+    uint8_t inputs;     // Input Bitmask (UP, DOWN, HOLD, etc.)
 };
 
 4.4.2 Player State (Type 2)

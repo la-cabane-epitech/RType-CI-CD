@@ -78,13 +78,13 @@ You will need the following tools installed on your system:
 1.  **Start the server:**
     The server requires a port to listen on.
     ```bash
-    ./rtype_server <port>
+    ./rtype_server
     ```
 
 2.  **Start the client:**
     The client needs the server's IP address and port to connect.
     ```bash
-    ./rtype_client <server_ip> <port>
+    ./rtype_client <server_ip>
     ```
 
 ## Documentation

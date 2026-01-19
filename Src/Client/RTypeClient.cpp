@@ -177,9 +177,9 @@ void RTypeClient::handleInput()
     } else if (IsKeyReleased(KEY_SPACE)) {
         if (isCharging) {
             if (_clock.getElapsedTimeMs() - chargeStart > 500)
-            packet.inputs |= CHARGE_SHOOT;
+            packet.inputs |= HOLD;
             else
-            packet.inputs |= SHOOT;
+            packet.inputs |= PRESSED;
             isCharging = false;
         }
     }

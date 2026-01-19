@@ -119,8 +119,8 @@ Defined in the `Input` enum. Multiple actions can be combined using a bitwise OR
 | 1 | 0x02 | DOWN |
 | 2 | 0x04 | LEFT |
 | 3 | 0x08 | RIGHT |
-| 4 | 0x10 | SHOOT |
-| 5 | 0x20 | CHARGE_SHOOT |
+| 4 | 0x10 | PRESSED |
+| 5 | 0x20 | HOLD |
 
 ### 4.4 Packet Definitions
 
