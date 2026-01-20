@@ -57,7 +57,8 @@ enum UDPMessageType : uint8_t {
     PONG              = 7,  ///< Server to Client pong
     PLAYER_DISCONNECT = 8,  ///< Sent by client: player is disconnecting
     GLOBAL_STATE_SYNC = 9,   ///< Sent by server: full game state synchrnization
-    YOU_HAVE_BEEN_KICKED = 10
+    YOU_HAVE_BEEN_KICKED = 10,
+    BOSS_STATE        = 11  ///< Sent by server: update boss HP
 };
 
 /**
@@ -82,17 +83,16 @@ struct PlayerInputPacket {
  * @brief Sent by the server to update the player's authoritative state.
  *
  * Fields:
- * - type: PLAYER_STATE.
- * - sequence: A sequence number that increments with each packet, used for packet loss detection.
- * - playerId: ID of the player this state belongs to.
- * - lastProcessedTick: The last input tick from the client that the server has processed.
- * - timestamp: Server time when the state was generated, for interpolation.
- * - x / y: Authoritative position on the map.
+ * - type: PLAYER_STATE
+ * - playerId: IF of player
+ * - lastProcessedTick: Le dernier tick d'input traité par le serveur pour ce joueur
+ * - timestamp: Server time when the state was generated, for interpolation
+ * - x / y: Authoritative position on the map
  */
 struct PlayerStatePacket {
     uint8_t type = PLAYER_STATE; ///< Packet type (PLAYER_STATE)
-    uint32_t sequence;           ///< Packet sequence number for loss detection
     uint32_t playerId;           ///< Player identifier
+    uint32_t sequence;           ///< Sequence number for packet loss calculation
     uint32_t lastProcessedTick;  ///< Last input tick processed by server
     uint32_t timestamp;          ///< Server timestamp
     float x;                     ///< X position
@@ -213,6 +213,16 @@ struct GlobalStateSyncPacket {
  */
 struct YouHaveBeenKickedPacket {
     uint8_t type = YOU_HAVE_BEEN_KICKED; ///< Packet type (YOU_HAVE_BEEN_KICKED)
+};
+
+/**
+ * @struct BossStatePacket
+ * @brief Sent by the server to update the Boss health status.
+ */
+struct BossStatePacket {
+    uint8_t type = BOSS_STATE;
+    int32_t hp;
+    int32_t maxHp;
 };
 
 

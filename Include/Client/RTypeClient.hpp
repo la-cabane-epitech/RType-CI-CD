@@ -133,13 +133,9 @@ private:
 
     // --- END STATS ---
 
-    bool _bossSpawned = false;
-    uint32_t _lastBossShootTime = 0;
-    uint32_t _nextLocalEntityId = 10000;
-    int _bossHP = 1000;
+    int _bossHP = 0;
     int _bossMaxHP = 1000;
-    bool _bossMovingUp = true;
-    bool _bossDefeated = false;
+
 };
 
 #endif // RTYPECLIENT_HPP_

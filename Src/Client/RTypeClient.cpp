@@ -40,13 +40,6 @@ void RTypeClient::tick()
                 _lastScoreIncreaseTime = _clock.getElapsedTimeMs();
             }
 
-            if (_score >= 3000 && !_bossSpawned && !_bossDefeated) {
-                _bossSpawned = true;
-                _bossHP = _bossMaxHP;
-                _gameState.entities[9999] = { (float)GetScreenWidth() + 50, (float)GetScreenHeight() / 2 - 100, 10 };
-                std::cout << "[Game] BOSS SPAWNED!" << std::endl;
-            }
-
             if (_gameState.players.count(_gameState.myPlayerId)) {
                 auto& player = _gameState.players[_gameState.myPlayerId];
                 Rectangle playerRec = { player.x, player.y, 60.0f, 30.0f };
@@ -81,60 +74,6 @@ void RTypeClient::tick()
             handleInput();
             update();
 
-            if (_bossSpawned && _gameState.entities.count(9999)) {
-                auto& boss = _gameState.entities[9999];
-                
-                // Mouvement Entrée + Haut/Bas
-                if (boss.x > GetScreenWidth() - 350) {
-                    boss.x -= 2.0f;
-                } else {
-                    if (_bossMovingUp) {
-                        boss.y -= 2.0f;
-                        if (boss.y < 50) _bossMovingUp = false;
-                    } else {
-                        boss.y += 2.0f;
-                        if (boss.y > GetScreenHeight() - 200) _bossMovingUp = true;
-                    }
-                }
-
-                if (_clock.getElapsedTimeMs() - _lastBossShootTime > 2000) {
-                    _lastBossShootTime = _clock.getElapsedTimeMs();
-                    _gameState.entities[_nextLocalEntityId++] = { boss.x, boss.y + 40, 11 };
-                }
-
-                // Collisions Projectiles Joueur (Type 1 = Normal, Type 4 = Chargé) vs Boss
-                Rectangle bossRec = { boss.x, boss.y, 593.0f * 0.5f, 177.0f * 0.5f };
-                std::vector<uint32_t> projToRemove;
-                for (auto& pair : _gameState.entities) {
-                    if (pair.second.type == 1 || pair.second.type == 4) {
-                        Rectangle projRec = { pair.second.x, pair.second.y, 30, 30 };
-                        if (CheckCollisionRecs(bossRec, projRec)) {
-                            int dmg = (pair.second.type == 4) ? 50 : 10;
-                            _bossHP -= dmg;
-                            projToRemove.push_back(pair.first);
-                        }
-                    }
-                }
-                for (auto id : projToRemove) _gameState.entities.erase(id);
-
-                if (_bossHP <= 0) {
-                    _gameState.entities.erase(9999);
-                    _bossSpawned = false;
-                    _bossDefeated = true;
-                    _score += 5000;
-                    _status = InGameStatus::VICTORY;
-                    _gameState.entities.clear(); // Supprime tous les ennemis restants
-                }
-            }
-
-            std::vector<uint32_t> toRemove;
-            for (auto& pair : _gameState.entities) {
-                if (pair.second.type == 11) {
-                    pair.second.x -= 10.0f;
-                    if (pair.second.x < -100) toRemove.push_back(pair.first);
-                }
-            }
-            for (auto id : toRemove) _gameState.entities.erase(id);
             break;
         }
         case InGameStatus::PAUSED:
@@ -166,15 +105,16 @@ void RTypeClient::tick()
 
     _renderer.draw(_keybinds);
     _renderer.drawChat(_chatHistory, _chatInput, _isChatActive);
-    
-    const char* scoreText = TextFormat("SCORE: %06d", _score);
-    int textWidth = MeasureText(scoreText, 30);
-    DrawText(scoreText, GetScreenWidth() - textWidth - 20, 20, 30, RAYWHITE);
 
-    const char* lossText = TextFormat("Loss: %.1f%%", _packetLossPercentage);
-    DrawText(lossText, GetScreenWidth() - MeasureText(lossText, 20) - 20, 60, 20, _packetLossPercentage > 5.0f ? RED : YELLOW);
-    // Dessin de la barre de vie du Boss
-    if (_bossSpawned && _gameState.entities.count(9999)) {
+    // Dessin de la barre de vie du Boss (si présent et vivant)
+    bool bossExists = false;
+    for (const auto& pair : _gameState.entities) {
+        if (pair.second.type == 10) { // Type 10 = Boss dans le Renderer
+            bossExists = true;
+            break;
+        }
+    }
+    if (bossExists && _bossHP > 0) {
         float barWidth = 400.0f;
         float barHeight = 20.0f;
         float x = (GetScreenWidth() - barWidth) / 2;
@@ -185,6 +125,13 @@ void RTypeClient::tick()
         DrawRectangle(x, y, barWidth * hpPercent, barHeight, RED);
         DrawRectangleLines(x, y, barWidth, barHeight, WHITE);
     }
+    
+    const char* scoreText = TextFormat("SCORE: %06d", _score);
+    int textWidth = MeasureText(scoreText, 30);
+    DrawText(scoreText, GetScreenWidth() - textWidth - 20, 20, 30, RAYWHITE);
+
+    const char* lossText = TextFormat("Loss: %.1f%%", _packetLossPercentage);
+    DrawText(lossText, GetScreenWidth() - MeasureText(lossText, 20) - 20, 60, 20, _packetLossPercentage > 5.0f ? RED : YELLOW);
 
     if (_status == InGameStatus::GAME_OVER) {
         _renderer.drawGameOverScreen(_score);
@@ -426,6 +373,12 @@ void RTypeClient::update()
         if (type == UDPMessageType::YOU_HAVE_BEEN_KICKED) {
             std::cout << "[Game] You have been kicked." << std::endl;
             _status = InGameStatus::KICKED;
+        }
+
+        if (type == UDPMessageType::BOSS_STATE && data.size() >= sizeof(BossStatePacket)) {
+            const auto* bossPkt = reinterpret_cast<const BossStatePacket*>(data.data());
+            _bossHP = bossPkt->hp;
+            _bossMaxHP = bossPkt->maxHp;
         }
     }
 }
