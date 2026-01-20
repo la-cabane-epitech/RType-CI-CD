@@ -166,6 +166,14 @@ public:
     void drawGameOverScreen(int score);
 
     /**
+     * @brief Draws the Victory screen with a scoreboard.
+     * @param score The final score of the local player.
+     * @param players Map of all players to display in the scoreboard.
+     * @param myPlayerId The ID of the local player.
+     */
+    void drawVictoryScreen(int score, const std::unordered_map<uint32_t, Position>& players, uint32_t myPlayerId);
+
+    /**
      * @brief Gets the string representation of a Raylib key code.
      * @param key The Raylib key code.
      * @return A C-string representing the key name.

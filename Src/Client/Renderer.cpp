@@ -26,6 +26,7 @@ Renderer::Renderer(GameState& gameState) : _gameState(gameState), _actionToRemap
     _textures[10] = LoadTexture("Assets/blue-back.png");
     _textures[11] = LoadTexture("Assets/blue-stars.png");
     _textures[12] = LoadTexture("Assets/asteroid-1.png");
+    _textures[20] = LoadTexture("Assets/r-typesheet37.gif");
 
     float bgScale = (float)GetScreenHeight() / _textures[10].height;
     _parallaxLayers.emplace_back(0.2f, _textures[10], bgScale, 0.0f);
@@ -36,6 +37,8 @@ Renderer::Renderer(GameState& gameState) : _gameState(gameState), _actionToRemap
         ENTITY_REGISTRY[2] = { 2, true, 12, 8.0f, 17.0f, 18.0f, 2.0f, 0.0f, 0.0f };
         ENTITY_REGISTRY[3] = { 3, true, 8, 12.0f, 33.0f, 36.0f, 2.5f, 0.0f, 0.0f };
         ENTITY_REGISTRY[4] = { 4, true, 4, 0.0f, 29.0f, 30.0f, 3.0f, 136.0f, 19.0f };
+        ENTITY_REGISTRY[10] = { 20, false, 1, 0.0f, 593.0f, 177.0f, 0.5f, 0.0f, 0.0f };
+        ENTITY_REGISTRY[11] = { 1, false, 1, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
     }
 }
 
@@ -469,6 +472,39 @@ void Renderer::drawGameOverScreen(int score)
     DrawText(title, centerX - titleWidth / 2, centerY - 100, 60, RED);
     DrawText(scoreStr.c_str(), centerX - scoreWidth / 2, centerY, 40, WHITE);
     DrawText(subtitle, centerX - subtitleWidth / 2, centerY + 80, 20, LIGHTGRAY);
+}
+
+void Renderer::drawVictoryScreen(int score, const std::unordered_map<uint32_t, Position>& players, uint32_t myPlayerId)
+{
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.85f));
+
+    const char* title = "MISSION ACCOMPLISHED";
+    int titleWidth = MeasureText(title, 60);
+    DrawText(title, GetScreenWidth() / 2 - titleWidth / 2, 80, 60, GOLD);
+
+    int startY = 200;
+    int centerX = GetScreenWidth() / 2;
+
+    DrawText("SCOREBOARD", centerX - MeasureText("SCOREBOARD", 40) / 2, 150, 40, WHITE);
+
+    // Affichage du joueur local
+    std::string myText = "1. Player " + std::to_string(myPlayerId) + " (YOU) ........... " + std::to_string(score);
+    DrawText(myText.c_str(), centerX - 250, startY, 30, GREEN);
+    startY += 50;
+
+    // Affichage des autres joueurs (compétitif)
+    int rank = 2;
+    for (const auto& pair : players) {
+        if (pair.first == myPlayerId) continue;
+        std::string pText = std::to_string(rank) + ". Player " + std::to_string(pair.first) + " ................... ???";
+        DrawText(pText.c_str(), centerX - 250, startY, 30, LIGHTGRAY);
+        startY += 50;
+        rank++;
+    }
+
+    const char* subtitle = "Press ENTER to return to menu";
+    int subtitleWidth = MeasureText(subtitle, 20);
+    DrawText(subtitle, centerX - subtitleWidth / 2, GetScreenHeight() - 100, 20, LIGHTGRAY);
 }
 
 const char* Renderer::GetKeyName(int key) {

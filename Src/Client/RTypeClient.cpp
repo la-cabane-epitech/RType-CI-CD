@@ -30,7 +30,7 @@ RTypeClient::RTypeClient(const std::string& serverIp, TCPClient& tcpClient, cons
 void RTypeClient::tick()
 {
     switch (_status) {
-        case InGameStatus::PLAYING:
+        case InGameStatus::PLAYING: {
             if (IsKeyPressed(KEY_ESCAPE)) {
                 _status = InGameStatus::PAUSED;
             }
@@ -38,6 +38,13 @@ void RTypeClient::tick()
             if (_clock.getElapsedTimeMs() - _lastScoreIncreaseTime >= 1000) {
                 _score += 5;
                 _lastScoreIncreaseTime = _clock.getElapsedTimeMs();
+            }
+
+            if (_score >= 3000 && !_bossSpawned && !_bossDefeated) {
+                _bossSpawned = true;
+                _bossHP = _bossMaxHP;
+                _gameState.entities[9999] = { (float)GetScreenWidth() + 50, (float)GetScreenHeight() / 2 - 100, 10 };
+                std::cout << "[Game] BOSS SPAWNED!" << std::endl;
             }
 
             if (_gameState.players.count(_gameState.myPlayerId)) {
@@ -73,7 +80,63 @@ void RTypeClient::tick()
 
             handleInput();
             update();
+
+            if (_bossSpawned && _gameState.entities.count(9999)) {
+                auto& boss = _gameState.entities[9999];
+                
+                // Mouvement Entrée + Haut/Bas
+                if (boss.x > GetScreenWidth() - 350) {
+                    boss.x -= 2.0f;
+                } else {
+                    if (_bossMovingUp) {
+                        boss.y -= 2.0f;
+                        if (boss.y < 50) _bossMovingUp = false;
+                    } else {
+                        boss.y += 2.0f;
+                        if (boss.y > GetScreenHeight() - 200) _bossMovingUp = true;
+                    }
+                }
+
+                if (_clock.getElapsedTimeMs() - _lastBossShootTime > 2000) {
+                    _lastBossShootTime = _clock.getElapsedTimeMs();
+                    _gameState.entities[_nextLocalEntityId++] = { boss.x, boss.y + 40, 11 };
+                }
+
+                // Collisions Projectiles Joueur (Type 1 = Normal, Type 4 = Chargé) vs Boss
+                Rectangle bossRec = { boss.x, boss.y, 593.0f * 0.5f, 177.0f * 0.5f };
+                std::vector<uint32_t> projToRemove;
+                for (auto& pair : _gameState.entities) {
+                    if (pair.second.type == 1 || pair.second.type == 4) {
+                        Rectangle projRec = { pair.second.x, pair.second.y, 30, 30 };
+                        if (CheckCollisionRecs(bossRec, projRec)) {
+                            int dmg = (pair.second.type == 4) ? 50 : 10;
+                            _bossHP -= dmg;
+                            projToRemove.push_back(pair.first);
+                        }
+                    }
+                }
+                for (auto id : projToRemove) _gameState.entities.erase(id);
+
+                if (_bossHP <= 0) {
+                    _gameState.entities.erase(9999);
+                    _bossSpawned = false;
+                    _bossDefeated = true;
+                    _score += 5000;
+                    _status = InGameStatus::VICTORY;
+                    _gameState.entities.clear(); // Supprime tous les ennemis restants
+                }
+            }
+
+            std::vector<uint32_t> toRemove;
+            for (auto& pair : _gameState.entities) {
+                if (pair.second.type == 11) {
+                    pair.second.x -= 10.0f;
+                    if (pair.second.x < -100) toRemove.push_back(pair.first);
+                }
+            }
+            for (auto id : toRemove) _gameState.entities.erase(id);
             break;
+        }
         case InGameStatus::PAUSED:
             if (IsKeyPressed(KEY_ESCAPE)) {
                 _status = InGameStatus::PLAYING;
@@ -90,6 +153,13 @@ void RTypeClient::tick()
             }
             update();
             break;
+        case InGameStatus::VICTORY:
+            if (IsKeyPressed(KEY_ENTER)) {
+                _status = InGameStatus::QUITTING;
+            }
+            update();
+            _gameState.entities.clear(); // Force le nettoyage si le serveur en renvoie
+            break;
         default:
             break;
     }
@@ -103,9 +173,24 @@ void RTypeClient::tick()
 
     const char* lossText = TextFormat("Loss: %.1f%%", _packetLossPercentage);
     DrawText(lossText, GetScreenWidth() - MeasureText(lossText, 20) - 20, 60, 20, _packetLossPercentage > 5.0f ? RED : YELLOW);
+    // Dessin de la barre de vie du Boss
+    if (_bossSpawned && _gameState.entities.count(9999)) {
+        float barWidth = 400.0f;
+        float barHeight = 20.0f;
+        float x = (GetScreenWidth() - barWidth) / 2;
+        float y = 50.0f;
+        DrawText("BOSS", x, y - 25, 20, RED);
+        DrawRectangle(x, y, barWidth, barHeight, Fade(GRAY, 0.5f));
+        float hpPercent = (float)_bossHP / (float)_bossMaxHP;
+        DrawRectangle(x, y, barWidth * hpPercent, barHeight, RED);
+        DrawRectangleLines(x, y, barWidth, barHeight, WHITE);
+    }
 
     if (_status == InGameStatus::GAME_OVER) {
         _renderer.drawGameOverScreen(_score);
+    }
+    if (_status == InGameStatus::VICTORY) {
+        _renderer.drawVictoryScreen(_score, _gameState.players, _gameState.myPlayerId);
     }
     if (_status == InGameStatus::PAUSED) {
         PauseMenuChoice choice = _renderer.drawPauseMenu();
@@ -314,7 +399,17 @@ void RTypeClient::update()
         if (type == UDPMessageType::GLOBAL_STATE_SYNC && data.size() >= sizeof(GlobalStateSyncPacket)) {
             const auto* syncPkt = reinterpret_cast<const GlobalStateSyncPacket*>(data.data());
             size_t offset = sizeof(GlobalStateSyncPacket);
+
+            std::vector<std::pair<uint32_t, EntityState>> localEntities;
+            for (const auto& pair : _gameState.entities) {
+                if (pair.first >= 9999) {
+                    localEntities.push_back(pair);
+                }
+            }
+
             _gameState.entities.clear();
+            for (const auto& pair : localEntities)
+                _gameState.entities[pair.first] = pair.second;
 
             for (uint32_t i = 0; i < syncPkt->entityCount; ++i) {
                 if (offset + sizeof(SyncedEntityState) <= data.size()) {
