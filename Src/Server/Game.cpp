@@ -13,8 +13,9 @@
 
 // Static maps to hold Boss state per Game instance since we cannot modify Game.hpp
 static std::unordered_map<Game*, int> g_bossHP;
-static std::unordered_map<Game*, bool> g_bossSpawned;
+static std::unordered_map<Game*, int> g_bossLevel; // 0: None, 1: Boss1, 2: Cooldown, 3: Boss2, 4: Victory
 static std::unordered_map<Game*, float> g_lastBossShootTime;
+static std::unordered_map<Game*, float> g_bossDeathTime;
 
 void Game::addPlayer(uint32_t playerId, const char* username) {
     std::lock_guard<std::mutex> lock(_playersMutex);
@@ -282,7 +283,11 @@ void Game::updateGameLevel(float elapsedTime) {
                 entity.velocityY = 0.0f;
             } else {
                 entity.velocityX = 0.0f;
-                entity.velocityY = 3.0f * std::sin(_gameTime);
+                    if (g_bossLevel[this] == 3) { // Boss Level 2 (Faster)
+                        entity.velocityY = 8.0f * std::sin(_gameTime * 4.0f);
+                    } else { // Boss Level 1
+                        entity.velocityY = 3.0f * std::sin(_gameTime);
+                    }
             }
         }
     }
@@ -329,14 +334,27 @@ void Game::update(UDPServer& udpServer) {
     broadcastGameState(udpServer);
     updateGameLevel(0.016f);
 
-    // Boss Spawning Logic (at 30 seconds)
-    if (_gameTime > 6.0f && !g_bossSpawned[this]) {
-        g_bossSpawned[this] = true;
-        g_bossHP[this] = 1000;
+    bool spawnBoss = false;
+    int bossMaxHP = 1000;
 
+    if (g_bossLevel[this] == 0 && _gameTime > 30.0f) {
+        g_bossLevel[this] = 1;
+        g_bossHP[this] = 1000;
+        bossMaxHP = 1000;
+        spawnBoss = true;
+        std::cout << "[Game] Boss Level 1 Spawned!" << std::endl;
+    } else if (g_bossLevel[this] == 2 && _gameTime > g_bossDeathTime[this] + 30.0f) { // Spawn Boss 2 (30s after death)
+        g_bossLevel[this] = 3;
+        g_bossHP[this] = 2000;
+        bossMaxHP = 2000;
+        spawnBoss = true;
+        std::cout << "[Game] Boss Level 2 Spawned!" << std::endl;
+    }
+
+    if (spawnBoss) {
         std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
         uint32_t entityId = _nextEntityId++;
-        // Spawn Boss: Type 10, HP 1000
+        // Spawn Boss: Type 10
         _entities.push_back({entityId, 10, 1600.0f, 400.0f, -2.0f, 0.0f, 296, 88});
 
         EntitySpawnPacket spawnPkt;
@@ -346,8 +364,8 @@ void Game::update(UDPServer& udpServer) {
         spawnPkt.y = 400.0f;
 
         BossStatePacket bossPkt;
-        bossPkt.hp = 1000;
-        bossPkt.maxHp = 1000;
+        bossPkt.hp = g_bossHP[this];
+        bossPkt.maxHp = bossMaxHP;
 
         std::lock_guard<std::mutex> lock_players(_playersMutex);
         for (const auto& destPlayer : _players) {
@@ -356,11 +374,10 @@ void Game::update(UDPServer& udpServer) {
                 udpServer.queueMessage(bossPkt, destPlayer.udpAddr);
             }
         }
-        std::cout << "[Game] Boss Spawned!" << std::endl;
     }
 
     // Boss Shooting Logic
-    if (g_bossSpawned[this]) {
+    if (g_bossLevel[this] == 1 || g_bossLevel[this] == 3) {
         bool bossExists = false;
         float bossX = 0;
         float bossY = 0;
@@ -377,21 +394,30 @@ void Game::update(UDPServer& udpServer) {
             }
         }
 
-        if (bossExists && (_gameTime - g_lastBossShootTime[this] > 1.5f)) {
+        float shootInterval = (g_bossLevel[this] == 3) ? 1.0f : 1.5f;
+
+        if (bossExists && (_gameTime - g_lastBossShootTime[this] > shootInterval)) {
             g_lastBossShootTime[this] = _gameTime;
             std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
-            uint32_t projId = _nextEntityId++;
-            _entities.push_back({projId, 11, bossX, bossY + 80, -10.0f, 0.0f, 30, 30});
-
-            EntitySpawnPacket spawnPkt;
-            spawnPkt.entityId = projId;
-            spawnPkt.entityType = 11;
-            spawnPkt.x = bossX;
-            spawnPkt.y = bossY + 80;
-
             std::lock_guard<std::mutex> lock_players(_playersMutex);
-            for (const auto& destPlayer : _players) {
-                if (destPlayer.addrSet) udpServer.queueMessage(spawnPkt, destPlayer.udpAddr);
+
+            std::vector<float> vyOffsets;
+            if (g_bossLevel[this] == 3) vyOffsets = {-5.0f, 0.0f, 5.0f}; // Triple shot
+            else vyOffsets = {0.0f}; // Single shot
+
+            for (float vy : vyOffsets) {
+                uint32_t projId = _nextEntityId++;
+                _entities.push_back({projId, 11, bossX, bossY + 80, -15.0f, vy, 30, 30});
+
+                EntitySpawnPacket spawnPkt;
+                spawnPkt.entityId = projId;
+                spawnPkt.entityType = 11;
+                spawnPkt.x = bossX;
+                spawnPkt.y = bossY + 80;
+
+                for (const auto& destPlayer : _players) {
+                    if (destPlayer.addrSet) udpServer.queueMessage(spawnPkt, destPlayer.udpAddr);
+                }
             }
         }
     }
@@ -465,7 +491,7 @@ void Game::handleCollision(UDPServer &udpServer) {
 
                     BossStatePacket bossPkt;
                     bossPkt.hp = g_bossHP[this];
-                    bossPkt.maxHp = 1000;
+                    bossPkt.maxHp = (g_bossLevel[this] == 3) ? 2000 : 1000;
 
                     for (const auto& destPlayer : _players) {
                         if (destPlayer.addrSet) udpServer.queueMessage(bossPkt, destPlayer.udpAddr);
@@ -473,6 +499,14 @@ void Game::handleCollision(UDPServer &udpServer) {
 
                     if (g_bossHP[this] <= 0) {
                         enemy.is_collide = true;
+                        if (g_bossLevel[this] == 1) {
+                            g_bossLevel[this] = 2; // Start cooldown for Boss 2
+                            g_bossDeathTime[this] = _gameTime;
+                            std::cout << "[Game] Boss 1 Defeated. Waiting for Boss 2..." << std::endl;
+                        } else if (g_bossLevel[this] == 3) {
+                            g_bossLevel[this] = 4; // Victory
+                            std::cout << "[Game] Boss 2 Defeated. Victory!" << std::endl;
+                        }
                     }
                 } else {
                     enemy.is_collide = true;
