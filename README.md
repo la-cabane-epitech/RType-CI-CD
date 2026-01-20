@@ -36,7 +36,7 @@ You will need the following tools installed on your system:
 1.  **C++20 Compiler**:
     -   **Linux**: GCC or Clang.
     -   **Windows**: Visual Studio 2022 (with C++ workload).
-2.  **CMake** (version 3.15 or higher):
+2.  **CMake** (version 3.28.3 - only tested version):
     ```bash
     # Ubuntu / Debian
     sudo apt install cmake
@@ -44,7 +44,10 @@ You will need the following tools installed on your system:
     sudo dnf install cmake
     # Windows: Download from https://cmake.org/download/
     ```
-3.  **Conan** (C/C++ Package Manager):
+3.  **Python** (required for pip/pipx):
+    Ensure Python 3 is installed on your system.
+
+4.  **Conan** (C/C++ Package Manager):
     ```bash
     pip install conan
     # Or using pipx (recommended)
@@ -55,8 +58,8 @@ You will need the following tools installed on your system:
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/EpitechPGE3-2025/RType-CI-CD.git
-    cd RType-CI-CD
+    git clone https://github.com/EpitechPGE3-2025/G-CPP-500-RUN-5-2-rtype-6.git
+    cd G-CPP-500-RUN-5-2-rtype-6
     ```
 
 2.  **Run the build script:**
@@ -89,7 +92,7 @@ You will need the following tools installed on your system:
 
 ## Documentation
 
-The network protocol is detailed in the RFC_Protocol.md file. It specifies all TCP and UDP packet structures used for communication.
+The network protocol is detailed in the [rfc.txt](Document/rfc.txt) file. It specifies all TCP and UDP packet structures used for communication.
 
 ## Contributing
 
