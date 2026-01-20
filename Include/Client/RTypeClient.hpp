@@ -28,7 +28,8 @@ enum class InGameStatus {
     OPTIONS,
     QUITTING,
     KICKED,
-    GAME_OVER
+    GAME_OVER,
+    VICTORY
 };
 
 /**
@@ -104,6 +105,13 @@ private:
 
     int _score = 0;
     uint32_t _lastScoreIncreaseTime = 0;
+    bool _bossSpawned = false;
+    uint32_t _lastBossShootTime = 0;
+    uint32_t _nextLocalEntityId = 10000;
+    int _bossHP = 1000;
+    int _bossMaxHP = 1000;
+    bool _bossMovingUp = true;
+    bool _bossDefeated = false;
 };
 
 #endif // RTYPECLIENT_HPP_
