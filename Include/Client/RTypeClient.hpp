@@ -27,7 +27,8 @@ enum class InGameStatus {
     PAUSED,
     OPTIONS,
     QUITTING,
-    KICKED
+    KICKED,
+    GAME_OVER
 };
 
 /**
@@ -65,6 +66,8 @@ public:
     void tick();
 
     InGameStatus getStatus() const { return _status; }
+
+    int getScore() const { return _score; }
 private:
     /**
      * @brief Captures and processes local player input.
@@ -98,6 +101,9 @@ private:
     bool _isChatActive = false;
     std::string _chatInput;
     std::vector<std::string> _chatHistory;
+
+    int _score = 0;
+    uint32_t _lastScoreIncreaseTime = 0;
 };
 
 #endif // RTYPECLIENT_HPP_

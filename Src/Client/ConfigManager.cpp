@@ -23,7 +23,7 @@ Config ConfigManager::loadConfig(const std::string& filename) {
         {"DOWN", 83},
         {"LEFT", 65},
         {"RIGHT", 68},
-        {"SHOOT", 32}
+        {"PRESSED", 32}
     };
 
     std::ifstream file(filename);

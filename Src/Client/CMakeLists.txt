@@ -4,6 +4,7 @@ set(SOURCES
     Renderer.cpp
     ConfigManager.cpp
     ParallaxLayer.cpp
+    ClientManager.cpp
 )
 
 add_executable(rtype_client ${SOURCES})

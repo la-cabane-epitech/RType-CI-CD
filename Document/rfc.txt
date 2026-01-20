@@ -1,0 +1,226 @@
+R-Type Network Protocol Specification (RFC)
+
+Abstract
+========
+
+This document specifies the communication protocols used in the R-Type project. It defines the packet structures, data types, and interaction flows for both TCP (for control, lobby, and session management) and UDP (for real-time gameplay) channels.
+
+1. Overview
+===========
+
+The R-Type multiplayer architecture uses a dual-protocol approach:
+1.  TCP: Used for session initialization, reliable exchange of critical information (handshake, lobby joining), and assigning unique Player IDs.
+2.  UDP: Used for the real-time game loop to minimize latency. This includes player movement, entity updates, and game state synchronization.
+
+2. Data Types and Conventions
+=============================
+
+- Byte Order: Little-Endian.
+- Structure Packing: 1-byte alignment (`#pragma pack(1)`).
+- Floating Point: IEEE 754 32-bit float.
+- Types:
+    - `uint8_t`: Unsigned 8-bit integer.
+    - `uint16_t`: Unsigned 16-bit integer.
+    - `uint32_t`: Unsigned 32-bit integer.
+    - `float`: 32-bit floating point.
+
+3. TCP Protocol
+===============
+
+The TCP connection is established by the client to the server's listening port.
+
+3.1 Message Types
+-----------------
+Defined in `TCPMessageType`.
+
+ID | Mnemonic                 | Direction        | Description
+---|--------------------------|------------------|-------------------------------------------------------------
+1  | CONNECT                  | Client -> Server | Request to connect with a username.
+2  | CONNECT_OK               | Server -> Client | Connection successful, provides IDs and port.
+3  | CONNECT_ERROR            | Server -> Client | Connection failed.
+4  | LIST_ROOMS               | Client -> Server | Request the list of available game rooms.
+5  | LIST_ROOMS_RESPONSE      | Server -> Client | Response containing the list of rooms.
+6  | CREATE_ROOM              | Client -> Server | Request to create a new game room.
+7  | CREATE_ROOM_RESPONSE     | Server -> Client | Response with the new room's ID.
+8  | JOIN_ROOM                | Client -> Server | Request to join an existing room.
+9  | JOIN_ROOM_RESPONSE       | Server -> Client | Response indicating if join was successful.
+10 | GET_LOBBY_STATE          | Client -> Server | Request the current state of the player's lobby.
+11 | LOBBY_STATE_RESPONSE     | Server -> Client | Response with lobby details (host, players).
+12 | START_GAME_REQUEST       | Client -> Server | Sent by the host to start the game.
+13 | GAME_STARTING_NOTIFICATION | Server -> Client | Broadcast to all players in a lobby that the game is starting.
+14 | CHAT_MESSAGE             | Client <-> Server | (Not fully implemented) For in-lobby chat.
+
+3.2 Packet Definitions
+----------------------
+
+3.2.1 Connect Request (Type 1)
+struct ConnectRequest {
+    uint8_t type;       // 1
+    char username[32];
+};
+
+3.2.2 Connect Response (Type 2)
+struct ConnectResponse {
+    uint8_t type;         // 2
+    uint32_t playerId;    // Unique player ID
+    uint16_t udpPort;     // Assigned UDP port for gameplay
+    uint32_t serverTimeMs;
+};
+
+3.2.3 Lobby & Room Management
+Lobby and room management packets follow a request/response pattern.
+
+// To request room list
+struct ListRoomsRequest { uint8_t type; }; // 4
+
+// To create a room
+struct CreateRoomRequest { uint8_t type; }; // 6
+
+// To join a room
+struct JoinRoomRequest { uint8_t type; int32_t roomId; }; // 8
+
+// To get lobby state
+struct GetLobbyStateRequest { uint8_t type; }; // 10
+
+// To start the game (host only)
+struct StartGameRequest { uint8_t type; }; // 12
+
+Responses are more complex, often including variable-length data. For example, `ListRoomsResponse` is followed by `count` `RoomInfo` structs, and `LobbyStateResponse` is followed by `playerCount` `LobbyPlayerInfo` structs.
+
+4. UDP Protocol
+===============
+
+The UDP protocol handles the high-frequency game state replication.
+
+4.1 Packet Header
+-----------------
+All UDP packets begin with a 1-byte `type` field identifying the message.
+
+4.2 Message Types
+-----------------
+Defined in `UDPMessageType`.
+
+ID | Mnemonic             | Direction        | Description
+---|----------------------|------------------|-------------------------------------------
+1  | PLAYER_INPUT         | Client -> Server | Player control inputs
+2  | PLAYER_STATE         | Server -> Client | Authoritative player state
+3  | ENTITY_SPAWN         | Server -> Client | Spawn visual entity
+4  | ENTITY_UPDATE        | Server -> Client | Update entity position
+5  | ENTITY_DESTROY       | Server -> Client | Remove entity
+6  | PING                 | Client -> Server | Latency check
+7  | PONG                 | Server -> Client | Latency response
+8  | PLAYER_DISCONNECT    | Client -> Server | Graceful disconnect
+9  | GLOBAL_STATE_SYNC    | Server -> Client | Full game state synchronization.
+10 | YOU_HAVE_BEEN_KICKED | Server -> Client | Notification that the player was kicked.
+
+4.3 Input Bitmask
+-----------------
+Defined in the `Input` enum. Multiple actions can be combined using a bitwise OR.
+
+Bit | Value | Action
+----|-------|--------------
+0   | 0x01  | UP
+1   | 0x02  | DOWN
+2   | 0x04  | LEFT
+3   | 0x08  | RIGHT
+4   | 0x10  | PRESSED
+5   | 0x20  | HOLD
+
+4.4 Packet Definitions
+----------------------
+
+4.4.1 Player Input (Type 1)
+Sent by the client every tick to inform the server of pressed keys.
+
+struct PlayerInputPacket {
+    uint8_t type;       // 1
+    uint32_t playerId;  // ID received via TCP
+    uint32_t tick;      // Client tick counter
+    uint8_t inputs;     // Input Bitmask (UP, DOWN, HOLD, etc.)
+};
+
+4.4.2 Player State (Type 2)
+Sent by the server to correct/update the player's position.
+
+struct PlayerStatePacket {
+    uint8_t type;              // 2
+    uint32_t playerId;         // ID of the player being updated
+    uint32_t lastProcessedTick;// Last input tick processed by server
+    uint32_t timestamp;        // Server timestamp
+    float x;                   // X Position
+    float y;                   // Y Position
+};
+
+4.4.3 Entity Spawn (Type 3)
+Sent when a new entity (enemy, bullet, powerup) appears.
+
+struct EntitySpawnPacket {
+    uint8_t type;       // 3
+    uint32_t entityId;  // Unique Entity ID
+    uint16_t entityType;// Type of entity (sprite/behavior ID)
+    uint32_t timestamp; // Server timestamp
+    float x;            // Spawn X
+    float y;            // Spawn Y
+};
+
+4.4.4 Entity Update (Type 4)
+Sent to update the position of an existing entity.
+
+struct EntityUpdatePacket {
+    uint8_t type;       // 4
+    uint32_t entityId;  // Existing Entity ID
+    uint32_t timestamp; // Server timestamp
+    float x;            // New X
+    float y;            // New Y
+};
+
+4.4.5 Entity Destroy (Type 5)
+Sent when an entity is destroyed or leaves the screen.
+
+struct EntityDestroyPacket {
+    uint8_t type;       // 5
+    uint32_t entityId;  // Entity to remove
+};
+
+4.4.6 Ping / Pong (Type 6 / 7)
+Used to calculate Round Trip Time (RTT).
+
+struct PingPacket {
+    uint8_t type;       // 6
+    uint32_t timestamp; // Originating timestamp
+};
+
+struct PongPacket {
+    uint8_t type;       // 7
+    uint32_t timestamp; // Original client timestamp from PingPacket
+};
+
+4.4.7 Player Disconnect (Type 8)
+Sent by client before closing the application.
+
+struct PlayerDisconnectPacket {
+    uint8_t type;       // 8
+    uint32_t playerId;  // Player ID
+};
+
+4.4.8 Global State Sync (Type 9)
+Sent by the server to synchronize the entire game state. The packet header is followed by `entityCount` instances of `SyncedEntityState`.
+
+struct GlobalStateSyncPacket {
+    uint8_t type;           // 9
+    uint32_t entityCount;
+};
+
+struct SyncedEntityState {
+    uint32_t entityId;
+    uint16_t entityType;
+    float x;
+    float y;
+};
+
+4.4.9 You Have Been Kicked (Type 10)
+Sent by the server to a player who has been kicked from a room.
+
+struct YouHaveBeenKickedPacket {
+    uint8_t type; // 10
+};

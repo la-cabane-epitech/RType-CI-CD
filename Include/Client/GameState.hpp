@@ -18,6 +18,7 @@
 struct Position {
     float x; /**< X coordinate */
     float y; /**< Y coordinate */
+    float vy = 0.0f; /**< Vertical velocity for animation */
 };
 
 /**

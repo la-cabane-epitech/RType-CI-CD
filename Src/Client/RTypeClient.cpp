@@ -31,6 +31,43 @@ void RTypeClient::tick()
             if (IsKeyPressed(KEY_ESCAPE)) {
                 _status = InGameStatus::PAUSED;
             }
+
+            if (_clock.getElapsedTimeMs() - _lastScoreIncreaseTime >= 1000) {
+                _score += 5;
+                _lastScoreIncreaseTime = _clock.getElapsedTimeMs();
+            }
+
+            if (_gameState.players.count(_gameState.myPlayerId)) {
+                auto& player = _gameState.players[_gameState.myPlayerId];
+                Rectangle playerRec = { player.x, player.y, 60.0f, 30.0f };
+                for (const auto& pair : _gameState.entities) {
+                    const auto& entity = pair.second;
+                    if (entity.type == 1 || entity.type == 4 || entity.type == 5) continue;
+
+                    float w = 40.0f, h = 40.0f;
+                    if (_renderer.ENTITY_REGISTRY.count(entity.type)) {
+                        const auto& config = _renderer.ENTITY_REGISTRY.at(entity.type);
+                        w = (config.width > 0 ? config.width : 33.0f) * config.scale;
+                        h = (config.height > 0 ? config.height : 33.0f) * config.scale;
+                    }
+                    Rectangle entityRec = { entity.x, entity.y, w, h };
+
+                    if (CheckCollisionRecs(playerRec, entityRec)) {
+                        std::cout << "[DEBUG] Killed by Entity Type: " << static_cast<int>(entity.type) << std::endl;
+                        _status = InGameStatus::GAME_OVER;
+                        _renderer.addExplosion(player.x, player.y);
+                        
+                        PlayerDisconnectPacket disconnectPkt;
+                        disconnectPkt.type = UDPMessageType::PLAYER_DISCONNECT;
+                        disconnectPkt.playerId = _gameState.myPlayerId;
+                        _udpClient.sendMessage(disconnectPkt);
+
+                        _gameState.players.erase(_gameState.myPlayerId);
+                        break;
+                    }
+                }
+            }
+
             handleInput();
             update();
             break;
@@ -44,13 +81,26 @@ void RTypeClient::tick()
                 _status = InGameStatus::PAUSED;
             }
             break;
+        case InGameStatus::GAME_OVER:
+            if (IsKeyPressed(KEY_ENTER)) {
+                _status = InGameStatus::QUITTING;
+            }
+            update();
+            break;
         default:
             break;
     }
 
     _renderer.draw(_keybinds);
     _renderer.drawChat(_chatHistory, _chatInput, _isChatActive);
+    
+    const char* scoreText = TextFormat("SCORE: %06d", _score);
+    int textWidth = MeasureText(scoreText, 30);
+    DrawText(scoreText, GetScreenWidth() - textWidth - 20, 20, 30, RAYWHITE);
 
+    if (_status == InGameStatus::GAME_OVER) {
+        _renderer.drawGameOverScreen(_score);
+    }
     if (_status == InGameStatus::PAUSED) {
         PauseMenuChoice choice = _renderer.drawPauseMenu();
         if (choice == PauseMenuChoice::OPTIONS) _status = InGameStatus::OPTIONS;
@@ -127,9 +177,9 @@ void RTypeClient::handleInput()
     } else if (IsKeyReleased(KEY_SPACE)) {
         if (isCharging) {
             if (_clock.getElapsedTimeMs() - chargeStart > 500)
-            packet.inputs |= CHARGE_SHOOT;
+            packet.inputs |= HOLD;
             else
-            packet.inputs |= SHOOT;
+            packet.inputs |= PRESSED;
             isCharging = false;
         }
     }
@@ -162,6 +212,8 @@ void RTypeClient::update()
             const auto* serverState = reinterpret_cast<const PlayerStatePacket*>(data.data());
 
             if (serverState->playerId == _gameState.myPlayerId) {
+                if (_status == InGameStatus::GAME_OVER) continue;
+
                 _gameState.players[serverState->playerId] = {serverState->x, serverState->y};
 
                 while (!_pendingInputs.empty() && _pendingInputs.front().tick <= serverState->lastProcessedTick) {
@@ -172,7 +224,12 @@ void RTypeClient::update()
                     applyInput(input);
                 }
             } else {
-                _gameState.players[serverState->playerId] = {serverState->x, serverState->y};
+                float vy = 0.0f;
+                auto it = _gameState.players.find(serverState->playerId);
+                if (it != _gameState.players.end()) {
+                    vy = serverState->y - it->second.y;
+                }
+                _gameState.players[serverState->playerId] = {serverState->x, serverState->y, vy};
             }
         }
 
@@ -191,13 +248,28 @@ void RTypeClient::update()
 
         if (type == UDPMessageType::ENTITY_DESTROY && data.size() >= sizeof(EntityDestroyPacket)) {
             const auto* destroyPkt = reinterpret_cast<const EntityDestroyPacket*>(data.data());
+            if (_gameState.entities.count(destroyPkt->entityId)) {
+                const auto& entity = _gameState.entities[destroyPkt->entityId];
+                if (entity.type == 2) _score += 50;
+                else if (entity.type == 3) _score += 100;
+                if (entity.x > -20.0f) {
+                    _renderer.addExplosion(entity.x, entity.y);
+                }
+            }
             _gameState.entities.erase(destroyPkt->entityId);
         }
 
         if (type == UDPMessageType::PLAYER_DISCONNECT && data.size() >= sizeof(PlayerDisconnectPacket)) {
             const auto* disconnectPkt = reinterpret_cast<const PlayerDisconnectPacket*>(data.data());
+            if (_gameState.players.count(disconnectPkt->playerId)) {
+                _renderer.addExplosion(_gameState.players[disconnectPkt->playerId].x, _gameState.players[disconnectPkt->playerId].y);
+            }
             _gameState.players.erase(disconnectPkt->playerId);
             std::cout << "[Game] Player " << disconnectPkt->playerId << " disconnected." << std::endl;
+
+            if (disconnectPkt->playerId == _gameState.myPlayerId) {
+                _status = InGameStatus::GAME_OVER;
+            }
         }
 
         if (type == UDPMessageType::PONG && data.size() >= sizeof(PongPacket)) {

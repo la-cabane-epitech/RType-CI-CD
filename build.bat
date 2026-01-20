@@ -16,4 +16,4 @@ cmake --build ./build --config Release --target rtype_client rtype_server
 
 copy build\Src\Client\Release\rtype_client.exe .
 copy build\Src\Server\Release\rtype_server.exe .
-copy build\Release\rtype_network.dll .
+copy build\Src\Network\Release\rtype_network.dll .

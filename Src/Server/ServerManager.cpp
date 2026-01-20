@@ -76,8 +76,8 @@ void ServerManager::onMessageReceived(const char* data, size_t length, const soc
                             if (p->inputs & DOWN) player->y += player->velocity;
                             if (p->inputs & LEFT) player->x -= player->velocity;
                             if (p->inputs & RIGHT) player->x += player->velocity;
-                            if (p->inputs & SHOOT) game->createPlayerShot(p->playerId, _udpServer);
-                            if (p->inputs & CHARGE_SHOOT) game->createPlayerChargedShot(p->playerId, _udpServer);
+                            if (p->inputs & PRESSED) game->createPlayerShot(p->playerId, _udpServer);
+                            if (p->inputs & HOLD) game->createPlayerChargedShot(p->playerId, _udpServer);
                         }
                         break;
                     }

@@ -114,8 +114,9 @@ void TCPServer::handleClient(std::shared_ptr<asio::ip::tcp::socket> clientSocket
 
     ConnectRequest connectReq{};
     asio::read(*clientSocket, asio::buffer(&connectReq, sizeof(connectReq)), ec);
-    if (ec || connectReq.type != TCPMessageType::CONNECT) {
+    if (ec == asio::error::eof || connectReq.type != TCPMessageType::CONNECT) {
         clientSocket->close();
+        std::cout << "[TCP] Client disconnected. (Invalid connect request)" << std::endl;
         return;
     }
 

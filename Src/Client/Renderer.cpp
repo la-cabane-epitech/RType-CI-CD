@@ -71,12 +71,15 @@ void Renderer::draw(const std::map<std::string, int>& keybinds)
     for (const auto& pair : _gameState.players) {
         Color color = (pair.first == _gameState.myPlayerId) ? BLUE : RED;
 
-        float targetBank = 2.0f; // 2.0 = Neutre (Frame 2)
+        float targetBank = 2.0f;
         if (pair.first == _gameState.myPlayerId) {
             int upKey = (keybinds.count("UP")) ? keybinds.at("UP") : KEY_UP;
             int downKey = (keybinds.count("DOWN")) ? keybinds.at("DOWN") : KEY_DOWN;
             if (IsKeyDown(upKey)) targetBank = 4.0f;
             else if (IsKeyDown(downKey)) targetBank = 0.0f;
+        } else {
+            if (pair.second.vy < -0.1f) targetBank = 4.0f;
+            else if (pair.second.vy > 0.1f) targetBank = 0.0f;
         }
 
         if (_playerBank.find(pair.first) == _playerBank.end()) _playerBank[pair.first] = 2.0f;
@@ -115,8 +118,14 @@ void Renderer::draw(const std::map<std::string, int>& keybinds)
                 const Texture2D& texture = _textures.at(4);
                 int currentFrame = static_cast<int>(GetTime() * 10.0f) % 8;
                 Rectangle chargeRec = { 0.0f + currentFrame * 33.0f, 49.0f, 33.0f, 36.0f };
-                Vector2 chargePos = { pair.second.x + 10.0f, pair.second.y - chargeRec.height / 2 };
-                DrawTextureRec(texture, chargeRec, chargePos, WHITE);
+                float chargeScale = 2.0f;
+                Rectangle destRec = { 
+                    pair.second.x + 10.0f, 
+                    pair.second.y - (chargeRec.height * chargeScale) / 2.0f,
+                    chargeRec.width * chargeScale, 
+                    chargeRec.height * chargeScale 
+                };
+                DrawTexturePro(texture, chargeRec, destRec, {0, 0}, 0.0f, WHITE);
             }
         }
     }
@@ -145,6 +154,29 @@ void Renderer::draw(const std::map<std::string, int>& keybinds)
             }
         } else {
             DrawCircleLines(static_cast<int>(entity.x), static_cast<int>(entity.y), 20, MAGENTA);
+        }
+    }
+
+    if (_textures.count(4)) {
+        const Texture2D& texture = _textures.at(4);
+        for (auto it = _explosions.begin(); it != _explosions.end();) {
+            double lifeTime = GetTime() - it->startTime;
+            if (lifeTime > 0.5) {
+                it = _explosions.erase(it);
+            } else {
+                int frame = static_cast<int>(lifeTime * 12.0f) % 6;                 
+                float startX = 67.0f;
+                float startY = 294.0f;
+                float frameWidth = 38.0f; 
+                float frameHeight = 32.0f;
+
+                Rectangle sourceRec = { startX + frame * frameWidth, startY, frameWidth, frameHeight };
+                Rectangle destRec = { it->x, it->y, frameWidth * 2.5f, frameHeight * 2.5f };
+                Vector2 origin = { destRec.width / 2.0f, destRec.height / 2.0f };
+                
+                DrawTexturePro(texture, sourceRec, destRec, origin, 0.0f, WHITE);
+                ++it;
+            }
         }
     }
 }
@@ -326,6 +358,11 @@ int Renderer::drawRoomMenu(const std::vector<RoomInfo>& rooms)
     return action;
 }
 
+void Renderer::addExplosion(float x, float y)
+{
+    _explosions.push_back({x, y, GetTime()});
+}
+
 bool Renderer::drawLobby(const LobbyState& lobbyState, uint32_t myPlayerId)
 {
     ClearBackground(BLACK);
@@ -412,6 +449,26 @@ void Renderer::drawKickedScreen()
 
     DrawText(title, GetScreenWidth() / 2 - titleWidth / 2, GetScreenHeight() / 2 - 40, 40, RED);
     DrawText(subtitle, GetScreenWidth() / 2 - subtitleWidth / 2, GetScreenHeight() / 2 + 20, 20, LIGHTGRAY);
+}
+
+void Renderer::drawGameOverScreen(int score)
+{
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.8f));
+
+    const char* title = "GAME OVER";
+    std::string scoreStr = "Final Score: " + std::to_string(score);
+    const char* subtitle = "Press ENTER to exit";
+
+    int titleWidth = MeasureText(title, 60);
+    int scoreWidth = MeasureText(scoreStr.c_str(), 40);
+    int subtitleWidth = MeasureText(subtitle, 20);
+
+    int centerX = GetScreenWidth() / 2;
+    int centerY = GetScreenHeight() / 2;
+
+    DrawText(title, centerX - titleWidth / 2, centerY - 100, 60, RED);
+    DrawText(scoreStr.c_str(), centerX - scoreWidth / 2, centerY, 40, WHITE);
+    DrawText(subtitle, centerX - subtitleWidth / 2, centerY + 80, 20, LIGHTGRAY);
 }
 
 const char* Renderer::GetKeyName(int key) {
