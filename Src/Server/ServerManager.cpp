@@ -69,16 +69,7 @@ void ServerManager::onMessageReceived(const char* data, size_t length, const soc
                 for (auto& [id, game] : _rooms) {
                     if (game->getPlayer(p->playerId)) {
                         game->updatePlayerUdpAddr(p->playerId, clientAddr);
-                        game->setPlayerLastProcessedTick(p->playerId, p->tick);
-
-                        if (Player* player = game->getPlayer(p->playerId)) {
-                            if (p->inputs & UP) player->y -= player->velocity;
-                            if (p->inputs & DOWN) player->y += player->velocity;
-                            if (p->inputs & LEFT) player->x -= player->velocity;
-                            if (p->inputs & RIGHT) player->x += player->velocity;
-                            if (p->inputs & PRESSED) game->createPlayerShot(p->playerId, _udpServer);
-                            if (p->inputs & HOLD) game->createPlayerChargedShot(p->playerId, _udpServer);
-                        }
+                        game->handlePlayerInput(*p, _udpServer);
                         break;
                     }
                 }

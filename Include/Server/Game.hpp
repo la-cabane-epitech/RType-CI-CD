@@ -37,6 +37,13 @@ struct Player {
     sockaddr_in udpAddr;             ///< Player's UDP address for updates
     uint32_t lastProcessedTick = 0;  ///< Last input tick processed
     bool addrSet = false;            ///< Whether the UDP address has been resolved
+
+    uint32_t lastInputTick = 0;      ///< The last tick number received from this player's input.
+    uint64_t receivedInputs = 0;     ///< Total number of input packets received from this player.
+    uint64_t lostInputs = 0;         ///< Total number of input packets estimated as lost from this player.
+    bool firstInputReceived = true;  ///< Flag to handle the first input packet differently for stats.
+    uint32_t statePacketSequence = 0;///< The sequence number for the next state packet to be sent to this player.
+
     int height = 17;                 ///< Hitbox height
     int width = 33;                  ///< Hitbox width
 };
@@ -54,7 +61,7 @@ struct Entity {
     float velocityY = 0.0f;  ///< Vertical velocity
     int height = 0;          ///< Hitbox height
     int width = 0;           ///< Hitbox width
-    bool is_collide = false; ///< Collision state
+    bool is_collide = false; ///< Flag indicating if the entity has collided and should be destroyed.
 };
 
 /**
@@ -110,6 +117,13 @@ public:
      * @param udpServer Reference to the UDP server instance.
      */
     void broadcastGameState(UDPServer& udpServer);
+
+    /**
+     * @brief Handles a player input packet, updating state and calculating packet loss.
+     * @param pkt The received player input packet.
+     * @param udpServer Reference to the UDP server for creating shots.
+     */
+    void handlePlayerInput(const PlayerInputPacket& pkt, UDPServer& udpServer);
 
     /**
      * @brief Updates the last processed input tick for a player.

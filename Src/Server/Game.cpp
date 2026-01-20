@@ -18,14 +18,50 @@ void Game::addPlayer(uint32_t playerId, const char* username) {
     _players.push_back(newPlayer);
 }
 
+void Game::handlePlayerInput(const PlayerInputPacket& pkt, UDPServer& udpServer)
+{
+    Player* player = getPlayer(pkt.playerId);
+    if (!player) {
+        return;
+    }
+
+    // --- Détection de la perte de paquets ---
+    if (player->firstInputReceived) {
+        player->lastInputTick = pkt.tick;
+        player->receivedInputs = 1;
+        player->firstInputReceived = false;
+    } else if (pkt.tick > player->lastInputTick) {
+        uint32_t lostCount = pkt.tick - player->lastInputTick - 1;
+        if (lostCount > 0) {
+            player->lostInputs += lostCount;
+            // Optionnel: logguer une perte excessive
+            // std::cout << "[GAME] Player " << pkt.playerId << " lost " << lostCount << " input packets." << std::endl;
+        }
+        player->receivedInputs++;
+        player->lastInputTick = pkt.tick;
+    }
+    // else: paquet arrivé en désordre ou dupliqué, on l'ignore pour les stats pour l'instant.
+
+    // --- Logique de traitement de l'input (déplacée ici) ---
+    setPlayerLastProcessedTick(pkt.playerId, pkt.tick);
+
+    if (pkt.inputs & UP) player->y -= player->velocity;
+    if (pkt.inputs & DOWN) player->y += player->velocity;
+    if (pkt.inputs & LEFT) player->x -= player->velocity;
+    if (pkt.inputs & RIGHT) player->x += player->velocity;
+    if (pkt.inputs & PRESSED) createPlayerShot(pkt.playerId, udpServer);
+    if (pkt.inputs & HOLD) createPlayerChargedShot(pkt.playerId, udpServer);
+}
+
 void Game::broadcastGameState(UDPServer& udpServer) {
     std::lock_guard<std::mutex> lock(_playersMutex);
 
-    for (const auto& player : _players) {
+    for (auto& player : _players) { // Doit être non-const pour modifier la séquence
         if (!player.addrSet) continue;
 
         PlayerStatePacket statePkt;
         statePkt.playerId = player.id;
+        statePkt.sequence = player.statePacketSequence++;
         statePkt.lastProcessedTick = player.lastProcessedTick;
         statePkt.x = player.x;
         statePkt.y = player.y;

@@ -104,6 +104,34 @@ private:
 
     int _score = 0;
     uint32_t _lastScoreIncreaseTime = 0;
+
+    /**
+     * @enum PacketStatus
+     * @brief Represents the status of a packet in the event queue for loss calculation.
+     */
+    enum class PacketStatus {
+        RECEIVED, ///< The packet was successfully received.
+        LOST      ///< The packet was determined to be lost.
+    };
+    /**
+     * @struct PacketEvent
+     * @brief Stores an event (packet received or lost) with its timestamp.
+     */
+    struct PacketEvent {
+        PacketStatus status; ///< The status of the packet.
+        uint32_t timestamp;  ///< The time the event was recorded.
+    };
+
+    /// The duration of the sliding window for packet loss calculation, in seconds.
+    static constexpr uint32_t PACKET_LOSS_WINDOW_SECONDS = 5;
+
+    float _packetLossPercentage = 0.0f; ///< The calculated packet loss percentage over the sliding window.
+    uint32_t _lastServerSeq = 0;        ///< The sequence number of the last received server state packet.
+    bool _isFirstServerPacket = true;   ///< Flag to handle the first server packet differently for stats.
+    std::deque<PacketEvent> _packetEvents; ///< A queue of recent packet events for the sliding window calculation.
+
+    // --- END STATS ---
+
 };
 
 #endif // RTYPECLIENT_HPP_

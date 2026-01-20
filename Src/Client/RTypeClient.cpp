@@ -15,7 +15,10 @@ RTypeClient::RTypeClient(const std::string& serverIp, TCPClient& tcpClient, cons
         _renderer(_gameState),
         _tick(connectResponse.serverTimeMs),
         _clock(),
-        _keybinds(keybinds)
+        _keybinds(keybinds),
+        _packetLossPercentage(0.0f),
+        _lastServerSeq(0),
+        _isFirstServerPacket(true)
 {
     _gameState.myPlayerId = connectResponse.playerId;
 
@@ -97,6 +100,9 @@ void RTypeClient::tick()
     const char* scoreText = TextFormat("SCORE: %06d", _score);
     int textWidth = MeasureText(scoreText, 30);
     DrawText(scoreText, GetScreenWidth() - textWidth - 20, 20, 30, RAYWHITE);
+
+    const char* lossText = TextFormat("Loss: %.1f%%", _packetLossPercentage);
+    DrawText(lossText, GetScreenWidth() - MeasureText(lossText, 20) - 20, 60, 20, _packetLossPercentage > 5.0f ? RED : YELLOW);
 
     if (_status == InGameStatus::GAME_OVER) {
         _renderer.drawGameOverScreen(_score);
@@ -213,6 +219,33 @@ void RTypeClient::update()
 
             if (serverState->playerId == _gameState.myPlayerId) {
                 if (_status == InGameStatus::GAME_OVER) continue;
+
+                uint32_t nowMs = _clock.getElapsedTimeMs();
+
+                if (_isFirstServerPacket) {
+                    _lastServerSeq = serverState->sequence;
+                    _packetEvents.push_back({PacketStatus::RECEIVED, nowMs});
+                    _isFirstServerPacket = false;
+                } else if (serverState->sequence > _lastServerSeq) {
+                    uint32_t lostCount = serverState->sequence - _lastServerSeq - 1;
+                    for (uint32_t i = 0; i < lostCount; ++i) {
+                        _packetEvents.push_back({PacketStatus::LOST, nowMs});
+                    }
+                    _packetEvents.push_back({PacketStatus::RECEIVED, nowMs});
+                    _lastServerSeq = serverState->sequence;
+                }
+
+                uint32_t cutoffTime = nowMs - (PACKET_LOSS_WINDOW_SECONDS * 1000);
+                while (!_packetEvents.empty() && _packetEvents.front().timestamp < cutoffTime) {
+                    _packetEvents.pop_front();
+                }
+
+                size_t lostInWindow = 0;
+                for (const auto& event : _packetEvents) {
+                    if (event.status == PacketStatus::LOST)
+                        lostInWindow++;
+                }
+                _packetLossPercentage = _packetEvents.empty() ? 0.0f : (static_cast<float>(lostInWindow) / _packetEvents.size()) * 100.0f;
 
                 _gameState.players[serverState->playerId] = {serverState->x, serverState->y};
 
