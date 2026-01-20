@@ -337,13 +337,13 @@ void Game::update(UDPServer& udpServer) {
     bool spawnBoss = false;
     int bossMaxHP = 1000;
 
-    if (g_bossLevel[this] == 0 && _gameTime > 30.0f) {
+    if (g_bossLevel[this] == 0 && _gameTime > 10.0f) {
         g_bossLevel[this] = 1;
         g_bossHP[this] = 1000;
         bossMaxHP = 1000;
         spawnBoss = true;
         std::cout << "[Game] Boss Level 1 Spawned!" << std::endl;
-    } else if (g_bossLevel[this] == 2 && _gameTime > g_bossDeathTime[this] + 30.0f) { // Spawn Boss 2 (30s after death)
+    } else if (g_bossLevel[this] == 2 && _gameTime > g_bossDeathTime[this] + 0.0f) { // Spawn Boss 2 (30s after death)
         g_bossLevel[this] = 3;
         g_bossHP[this] = 2000;
         bossMaxHP = 2000;
