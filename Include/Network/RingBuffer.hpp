@@ -5,8 +5,8 @@
 ** RingBuffer
 */
 
-#ifndef RINGBUFFER_HPP_
-#define RINGBUFFER_HPP_
+#ifndef NETWORK_RINGBUFFER_HPP_
+#define NETWORK_RINGBUFFER_HPP_
 
 #include <array>
 #include <mutex>
@@ -16,6 +16,8 @@
  * @file RingBuffer.hpp
  * @brief Thread-safe circular buffer implementation.
  */
+
+namespace Network {
 
 /**
  * @class RingBuffer
@@ -103,4 +105,6 @@ class RingBuffer {
         std::mutex _mutex;
 };
 
-#endif /* !RINGBUFFER_HPP_ */
+}
+
+#endif /* !NETWORK_RINGBUFFER_HPP_ */

@@ -5,8 +5,8 @@
 ** INetworkHandler
 */
 
-#ifndef INETWORKHANDLER_HPP_
-#define INETWORKHANDLER_HPP_
+#ifndef NETWORK_INETWORKHANDLER_HPP_
+#define NETWORK_INETWORKHANDLER_HPP_
 
 #include <asio.hpp>
 #include <cstddef>
@@ -15,6 +15,8 @@
  * @file INetworkHandler.hpp
  * @brief Interface for handling network messages.
  */
+
+namespace Network {
 
 /**
  * @class INetworkHandler
@@ -40,4 +42,6 @@ public:
     virtual void onMessageReceived(const char* data, size_t length, const sockaddr_in& addr) = 0;
 };
 
-#endif /* !INETWORKHANDLER_HPP_ */
+}
+
+#endif /* !NETWORK_INETWORKHANDLER_HPP_ */

@@ -5,8 +5,8 @@
 ** Packet
 */
 
-#ifndef PACKET_HPP_
-#define PACKET_HPP_
+#ifndef NETWORK_PACKET_HPP_
+#define NETWORK_PACKET_HPP_
 
 #include <array>
 #include <cstddef>
@@ -16,6 +16,8 @@
  * @file Packet.hpp
  * @brief Defines the generic Packet structure for network communication.
  */
+
+namespace Network {
 
 /**
  * @struct Packet
@@ -28,5 +30,6 @@ struct Packet {
     sockaddr_in addr;                        ///< Source or destination address
 };
 
+}
 
-#endif /* !PACKET_HPP_ */
+#endif /* !NETWORK_PACKET_HPP_ */
