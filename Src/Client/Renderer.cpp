@@ -55,7 +55,7 @@ void Renderer::draw(const std::map<std::string, int>& keybinds)
     float scrollSpeed = 150.0f;
 
     static bool isRedMode = false;
-    bool targetRed = (_gameState.score >= 500);
+    bool targetRed = (_gameState.score >= 3000);
 
     if (isRedMode != targetRed) {
         _parallaxLayers.clear();
