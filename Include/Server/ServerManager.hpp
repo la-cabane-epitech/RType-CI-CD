@@ -13,8 +13,9 @@
 #include <atomic>
 #include <vector>
 #include "Server/Game.hpp"
-#include "Server/TCPServer.hpp"
-#include "Server/UDPServer.hpp"
+#include "Network/TCP/TCPServer.hpp"
+#include "Network/ITCPHandler.hpp"
+#include "Network/UDP/UDPServer.hpp"
 #include "Clock.hpp"
 
 /**
@@ -31,7 +32,7 @@
  * It implements both INetworkHandler (for UDP messages) and ITCPHandler
  * (for TCP lobby actions).
  */
-class ServerManager : public INetworkHandler, public ITCPHandler {
+class ServerManager : public Network::INetworkHandler, public Network::ITCPHandler {
 public:
     /**
      * @brief Construct a new ServerManager object.
@@ -69,7 +70,7 @@ public:
      * @brief Retrieves a list of all active rooms.
      * @return A vector of RoomSimpleInfo structures.
      */
-    std::vector<RoomSimpleInfo> onGetRooms() override;
+    std::vector<Network::RoomSimpleInfo> onGetRooms() override;
 
     /**
      * @brief Handles a player joining a room.

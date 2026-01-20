@@ -112,9 +112,9 @@ int ServerManager::onCreateRoom() {
     return id;
 }
 
-std::vector<RoomSimpleInfo> ServerManager::onGetRooms() {
+std::vector<Network::RoomSimpleInfo> ServerManager::onGetRooms() {
     std::lock_guard<std::mutex> lock(_serverMutex);
-    std::vector<RoomSimpleInfo> list;
+    std::vector<Network::RoomSimpleInfo> list;
     for (auto const& [id, game] : _rooms) {
         list.push_back({id, game->getPlayerCount()});
     }

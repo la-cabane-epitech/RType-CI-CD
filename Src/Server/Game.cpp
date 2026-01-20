@@ -7,7 +7,7 @@
 #include <chrono>
 
 #include "Server/Game.hpp"
-#include "Server/UDPServer.hpp"
+#include "Network/UDP/UDPServer.hpp"
 #include <cmath>
 
 

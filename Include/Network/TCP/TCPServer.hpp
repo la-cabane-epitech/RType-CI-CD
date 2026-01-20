@@ -15,8 +15,8 @@
 #include <atomic>
 #include <mutex>
 #include "Client/Asio.hpp"
-#include "ITCPHandler.hpp"
-#include "Protocole/ProtocoleTCP.hpp"
+#include "Network/ITCPHandler.hpp"
+#include "Network/Protocole/ProtocoleTCP.hpp"
 #include "Clock.hpp"
 
 /**
@@ -41,7 +41,7 @@ public:
      * @param handler Pointer to the handler for game logic events.
      * @param clock Reference to the shared Clock object.
      */
-    TCPServer(int port, ITCPHandler* handler, Clock& clock);
+    TCPServer(int port, Network::ITCPHandler* handler, Clock& clock);
 
     /**
      * @brief Destroy the TCPServer object.
@@ -98,7 +98,7 @@ private:
 
     std::atomic<bool> _running; /**< Flag indicating if the server is running. */
 
-    ITCPHandler* _handler; /**< Pointer to the handler for game logic events. */
+    Network::ITCPHandler* _handler; /**< Pointer to the handler for game logic events. */
 
     uint32_t _nextPlayerId = 1; /**< Counter for assigning unique player IDs. */
     int _nextRoomId = 0; /**< Counter for assigning unique room IDs. */

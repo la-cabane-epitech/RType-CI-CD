@@ -19,10 +19,10 @@
 #include <memory>
 
 #include "Client/Asio.hpp"
-#include "Server/RingBuffer.hpp"
-#include "Server/Packet.hpp"
-#include "Server/INetworkHandler.hpp"
-#include "Protocole/ProtocoleUDP.hpp"
+#include "Network/RingBuffer.hpp"
+#include "Network/Packet.hpp"
+#include "Network/INetworkHandler.hpp"
+#include "Network/Protocole/ProtocoleUDP.hpp"
 #include "Clock.hpp"
 #include "Client/Windows.hpp"
 
@@ -57,7 +57,7 @@ public:
      */
     // UDPServer(int port, std::map<int, std::shared_ptr<Game>>& rooms, Clock& clock);
 
-    UDPServer(int port, INetworkHandler* handler, Clock& clock);
+    UDPServer(int port, Network::INetworkHandler* handler, Clock& clock);
 
     /**
      * @brief Destroy the UDPServer object.
@@ -83,7 +83,7 @@ public:
     template<typename T>
     void queueMessage(const T& msg, const sockaddr_in& addr)
     {
-        Packet pkt;
+        Network::Packet pkt;
         pkt.addr = addr;
         pkt.length = sizeof(T);
 
@@ -108,15 +108,15 @@ private:
     std::atomic<bool> _running; /**< Running state flag */
     // std::map<int, std::shared_ptr<Game>>& _rooms; /**< Reference to shared rooms */
 
-    INetworkHandler* _handler;
+    Network::INetworkHandler* _handler;
     const Clock& _clock; /**< Reference to the server clock */
 
     std::thread _recvThread; /**< Thread for receiving packets */
     std::thread _sendThread; /**< Thread for sending packets */
     std::thread _processThread; /**< Thread for processing logic */
 
-    RingBuffer<Packet, 1024> _incoming; /**< Buffer for incoming packets */
-    RingBuffer<Packet, 1024> _outgoing; /**< Buffer for outgoing packets */
+    Network::RingBuffer<Network::Packet, 1024> _incoming; /**< Buffer for incoming packets */
+    Network::RingBuffer<Network::Packet, 1024> _outgoing; /**< Buffer for outgoing packets */
 
     std::unordered_map<uint32_t, ClientInfo> _clients; /**< Map of connected clients */
 

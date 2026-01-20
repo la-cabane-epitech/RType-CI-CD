@@ -5,7 +5,7 @@
 ** UDPClient.cpp
 */
 
-#include "Client/UDPClient.hpp"
+#include "Network/UDP/UDPClient.hpp"
 #include <stdexcept>
 
 UDPClient::UDPClient(const std::string& serverIp, uint16_t port)

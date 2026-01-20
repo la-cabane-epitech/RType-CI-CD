@@ -12,7 +12,7 @@
 #include <stdint.h>
 #include <cstring>
 #include <vector>
-#include "Protocole/ProtocoleTCP.hpp"
+#include "Network/Protocole/ProtocoleTCP.hpp"
 #include "Client/Asio.hpp"
 #include <optional>
 

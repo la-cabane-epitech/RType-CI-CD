@@ -7,7 +7,7 @@
 
 #include "Client/Ray.hpp"
 #include "Client/RTypeClient.hpp"
-#include "Protocole/ProtocoleUDP.hpp"
+#include "Network/Protocole/ProtocoleUDP.hpp"
 
 RTypeClient::RTypeClient(const std::string& serverIp, TCPClient& tcpClient, const ConnectResponse& connectResponse, const std::map<std::string, int>& keybinds)
     : _udpClient(serverIp, connectResponse.udpPort),

@@ -12,10 +12,10 @@
 #include "ParallaxLayer.hpp"
 #include <map>
 #include <vector>
-#include "Client/TCPClient.hpp"
+#include "Network/TCP/TCPClient.hpp"
 #include <optional>
 #include <string>
-#include "Protocole/ProtocoleTCP.hpp"
+#include "Network/Protocole/ProtocoleTCP.hpp"
 #include "Client/Ray.hpp"
 
 /**

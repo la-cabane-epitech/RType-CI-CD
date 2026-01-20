@@ -11,7 +11,7 @@
 #include <string>
 #include <memory>
 #include <optional>
-#include "Client/TCPClient.hpp"
+#include "Network/TCP/TCPClient.hpp"
 #include "Client/RTypeClient.hpp"
 #include "Client/Renderer.hpp"
 #include "Client/ConfigManager.hpp"

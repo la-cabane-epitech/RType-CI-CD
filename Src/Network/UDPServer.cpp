@@ -4,9 +4,9 @@
 ** File description:
 ** UDPServer
 */
-#include "Server/UDPServer.hpp"
+#include "Network/UDP/UDPServer.hpp"
 
-UDPServer::UDPServer(int port, INetworkHandler* handler, Clock& clock)
+UDPServer::UDPServer(int port, Network::INetworkHandler* handler, Clock& clock)
     : _io_context(),
         _socket(_io_context, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)),
         _handler(handler),
@@ -80,7 +80,7 @@ void UDPServer::recvLoop()
 {
     while (_running) {
         try {
-            Packet pkt{};
+            Network::Packet pkt{};
             asio::ip::udp::endpoint sender_endpoint;
             asio::error_code ec;
 
@@ -122,7 +122,7 @@ void UDPServer::sendLoop()
 
         auto pktOpt = _outgoing.pop();
         if (!pktOpt) continue;
-        const Packet& pkt = *pktOpt;
+        const Network::Packet& pkt = *pktOpt;
 
         asio::ip::address_v4::bytes_type addr_bytes;
         std::memcpy(addr_bytes.data(), &pkt.addr.sin_addr.s_addr, 4);
@@ -163,7 +163,7 @@ void UDPServer::queueMessage(const char* data, size_t length, const sockaddr_in&
         std::cerr << "Warning: UDP packet too large (" << length << " bytes), max is " << MAX_UDP_PACKET_SIZE << ". Truncating." << std::endl;
         length = MAX_UDP_PACKET_SIZE;
     }
-    Packet pkt;
+    Network::Packet pkt;
     pkt.addr = clientAddr;
     pkt.length = length;
     std::memcpy(pkt.data.data(), data, length);

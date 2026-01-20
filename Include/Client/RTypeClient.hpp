@@ -8,11 +8,11 @@
 #ifndef RTYPECLIENT_HPP_
 #define RTYPECLIENT_HPP_
 
-#include "./UDPClient.hpp"
-#include "./TCPClient.hpp"
+#include "Network/UDP/UDPClient.hpp"
+#include "Network/TCP/TCPClient.hpp"
 #include "GameState.hpp"
 #include "Renderer.hpp"
-#include "Protocole/ProtocoleTCP.hpp"
+#include "Network/Protocole/ProtocoleTCP.hpp"
 #include <string>
 #include <iostream>
 #include "Clock.hpp"

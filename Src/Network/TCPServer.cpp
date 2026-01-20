@@ -5,13 +5,13 @@
 ** TCPServer implementation (Network only)
 */
 
-#include "Server/TCPServer.hpp"
+#include "Network/TCP/TCPServer.hpp"
 #include <iostream>
 #include <cstring>
 #include <memory>
 #include <cstdint>
 
-TCPServer::TCPServer(int port, ITCPHandler* handler, Clock& clock)
+TCPServer::TCPServer(int port, Network::ITCPHandler* handler, Clock& clock)
     : _io_context(),
         _acceptor(_io_context, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port)),
         _running(false),
