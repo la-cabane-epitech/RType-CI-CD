@@ -9,7 +9,12 @@
 #include "Server/Game.hpp"
 #include "Network/UDP/UDPServer.hpp"
 #include <cmath>
+#include <unordered_map>
 
+// Static maps to hold Boss state per Game instance since we cannot modify Game.hpp
+static std::unordered_map<Game*, int> g_bossHP;
+static std::unordered_map<Game*, bool> g_bossSpawned;
+static std::unordered_map<Game*, float> g_lastBossShootTime;
 
 void Game::addPlayer(uint32_t playerId, const char* username) {
     std::lock_guard<std::mutex> lock(_playersMutex);
@@ -266,11 +271,18 @@ void Game::updateEntities(UDPServer& udpServer) {
 void Game::updateGameLevel(float elapsedTime) {
     _gameTime += elapsedTime;
 
-    if (_gameTime > 60.0f) {
-        std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
-        for (auto& entity : _entities) {
-            if (entity.type == 2 || entity.type == 3) {
-                entity.velocityY = 5.0f * std::sin(_gameTime * 2.0f + entity.id);
+    std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
+    for (auto& entity : _entities) {
+        if (_gameTime > 60.0f && (entity.type == 2 || entity.type == 3)) {
+            entity.velocityY = 5.0f * std::sin(_gameTime * 2.0f + entity.id);
+        }
+        if (entity.type == 10) { // Boss movement
+            if (entity.x > 1500) {
+                entity.velocityX = -2.0f;
+                entity.velocityY = 0.0f;
+            } else {
+                entity.velocityX = 0.0f;
+                entity.velocityY = 3.0f * std::sin(_gameTime);
             }
         }
     }
@@ -316,6 +328,73 @@ void Game::update(UDPServer& udpServer) {
     handleCollision(udpServer);
     broadcastGameState(udpServer);
     updateGameLevel(0.016f);
+
+    // Boss Spawning Logic (at 30 seconds)
+    if (_gameTime > 6.0f && !g_bossSpawned[this]) {
+        g_bossSpawned[this] = true;
+        g_bossHP[this] = 1000;
+
+        std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
+        uint32_t entityId = _nextEntityId++;
+        // Spawn Boss: Type 10, HP 1000
+        _entities.push_back({entityId, 10, 1600.0f, 400.0f, -2.0f, 0.0f, 296, 88});
+
+        EntitySpawnPacket spawnPkt;
+        spawnPkt.entityId = entityId;
+        spawnPkt.entityType = 10;
+        spawnPkt.x = 1600.0f;
+        spawnPkt.y = 400.0f;
+
+        BossStatePacket bossPkt;
+        bossPkt.hp = 1000;
+        bossPkt.maxHp = 1000;
+
+        std::lock_guard<std::mutex> lock_players(_playersMutex);
+        for (const auto& destPlayer : _players) {
+            if (destPlayer.addrSet) {
+                udpServer.queueMessage(spawnPkt, destPlayer.udpAddr);
+                udpServer.queueMessage(bossPkt, destPlayer.udpAddr);
+            }
+        }
+        std::cout << "[Game] Boss Spawned!" << std::endl;
+    }
+
+    // Boss Shooting Logic
+    if (g_bossSpawned[this]) {
+        bool bossExists = false;
+        float bossX = 0;
+        float bossY = 0;
+        
+        {
+            std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
+            for (const auto& entity : _entities) {
+                if (entity.type == 10) {
+                    bossExists = true;
+                    bossX = entity.x;
+                    bossY = entity.y;
+                    break;
+                }
+            }
+        }
+
+        if (bossExists && (_gameTime - g_lastBossShootTime[this] > 1.5f)) {
+            g_lastBossShootTime[this] = _gameTime;
+            std::lock_guard<std::mutex> lock_entities(_entitiesMutex);
+            uint32_t projId = _nextEntityId++;
+            _entities.push_back({projId, 11, bossX, bossY + 80, -10.0f, 0.0f, 30, 30});
+
+            EntitySpawnPacket spawnPkt;
+            spawnPkt.entityId = projId;
+            spawnPkt.entityType = 11;
+            spawnPkt.x = bossX;
+            spawnPkt.y = bossY + 80;
+
+            std::lock_guard<std::mutex> lock_players(_playersMutex);
+            for (const auto& destPlayer : _players) {
+                if (destPlayer.addrSet) udpServer.queueMessage(spawnPkt, destPlayer.udpAddr);
+            }
+        }
+    }
 
     if (std::chrono::steady_clock::now() - _lastEnemySpawnTime > std::chrono::seconds(2)) {
         createEnemy(udpServer);
@@ -375,64 +454,78 @@ void Game::handleCollision(UDPServer &udpServer) {
     for (auto& projectile : _entities) {
         if (projectile.type != 1 && projectile.type != 4) continue;
         for (auto& enemy : _entities) {
-            if (enemy.type != 2 && enemy.type != 3) continue;
+            if (enemy.type != 2 && enemy.type != 3 && enemy.type != 10) continue;
             if (projectile.is_collide || enemy.is_collide) continue;
             if (checkCollision(projectile.x, projectile.y, projectile.width, projectile.height, enemy.x, enemy.y, enemy.width, enemy.height)) {
                 projectile.is_collide = true;
-                enemy.is_collide = true;
+                
+                if (enemy.type == 10) { // Boss Logic
+                    int damage = (projectile.type == 4) ? 50 : 10;
+                    g_bossHP[this] -= damage;
+
+                    BossStatePacket bossPkt;
+                    bossPkt.hp = g_bossHP[this];
+                    bossPkt.maxHp = 1000;
+
+                    for (const auto& destPlayer : _players) {
+                        if (destPlayer.addrSet) udpServer.queueMessage(bossPkt, destPlayer.udpAddr);
+                    }
+
+                    if (g_bossHP[this] <= 0) {
+                        enemy.is_collide = true;
+                    }
+                } else {
+                    enemy.is_collide = true;
+                }
             }
         }
     }
 
     for (auto& player : _players) {
         for (auto& enemy : _entities) {
-            if (enemy.type != 2 && enemy.type != 3)
+            if (enemy.type != 2 && enemy.type != 3 && enemy.type != 11)
                 continue;
             if (enemy.is_collide)
                 continue;
 
-            if (checkCollision(player.x - player.width / 2.0f, player.y - player.height / 2.0f, player.width, player.height, enemy.x, enemy.y, enemy.width, enemy.height)) {
-                player.x = 100.0f;
-                player.y = 100.0f;
+            if (checkCollision(player.x, player.y, 60, 30, enemy.x, enemy.y, enemy.width, enemy.height)) {
                 enemy.is_collide = true;
             }
         }
     }
 }
 
-void Game::kickPlayer(uint32_t playerId, UDPServer& udpServer)
-{
-    std::optional<sockaddr_in> kickedPlayerAddr;
-    bool playerFoundAndRemoved = false;
+void Game::kickPlayer(uint32_t playerId, UDPServer& udpServer) {
+    std::lock_guard<std::mutex> lock(_playersMutex);
 
-    {
-        std::lock_guard<std::mutex> lock(_playersMutex);
-        auto it = std::find_if(_players.begin(), _players.end(),
-                             [playerId](const Player& p) { return p.id == playerId; });
-
-        if (it != _players.end()) {
-            if (it->addrSet) {
-                kickedPlayerAddr = it->udpAddr;
+    // Notify the kicked player
+    for (const auto& player : _players) {
+        if (player.id == playerId) {
+            if (player.addrSet) {
+                YouHaveBeenKickedPacket kickPkt;
+                udpServer.queueMessage(kickPkt, player.udpAddr);
             }
-            _players.erase(it);
-            playerFoundAndRemoved = true;
-            std::cout << "[Game] Player " << playerId << " was kicked." << std::endl;
+            break;
         }
     }
 
-    if (playerFoundAndRemoved) {
-        if (kickedPlayerAddr) {
-            YouHaveBeenKickedPacket kickPkt;
-            udpServer.queueMessage(kickPkt, *kickedPlayerAddr);
-        }
+    // Remove the player
+    auto it = std::remove_if(_players.begin(), _players.end(),
+                             [playerId](const Player& player) {
+                                return player.id == playerId;
+                             });
 
-        PlayerDisconnectPacket disconnectPkt{};
-        disconnectPkt.playerId = playerId;
-        std::lock_guard<std::mutex> lock(_playersMutex);
-        for (const auto& destPlayer : _players) {
-            if (destPlayer.addrSet) {
-                udpServer.queueMessage(disconnectPkt, destPlayer.udpAddr);
-            }
+    if (it != _players.end()) {
+        _players.erase(it, _players.end());
+        std::cout << "[Game] Player " << playerId << " kicked." << std::endl;
+    }
+
+    // Notify remaining players
+    for (const auto& destPlayer : _players) {
+        if (destPlayer.addrSet) {
+            PlayerDisconnectPacket disconnectPkt;
+            disconnectPkt.playerId = playerId;
+            udpServer.queueMessage(disconnectPkt, destPlayer.udpAddr);
         }
     }
 }
