@@ -22,10 +22,10 @@ Renderer::Renderer(GameState& gameState) : _gameState(gameState), _actionToRemap
     _textures[3] = LoadTexture("Assets/r-typesheet5.gif");
     _textures[4] = LoadTexture("Assets/r-typesheet1.gif");
 
-    // Background Textures
     _textures[10] = LoadTexture("Assets/blue-back.png");
     _textures[11] = LoadTexture("Assets/blue-stars.png");
     _textures[12] = LoadTexture("Assets/asteroid-1.png");
+    _textures[13] = LoadTexture("Assets/red-back.png");
 
     float bgScale = (float)GetScreenHeight() / _textures[10].height;
     _parallaxLayers.emplace_back(0.2f, _textures[10], bgScale, 0.0f);
@@ -53,6 +53,23 @@ void Renderer::draw(const std::map<std::string, int>& keybinds)
 {
     float dt = GetFrameTime();
     float scrollSpeed = 150.0f;
+
+    static bool isRedMode = false;
+    bool targetRed = (_gameState.score >= 500);
+
+    if (isRedMode != targetRed) {
+        _parallaxLayers.clear();
+        if (targetRed) {
+            float bgScale = (float)GetScreenHeight() / _textures[13].height;
+            _parallaxLayers.emplace_back(0.2f, _textures[13], bgScale, 0.0f);
+            _parallaxLayers.emplace_back(0.4f, _textures[11], 6.0f, 0.0f);
+        } else {
+            float bgScale = (float)GetScreenHeight() / _textures[10].height;
+            _parallaxLayers.emplace_back(0.2f, _textures[10], bgScale, 0.0f);
+            _parallaxLayers.emplace_back(0.4f, _textures[11], 6.0f, 0.0f);
+        }
+        isRedMode = targetRed;
+    }
 
     for (auto& layer : _parallaxLayers) {
         layer.update(dt, scrollSpeed);

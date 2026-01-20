@@ -91,6 +91,7 @@ void RTypeClient::tick()
             break;
     }
 
+    _gameState.score = _score;
     _renderer.draw(_keybinds);
     _renderer.drawChat(_chatHistory, _chatInput, _isChatActive);
     

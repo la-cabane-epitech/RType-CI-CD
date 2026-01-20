@@ -42,6 +42,7 @@ struct GameState {
     std::unordered_map<uint32_t, Position> players; /**< Map of player IDs to their positions */
     std::unordered_map<uint32_t, EntityState> entities; /**< Map of entity IDs to their states */
     uint32_t rtt = 0; /**< Round Trip Time in milliseconds */
+    int score = 0; /**< Current game score */
 };
 
 #endif
